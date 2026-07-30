@@ -25,7 +25,7 @@ export default function QuoteForm() {
         <div className="text-center max-w-[800px] mx-auto mb-12">
           <span className="text-xs font-bold uppercase tracking-wider text-accent-500 bg-accent-500/10 px-3 py-1.5 rounded-full">Free Custom Solar Design & Cost Estimate</span>
           <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mt-4 mb-4">Get Your Free Solar Quote & Custom Rooftop Layout</h2>
-          <p className="text-base text-gray-600 leading-relaxed">Submit your details below and our engineering team will prepare a custom structural plan, optimal panel layout, estimated daily generation, and transparent cost breakdown for your rooftop — delivered within 24 hours. No hidden charges. No obligation.</p>
+          <p className="text-base text-gray-600 leading-relaxed hidden md:block">Submit your details below and our engineering team will prepare a custom structural plan, optimal panel layout, estimated daily generation, and transparent cost breakdown for your rooftop — delivered within 24 hours. No hidden charges. No obligation.</p>
         </div>
 
         <div className="bg-white border border-gray-100 shadow-xl rounded-3xl p-8 max-w-[700px] mx-auto text-left">

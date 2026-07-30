@@ -1,5 +1,5 @@
 import React from 'react';
-import { Zap, ArrowRight, Calculator, Sun, Users, IndianRupee, ShieldCheck } from 'lucide-react';
+import { Zap, ArrowRight, ShoppingBag, Sun, Users, IndianRupee, ShieldCheck } from 'lucide-react';
 
 export default function Hero() {
   return (
@@ -55,11 +55,11 @@ export default function Hero() {
               Get Free Quote <ArrowRight size={18} />
             </a>
             <a 
-              href="#subsidy-guide" 
+              href="#store" 
               className="inline-flex items-center justify-center gap-2 bg-white/5 border border-white/20 backdrop-blur-md text-white px-8 py-4 rounded-full font-bold text-base hover:bg-white/10 transition-all duration-300"
             >
-              <Calculator size={18} className="text-green-400" />
-              Calculate Savings
+              <ShoppingBag size={18} className="text-accent-400" />
+              Shop Accessories
             </a>
           </div>
         </div>
@@ -142,7 +142,7 @@ export default function Hero() {
 
       {/* Floating WhatsApp Widget */}
       <a 
-        href="https://wa.me/919347416140" 
+        href="https://wa.me/918639103947" 
         target="_blank" 
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-[9999] bg-[#25D366] hover:bg-[#20BA56] text-white w-14 h-14 rounded-full flex items-center justify-center shadow-[0_4px_15px_rgba(37,211,102,0.4)] transition-all duration-300 transform hover:scale-110 hover:rotate-6 active:scale-95"

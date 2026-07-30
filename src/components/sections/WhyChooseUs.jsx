@@ -31,15 +31,15 @@ export default function WhyChooseUs() {
         <div className="text-center max-w-[800px] mx-auto mb-12">
           <span className="text-xs font-bold uppercase tracking-wider text-accent-500 bg-accent-500/10 px-3 py-1.5 rounded-full">Why Homeowners Across AP Trust Us</span>
           <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mt-4 mb-4">Why Choose Mirror Solar Vision for Your Rooftop Solar Installation?</h2>
-          <p className="text-base text-gray-600 leading-relaxed">We are not just another solar installer. Mirror Solar Vision combines deep engineering expertise, end-to-end government subsidy processing, and the trusted legacy of Mirror Aqua to deliver rooftop solar systems built for Andhra Pradesh's unique climate — hot, humid, and cyclone-prone.</p>
+          <p className="text-base text-gray-600 leading-relaxed hidden md:block">We are not just another solar installer. Mirror Solar Vision combines deep engineering expertise, end-to-end government subsidy processing, and the trusted legacy of Mirror Aqua to deliver rooftop solar systems built for Andhra Pradesh's unique climate — hot, humid, and cyclone-prone.</p>
         </div>
 
         {/* Horizontal scroll on mobile, grid on desktop */}
-        <div className="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 pb-6 snap-x snap-mandatory scrollbar-none select-none">
+        <div className="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 pb-6 snap-x snap-mandatory scrollbar-hide select-none">
           {cards.map((card, idx) => (
             <div 
               key={idx} 
-              className="w-[290px] shrink-0 snap-center md:w-auto bg-gray-50 p-6 rounded-2xl border border-gray-100 hover:shadow-lg transition-shadow duration-300 flex flex-col justify-between"
+              className="w-full shrink-0 snap-center md:w-auto bg-gray-50 p-6 rounded-2xl border border-gray-100 hover:shadow-lg transition-shadow duration-300 flex flex-col justify-between"
             >
               <div>
                 <div className="bg-primary-50 text-primary-500 w-12 h-12 rounded-xl flex items-center justify-center mb-5">

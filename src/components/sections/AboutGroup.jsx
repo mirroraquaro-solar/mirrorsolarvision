@@ -12,10 +12,10 @@ export default function AboutGroup() {
             <p className="text-[15px] text-gray-600 leading-relaxed mb-4">
               Mirror Solar Vision is not a startup. We are the solar energy division of the <strong className="text-gray-950">Mirror Group</strong> — the same organization behind <strong className="text-gray-950">Mirror Aqua</strong>, Andhra Pradesh's trusted name in water purification for nearly two decades.
             </p>
-            <p className="text-[15px] text-gray-600 leading-relaxed mb-4">
+            <p className="text-[15px] text-gray-600 leading-relaxed mb-4 hidden md:block">
               Since its founding, Mirror Aqua has served lakhs of families across AP with premium water purifiers, RO membranes, sediment filters, and reliable after-sales service. Our customers trust us because we show up. We service. We stand behind what we sell — not for months, but for years.
             </p>
-            <p className="text-[15px] text-gray-600 leading-relaxed mb-6">
+            <p className="text-[15px] text-gray-600 leading-relaxed mb-6 hidden md:block">
               We brought that identical DNA — technical expertise, zero-compromise components, responsive customer support, and long-term accountability — to the solar energy sector under <strong className="text-gray-950">Mirror Solar Vision</strong>. When you invest in a solar plant from us, you're not buying from an unknown entity. You're investing in a relationship backed by decades of proven service heritage across your state.
             </p>
             <div className="flex gap-4">

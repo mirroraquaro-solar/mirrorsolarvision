@@ -68,7 +68,7 @@ export default function SubsidyGuide() {
         <div className="text-center max-w-[800px] mx-auto mb-12">
           <span className="text-xs font-bold uppercase tracking-wider text-accent-500 bg-accent-500/10 px-3 py-1.5 rounded-full">Central Government Solar Subsidy — Active in AP</span>
           <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mt-4 mb-4">PM Surya Ghar Muft Bijli Yojana — Get Up to ₹78,000 Government Subsidy</h2>
-          <p className="text-base text-gray-600 leading-relaxed">The PM Surya Ghar Muft Bijli Yojana is a central government scheme that provides direct financial assistance to Indian homeowners who install rooftop solar systems. Mirror Solar Vision is a registered installer under this scheme and handles the entire application, documentation, and disbursement process for you at no extra cost.</p>
+          <p className="text-base text-gray-600 leading-relaxed hidden md:block">The PM Surya Ghar Muft Bijli Yojana is a central government scheme that provides direct financial assistance to Indian homeowners who install rooftop solar systems. Mirror Solar Vision is a registered installer under this scheme and handles the entire application, documentation, and disbursement process for you at no extra cost.</p>
         </div>
 
         {/* Horizontal scroll on mobile, grid on desktop */}
