@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Phone, Zap, Menu, X, ShoppingBag } from 'lucide-react';
+import { Phone, Zap, Menu, X, ShoppingBag, User } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Header({ onNavigate }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  const { isAuthenticated, userProfile, openAuthModal, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -52,20 +55,7 @@ export default function Header({ onNavigate }) {
             >
               Home
             </a>
-            <a 
-              href="#about" 
-              onClick={(e) => { e.preventDefault(); handleNavClick('home'); setTimeout(() => { const el = document.getElementById('about'); if(el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); }} 
-              className="text-[14px] font-semibold text-gray-700 hover:text-primary-500 transition-colors"
-            >
-              About Us
-            </a>
-            <a 
-              href="#why-choose-us" 
-              onClick={(e) => { e.preventDefault(); handleNavClick('home'); setTimeout(() => { const el = document.getElementById('why-choose-us'); if(el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); }} 
-              className="text-[14px] font-semibold text-gray-700 hover:text-primary-500 transition-colors"
-            >
-              Why Choose Us
-            </a>
+
 
             {/* Mirror Solar Store Nav Button */}
             <a 
@@ -77,13 +67,7 @@ export default function Header({ onNavigate }) {
               <span>Mirror Solar Store</span>
             </a>
 
-            <a 
-              href="#subsidy-guide" 
-              onClick={(e) => { e.preventDefault(); handleNavClick('home'); setTimeout(() => { const el = document.getElementById('subsidy-guide'); if(el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); }} 
-              className="text-[14px] font-semibold text-gray-700 hover:text-primary-500 transition-colors"
-            >
-              Subsidy Guide
-            </a>
+
             <a 
               href="#projects" 
               onClick={(e) => { e.preventDefault(); handleNavClick('home'); setTimeout(() => { const el = document.getElementById('projects'); if(el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); }} 
@@ -113,6 +97,29 @@ export default function Header({ onNavigate }) {
               <Phone size={16} className="text-green-500 fill-green-500/20" />
               <span>+91 86391 03947</span>
             </a>
+            {/* Auth Dropdown or Button */}
+            {isAuthenticated ? (
+              <div className="relative group">
+                <button className="flex items-center gap-1.5 text-[14px] font-bold text-gray-950 hover:text-primary-500 transition-colors">
+                  <User size={16} className="text-primary-500" />
+                  <span>{userProfile?.fullName?.split(' ')[0] || 'Profile'}</span>
+                </button>
+                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 overflow-hidden">
+                  <a href="#profile" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-500 font-medium">My Profile</a>
+                  <a href="#orders" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-500 font-medium">My Orders</a>
+                  <button onClick={logout} className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 font-medium border-t border-gray-100">Sign Out</button>
+                </div>
+              </div>
+            ) : (
+              <button 
+                onClick={openAuthModal}
+                className="flex items-center gap-1.5 text-[14px] font-bold text-gray-950 hover:text-primary-500 transition-colors"
+              >
+                <User size={16} className="text-gray-400" />
+                <span>Sign In</span>
+              </button>
+            )}
+
             <a 
               href="#contact" 
               onClick={(e) => { e.preventDefault(); handleNavClick('home'); setTimeout(() => { const el = document.getElementById('contact'); if(el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); }}
@@ -185,9 +192,7 @@ export default function Header({ onNavigate }) {
             <span className="text-[10px] bg-accent-500 text-slate-950 font-bold px-2 py-0.5 rounded-full uppercase">Shop</span>
           </a>
 
-          <a href="#about" onClick={(e) => { e.preventDefault(); handleNavClick('home'); setTimeout(() => { const el = document.getElementById('about'); if(el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); }} className="py-2 text-sm font-semibold text-gray-700 hover:text-primary-500">About Us</a>
-          <a href="#why-choose-us" onClick={(e) => { e.preventDefault(); handleNavClick('home'); setTimeout(() => { const el = document.getElementById('why-choose-us'); if(el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); }} className="py-2 text-sm font-semibold text-gray-700 hover:text-primary-500">Why Choose Us</a>
-          <a href="#subsidy-guide" onClick={(e) => { e.preventDefault(); handleNavClick('home'); setTimeout(() => { const el = document.getElementById('subsidy-guide'); if(el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); }} className="py-2 text-sm font-semibold text-gray-700 hover:text-primary-500">Subsidy Guide</a>
+
           <a href="#projects" onClick={(e) => { e.preventDefault(); handleNavClick('home'); setTimeout(() => { const el = document.getElementById('projects'); if(el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); }} className="py-2 text-sm font-semibold text-gray-700 hover:text-primary-500">Projects</a>
           <a href="#testimonials" onClick={(e) => { e.preventDefault(); handleNavClick('home'); setTimeout(() => { const el = document.getElementById('testimonials'); if(el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); }} className="py-2 text-sm font-semibold text-gray-700 hover:text-primary-500">Testimonials</a>
           <a href="#contact" onClick={(e) => { e.preventDefault(); handleNavClick('home'); setTimeout(() => { const el = document.getElementById('contact'); if(el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); }} className="py-2 text-sm font-semibold text-gray-700 hover:text-primary-500 border-b border-gray-100 pb-4">Contact</a>
@@ -197,12 +202,35 @@ export default function Header({ onNavigate }) {
             +91 86391 03947
           </a>
           
+          {/* Mobile Auth Section */}
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            {isAuthenticated ? (
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2 py-3 text-sm font-bold text-gray-900">
+                  <User size={18} className="text-primary-500" />
+                  Hi, {userProfile?.fullName?.split(' ')[0] || 'User'}
+                </div>
+                <a href="#profile" className="py-2 text-sm font-semibold text-gray-700 hover:text-primary-500 pl-7">My Profile</a>
+                <a href="#orders" className="py-2 text-sm font-semibold text-gray-700 hover:text-primary-500 pl-7">My Orders</a>
+                <button onClick={logout} className="text-left py-2 text-sm font-semibold text-red-600 hover:text-red-700 pl-7 mt-2">Sign Out</button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => { setIsMobileMenuOpen(false); openAuthModal(); }}
+                className="flex items-center gap-2 py-3 text-sm font-bold text-gray-900"
+              >
+                <User size={18} className="text-gray-400" />
+                Sign In / Register
+              </button>
+            )}
+          </div>
+          
           <a 
             href="#contact" 
-            onClick={(e) => { e.preventDefault(); handleNavClick('home'); setTimeout(() => { const el = document.getElementById('contact'); if(el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); }} 
-            className="flex items-center justify-center gap-2 bg-gradient-to-r from-accent-500 to-[#F58220] text-white py-3 px-4 rounded-xl font-bold shadow-accent mt-2"
+            onClick={(e) => { e.preventDefault(); handleNavClick('home'); setTimeout(() => { const el = document.getElementById('contact'); if(el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); }}
+            className="mt-6 flex items-center justify-center gap-2 w-full bg-gradient-to-r from-accent-500 to-[#F58220] text-white px-6 py-3 rounded-full font-bold text-[14px] shadow-accent"
           >
-            <Zap size={16} className="fill-white" />
+            <Zap size={14} className="fill-white" />
             Get Free Quote
           </a>
         </div>

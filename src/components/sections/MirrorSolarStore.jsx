@@ -12,6 +12,7 @@ import {
   Minus, 
   X
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function MirrorSolarStore({ initialSubView = 'catalog', onBackToHome }) {
   const [activeSubView, setActiveSubView] = useState(initialSubView); // 'catalog' | 'product-detail'
@@ -85,6 +86,8 @@ export default function MirrorSolarStore({ initialSubView = 'catalog', onBackToH
   const [quantity, setQuantity] = useState(1);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [orderSubmitted, setOrderSubmitted] = useState(false);
+  
+  const { requireAuth } = useAuth();
   const [cartCount, setCartCount] = useState(0);
   
   const [checkoutForm, setCheckoutForm] = useState({
@@ -115,8 +118,16 @@ export default function MirrorSolarStore({ initialSubView = 'catalog', onBackToH
   };
 
   const handleAddToCart = () => {
-    setCartCount(prev => prev + quantity);
-    alert(`Added ${quantity} ${activeProduct.name} to your cart.`);
+    requireAuth(() => {
+      setCartCount(prev => prev + quantity);
+      alert(`Added ${quantity} ${activeProduct.name} to your cart.`);
+    }, 'Sign in to save this product to your cart.');
+  };
+
+  const handleBuyNow = () => {
+    requireAuth(() => {
+      setIsCheckoutOpen(true);
+    }, 'Sign in to securely checkout your order.');
   };
 
   return (
@@ -417,7 +428,7 @@ export default function MirrorSolarStore({ initialSubView = 'catalog', onBackToH
                       </button>
                       
                       <button
-                        onClick={() => setIsCheckoutOpen(true)}
+                        onClick={handleBuyNow}
                         className="w-full bg-[#FFA41C] hover:bg-[#FA8900] text-slate-900 border border-[#FF8F00] font-normal py-2 rounded-full text-sm shadow-sm transition-colors flex justify-center"
                       >
                         Buy Now
