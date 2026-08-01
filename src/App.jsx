@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from './components/layout/Layout';
 import Hero from './components/sections/Hero';
+import AuthorizedDealers from './components/sections/AuthorizedDealers';
 import AboutGroup from './components/sections/AboutGroup';
 import WhyChooseUs from './components/sections/WhyChooseUs';
 import StoreTeaser from './components/sections/StoreTeaser';
@@ -9,10 +10,15 @@ import SubsidyGuide from './components/sections/SubsidyGuide';
 import Gallery from './components/sections/Gallery';
 import Reviews from './components/sections/Reviews';
 import QuoteForm from './components/sections/QuoteForm';
+import CheckoutPage from './components/checkout/CheckoutPage';
+import OrderSuccess from './components/checkout/OrderSuccess';
+import MyOrders from './components/checkout/MyOrders';
 
 function App() {
-  const [currentView, setCurrentView] = useState('home'); // 'home' | 'store'
+  const [currentView, setCurrentView] = useState('home'); // 'home' | 'store' | 'checkout' | 'order-success'
   const [storeSubView, setStoreSubView] = useState('catalog'); // 'catalog' | 'drain-clips'
+  const [lastOrderId, setLastOrderId] = useState(null);
+  const [checkoutData, setCheckoutData] = useState(null);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -25,9 +31,18 @@ function App() {
         setCurrentView('store');
         setStoreSubView('drain-clips');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (hash === '#checkout') {
+        setCurrentView('checkout');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (hash === '#order-success') {
+        setCurrentView('order-success');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (hash === '#orders') {
+        setCurrentView('orders');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         // Return to home if hash is empty or points to another section
-        if (currentView === 'store' && (hash === '#home' || hash === '' || hash === '#about' || hash === '#why-choose-us' || hash === '#contact')) {
+        if (currentView !== 'home' && (hash === '#home' || hash === '' || hash === '#about' || hash === '#why-choose-us' || hash === '#contact')) {
           setCurrentView('home');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -41,11 +56,25 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const handleNavigate = (view, subView = 'catalog') => {
+  const handleNavigate = (view, subView = 'catalog', additionalData = null) => {
     if (view === 'store') {
       setCurrentView('store');
       setStoreSubView(subView);
       window.location.hash = subView === 'drain-clips' ? '#drain-clips' : '#store';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (view === 'checkout') {
+      setCurrentView('checkout');
+      setCheckoutData(additionalData);
+      window.location.hash = '#checkout';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (view === 'order-success') {
+      setCurrentView('order-success');
+      setLastOrderId(additionalData);
+      window.location.hash = '#order-success';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (view === 'orders') {
+      setCurrentView('orders');
+      window.location.hash = '#orders';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       setCurrentView('home');
@@ -59,6 +88,7 @@ function App() {
       {currentView === 'home' ? (
         <>
           <Hero />
+          <AuthorizedDealers />
           <StoreTeaser onNavigateToStore={(subView) => handleNavigate('store', subView)} />
           <AboutGroup />
           <Gallery />
@@ -67,12 +97,27 @@ function App() {
           <WhyChooseUs />
           <SubsidyGuide />
         </>
-      ) : (
+      ) : currentView === 'store' ? (
         <MirrorSolarStore 
           initialSubView={storeSubView} 
-          onBackToHome={() => handleNavigate('home')} 
+          onBackToHome={() => handleNavigate('home')}
+          onCheckout={(data) => handleNavigate('checkout', null, data)}
         />
-      )}
+      ) : currentView === 'checkout' ? (
+        <CheckoutPage 
+          onBack={() => handleNavigate('store')} 
+          onPaymentSuccess={(orderId) => handleNavigate('order-success', null, orderId)} 
+          checkoutData={checkoutData}
+        />
+      ) : currentView === 'order-success' ? (
+        <OrderSuccess 
+          orderData={lastOrderId} 
+          onContinueShopping={() => handleNavigate('store')} 
+          onViewOrders={() => handleNavigate('orders')}
+        />
+      ) : currentView === 'orders' ? (
+        <MyOrders onBackToStore={() => handleNavigate('store')} />
+      ) : null}
     </Layout>
   );
 }

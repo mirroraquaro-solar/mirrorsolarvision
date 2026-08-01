@@ -4,7 +4,9 @@ import {
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signOut, 
-  sendPasswordResetEmail 
+  sendPasswordResetEmail,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
@@ -81,6 +83,37 @@ export function AuthProvider({ children }) {
     return signOut(auth);
   }
 
+  // Google Sign In
+  async function signInWithGoogle() {
+    const provider = new GoogleAuthProvider();
+    const userCredential = await signInWithPopup(auth, provider);
+    const user = userCredential.user;
+
+    const docRef = doc(db, 'users', user.uid);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      const newProfile = {
+        uid: user.uid,
+        fullName: user.displayName || 'Google User',
+        email: user.email,
+        phone: user.phoneNumber || '',
+        role: 'customer',
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+        emailVerified: user.emailVerified
+      };
+      await setDoc(docRef, newProfile);
+      setUserProfile(newProfile);
+    } else {
+      await setDoc(docRef, { lastLogin: new Date().toISOString() }, { merge: true });
+      setUserProfile({ ...docSnap.data(), lastLogin: new Date().toISOString() });
+    }
+
+    return userCredential;
+  }
+
   // Password reset
   function resetPassword(email) {
     return sendPasswordResetEmail(auth, email);
@@ -126,9 +159,16 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!currentUser,
     login,
     register,
+    signInWithGoogle,
     logout,
     resetPassword,
     requireAuth,
+    updateCart: async (newCount) => {
+      if (!currentUser) return;
+      const docRef = doc(db, 'users', currentUser.uid);
+      await setDoc(docRef, { cartCount: newCount }, { merge: true });
+      setUserProfile(prev => ({ ...prev, cartCount: newCount }));
+    },
     openAuthModal: () => setIsModalOpen(true),
     refreshProfile: () => currentUser && fetchProfile(currentUser.uid)
   };

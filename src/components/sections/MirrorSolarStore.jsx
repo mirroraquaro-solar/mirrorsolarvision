@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-export default function MirrorSolarStore({ initialSubView = 'catalog', onBackToHome }) {
+export default function MirrorSolarStore({ initialSubView = 'catalog', onBackToHome, onCheckout }) {
   const [activeSubView, setActiveSubView] = useState(initialSubView); // 'catalog' | 'product-detail'
   const [selectedProductId, setSelectedProductId] = useState('drain-clips');
   
@@ -78,6 +78,25 @@ export default function MirrorSolarStore({ initialSubView = 'catalog', onBackToH
       inStock: true,
       featured: true,
     },
+    {
+      id: 'test-pen',
+      name: 'Test Product (Pen)',
+      subtitle: 'For Payment Testing',
+      category: 'testing',
+      badge: 'Test',
+      tag: 'Demo',
+      rating: 5.0,
+      reviewsCount: 1,
+      image: 'https://images.unsplash.com/photo-1585336261022-680e295ce3fe?auto=format&fit=crop&q=80&w=400',
+      images: [
+        'https://images.unsplash.com/photo-1585336261022-680e295ce3fe?auto=format&fit=crop&q=80&w=400'
+      ],
+      description: 'This is a test product created specifically to verify the Razorpay and Shiprocket integration flows. It is priced at exactly ₹20.',
+      startingPrice: 20,
+      unitText: 'per pen',
+      inStock: true,
+      featured: true,
+    },
   ];
 
   const [activeImage, setActiveImage] = useState('');
@@ -87,8 +106,16 @@ export default function MirrorSolarStore({ initialSubView = 'catalog', onBackToH
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [orderSubmitted, setOrderSubmitted] = useState(false);
   
-  const { requireAuth } = useAuth();
-  const [cartCount, setCartCount] = useState(0);
+  const { requireAuth, userProfile, updateCart } = useAuth();
+  const [localCartCount, setLocalCartCount] = useState(0);
+
+  useEffect(() => {
+    if (userProfile && userProfile.cartCount !== undefined) {
+      setLocalCartCount(userProfile.cartCount);
+    } else if (!userProfile) {
+      setLocalCartCount(0);
+    }
+  }, [userProfile]);
   
   const [checkoutForm, setCheckoutForm] = useState({
     name: '',
@@ -117,16 +144,31 @@ export default function MirrorSolarStore({ initialSubView = 'catalog', onBackToH
     setOrderSubmitted(true);
   };
 
+  const [toastMessage, setToastMessage] = useState('');
+
   const handleAddToCart = () => {
     requireAuth(() => {
-      setCartCount(prev => prev + quantity);
-      alert(`Added ${quantity} ${activeProduct.name} to your cart.`);
+      const newCount = localCartCount + quantity;
+      setLocalCartCount(newCount);
+      updateCart(newCount);
+      setToastMessage(`Added ${quantity} ${activeProduct.name} to your cart.`);
+      setTimeout(() => setToastMessage(''), 3000);
     }, 'Sign in to save this product to your cart.');
   };
 
   const handleBuyNow = () => {
     requireAuth(() => {
-      setIsCheckoutOpen(true);
+      if (onCheckout) {
+        onCheckout({
+          item: {
+             ...activeProduct,
+             quantity,
+             selectedSize,
+             selectedKw
+          },
+          totalPrice
+        });
+      }
     }, 'Sign in to securely checkout your order.');
   };
 
@@ -161,9 +203,9 @@ export default function MirrorSolarStore({ initialSubView = 'catalog', onBackToH
               <div className="flex items-center gap-2 bg-slate-800 px-4 py-2 rounded-lg cursor-pointer hover:bg-slate-700 transition">
                 <ShoppingCart size={18} className="text-accent-400" />
                 <span className="font-bold text-sm">Cart</span>
-                {cartCount > 0 && (
+                {localCartCount > 0 && (
                   <span className="bg-accent-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full ml-1">
-                    {cartCount}
+                    {localCartCount}
                   </span>
                 )}
               </div>
@@ -576,6 +618,18 @@ export default function MirrorSolarStore({ initialSubView = 'catalog', onBackToH
               </form>
             )}
           </div>
+        </div>
+      )}
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 z-[9999] animate-fade-in-up">
+          <div className="bg-emerald-500 rounded-full p-1">
+            <ShoppingCart size={16} className="text-white" />
+          </div>
+          <span className="text-sm font-bold">{toastMessage}</span>
+          <button onClick={() => setToastMessage('')} className="ml-2 text-slate-400 hover:text-white">
+            <X size={16} />
+          </button>
         </div>
       )}
 

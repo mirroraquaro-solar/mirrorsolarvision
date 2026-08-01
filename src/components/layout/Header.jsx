@@ -106,7 +106,7 @@ export default function Header({ onNavigate }) {
                 </button>
                 <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 overflow-hidden">
                   <a href="#profile" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-500 font-medium">My Profile</a>
-                  <a href="#orders" className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-500 font-medium">My Orders</a>
+                  <a href="#orders" onClick={(e) => { e.preventDefault(); handleNavClick('orders'); }} className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-500 font-medium">My Orders</a>
                   <button onClick={logout} className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 font-medium border-t border-gray-100">Sign Out</button>
                 </div>
               </div>
@@ -211,7 +211,7 @@ export default function Header({ onNavigate }) {
                   Hi, {userProfile?.fullName?.split(' ')[0] || 'User'}
                 </div>
                 <a href="#profile" className="py-2 text-sm font-semibold text-gray-700 hover:text-primary-500 pl-7">My Profile</a>
-                <a href="#orders" className="py-2 text-sm font-semibold text-gray-700 hover:text-primary-500 pl-7">My Orders</a>
+                <a href="#orders" onClick={(e) => { e.preventDefault(); handleNavClick('orders'); }} className="py-2 text-sm font-semibold text-gray-700 hover:text-primary-500 pl-7">My Orders</a>
                 <button onClick={logout} className="text-left py-2 text-sm font-semibold text-red-600 hover:text-red-700 pl-7 mt-2">Sign Out</button>
               </div>
             ) : (
