@@ -10,7 +10,8 @@ import {
   ChevronRight, 
   Plus, 
   Minus, 
-  X
+  X,
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -106,14 +107,17 @@ export default function MirrorSolarStore({ initialSubView = 'catalog', onBackToH
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [orderSubmitted, setOrderSubmitted] = useState(false);
   
-  const { requireAuth, userProfile, updateCart } = useAuth();
-  const [localCartCount, setLocalCartCount] = useState(0);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const { requireAuth, userProfile, updateCartItems } = useAuth();
+  const [localCartItems, setLocalCartItems] = useState([]);
+
+  const localCartCount = localCartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   useEffect(() => {
-    if (userProfile && userProfile.cartCount !== undefined) {
-      setLocalCartCount(userProfile.cartCount);
+    if (userProfile && userProfile.cartItems) {
+      setLocalCartItems(userProfile.cartItems);
     } else if (!userProfile) {
-      setLocalCartCount(0);
+      setLocalCartItems([]);
     }
   }, [userProfile]);
   
@@ -148,9 +152,31 @@ export default function MirrorSolarStore({ initialSubView = 'catalog', onBackToH
 
   const handleAddToCart = () => {
     requireAuth(() => {
-      const newCount = localCartCount + quantity;
-      setLocalCartCount(newCount);
-      updateCart(newCount);
+      const itemToAdd = {
+        id: activeProduct.id,
+        name: activeProduct.name,
+        price: currentPrice,
+        image: activeImage,
+        quantity: quantity,
+        selectedSize: activeProduct.id === 'drain-clips' ? selectedSize : null,
+        selectedKw: activeProduct.id === 'drain-clips' ? selectedKw : null,
+      };
+      
+      const newCartItems = [...localCartItems];
+      const existingIdx = newCartItems.findIndex(i => 
+        i.id === itemToAdd.id && 
+        i.selectedSize === itemToAdd.selectedSize && 
+        i.selectedKw === itemToAdd.selectedKw
+      );
+
+      if (existingIdx >= 0) {
+        newCartItems[existingIdx].quantity += itemToAdd.quantity;
+      } else {
+        newCartItems.push(itemToAdd);
+      }
+      
+      setLocalCartItems(newCartItems);
+      updateCartItems(newCartItems);
       setToastMessage(`Added ${quantity} ${activeProduct.name} to your cart.`);
       setTimeout(() => setToastMessage(''), 3000);
     }, 'Sign in to save this product to your cart.');
@@ -200,7 +226,7 @@ export default function MirrorSolarStore({ initialSubView = 'catalog', onBackToH
               <h1 className="text-xl md:text-2xl font-extrabold font-heading hidden sm:block">
                 Mirror Solar <span className="text-accent-500">Store</span>
               </h1>
-              <div className="flex items-center gap-2 bg-slate-800 px-4 py-2 rounded-lg cursor-pointer hover:bg-slate-700 transition">
+              <div onClick={() => setIsCartOpen(true)} className="flex items-center gap-2 bg-slate-800 px-4 py-2 rounded-lg cursor-pointer hover:bg-slate-700 transition">
                 <ShoppingCart size={18} className="text-accent-400" />
                 <span className="font-bold text-sm">Cart</span>
                 {localCartCount > 0 && (
@@ -620,6 +646,88 @@ export default function MirrorSolarStore({ initialSubView = 'catalog', onBackToH
           </div>
         </div>
       )}
+      {/* Cart Drawer */}
+      {isCartOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex justify-end">
+          <div className="bg-white w-full max-w-md h-full shadow-2xl flex flex-col animate-fade-in-right">
+            {/* Header */}
+            <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShoppingCart size={18} className="text-accent-400" />
+                <span className="font-heading font-bold text-base">Your Cart</span>
+              </div>
+              <button onClick={() => setIsCartOpen(false)} className="text-white/70 hover:text-white transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            {/* Cart Items */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {localCartItems.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                  <ShoppingBag size={48} className="text-slate-300 mb-4" />
+                  <p>Your cart is empty.</p>
+                </div>
+              ) : (
+                localCartItems.map((item, idx) => (
+                  <div key={idx} className="flex gap-4 p-4 border border-slate-200 rounded-xl bg-slate-50 relative">
+                    <img src={item.image} alt={item.name} className="w-20 h-20 object-contain bg-white border border-slate-100 rounded-lg p-2 mix-blend-multiply" />
+                    <div className="flex-1">
+                      <h4 className="font-bold text-slate-900 text-sm leading-tight mb-1">{item.name}</h4>
+                      {item.selectedSize && <p className="text-xs text-slate-500 mb-1">Size: {item.selectedSize}</p>}
+                      {item.selectedKw && <p className="text-xs text-slate-500 mb-1">Plant: {item.selectedKw}kW</p>}
+                      <div className="flex justify-between items-end mt-2">
+                        <span className="font-bold text-slate-900">₹{(item.price * item.quantity).toLocaleString('en-IN')}</span>
+                        <div className="text-xs font-bold text-slate-600 bg-white border border-slate-200 px-2 py-1 rounded">
+                          Qty: {item.quantity}
+                        </div>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        const newCartItems = [...localCartItems];
+                        newCartItems.splice(idx, 1);
+                        setLocalCartItems(newCartItems);
+                        updateCartItems(newCartItems);
+                      }}
+                      className="absolute top-2 right-2 text-slate-400 hover:text-red-500 transition-colors p-1"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Footer */}
+            {localCartItems.length > 0 && (
+              <div className="p-6 border-t border-slate-200 bg-slate-50">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="font-bold text-slate-700">Subtotal</span>
+                  <span className="font-extrabold text-xl text-slate-900">
+                    ₹{localCartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0).toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <button 
+                  onClick={() => {
+                    setIsCartOpen(false);
+                    if (onCheckout) {
+                      onCheckout({
+                        items: localCartItems,
+                        totalPrice: localCartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0)
+                      });
+                    }
+                  }}
+                  className="w-full bg-[#FFA41C] hover:bg-[#FA8900] text-slate-900 border border-[#FF8F00] font-bold py-3.5 rounded-xl transition-all shadow-sm text-sm"
+                >
+                  Proceed to Checkout ({localCartCount} items)
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 z-[9999] animate-fade-in-up">

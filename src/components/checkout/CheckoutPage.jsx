@@ -5,10 +5,13 @@ import { useAuth } from '../../context/AuthContext';
 const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { currentUser: user } = useAuth();
+  const { currentUser: user, requireAuth } = useAuth();
 
-  // Ensure each item has a explicit 'price' field for the Shiprocket backend
-  const cartItems = checkoutData ? [{ ...checkoutData.item, price: checkoutData.totalPrice / (checkoutData.item.quantity || 1) }] : [];
+  const cartItems = checkoutData?.items 
+    ? checkoutData.items 
+    : checkoutData?.item 
+      ? [{ ...checkoutData.item, price: checkoutData.totalPrice / (checkoutData.item.quantity || 1) }]
+      : [];
   const totalAmount = checkoutData ? checkoutData.totalPrice : 0;
 
   // Address State
@@ -65,6 +68,11 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
   };
 
   const handlePayment = async () => {
+    if (!user) {
+      requireAuth(() => {}, "Please login to complete your checkout.");
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     try {
@@ -80,9 +88,14 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
           data: {
             amount: totalAmount,
             items: cartItems,
-            userId: user?.uid || 'guest',
+            userId: user.uid,
             address: address // Send address to backend for Shiprocket
-          }
+          },
+          // Fallback for older deployed cloud functions
+          amount: totalAmount,
+          items: cartItems,
+          userId: user.uid,
+          address: address
         })
       });
 
@@ -113,8 +126,14 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_signature: response.razorpay_signature,
-                  firestoreOrderId: data.firestoreOrderId
-                }
+                  firestoreOrderId: data.firestoreOrderId,
+                  userId: user.uid
+                },
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                firestoreOrderId: data.firestoreOrderId,
+                userId: user.uid
               })
             });
 

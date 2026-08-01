@@ -9,6 +9,8 @@ export default function MyOrders({ onBackToStore }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [errorMsg, setErrorMsg] = useState('');
+
   useEffect(() => {
     async function fetchOrders() {
       if (!user) {
@@ -17,16 +19,35 @@ export default function MyOrders({ onBackToStore }) {
       }
       
       try {
-        const q = query(
-          collection(db, 'orders'),
-          where('userId', '==', user.uid)
-        );
-        
-        const querySnapshot = await getDocs(q);
-        const fetchedOrders = [];
-        querySnapshot.forEach((doc) => {
-          fetchedOrders.push({ id: doc.id, ...doc.data() });
-        });
+        let fetchedOrders = [];
+        let errors = [];
+
+        // Try querying the subcollection first (New Backend format)
+        try {
+          const subQ = query(collection(db, 'users', user.uid, 'orders'));
+          const subSnap = await getDocs(subQ);
+          subSnap.forEach((doc) => fetchedOrders.push({ id: doc.id, ...doc.data() }));
+        } catch (e) {
+          errors.push('Subcollection error: ' + e.message);
+        }
+
+        // Try querying the root collection (Old Backend format)
+        try {
+          const rootQ = query(collection(db, 'orders'), where('userId', '==', user.uid));
+          const rootSnap = await getDocs(rootQ);
+          rootSnap.forEach((doc) => {
+            // Avoid duplicates if somehow it's in both
+            if (!fetchedOrders.find(o => o.id === doc.id)) {
+               fetchedOrders.push({ id: doc.id, ...doc.data() });
+            }
+          });
+        } catch (e) {
+          errors.push('Root collection error: ' + e.message);
+        }
+
+        if (fetchedOrders.length === 0 && errors.length > 0) {
+           setErrorMsg(errors.join(' | '));
+        }
         
         // Sort in memory by date descending
         fetchedOrders.sort((a, b) => {
@@ -37,7 +58,8 @@ export default function MyOrders({ onBackToStore }) {
         
         setOrders(fetchedOrders);
       } catch (error) {
-        console.error("Error fetching orders:", error);
+        console.error("Critical error fetching orders:", error);
+        setErrorMsg(error.message);
       } finally {
         setLoading(false);
       }
@@ -89,6 +111,11 @@ export default function MyOrders({ onBackToStore }) {
             <Package size={64} className="text-slate-300 mx-auto mb-4" />
             <h3 className="text-xl font-bold text-slate-800 mb-2">No orders found</h3>
             <p className="text-slate-500 mb-6">Looks like you haven't placed any orders yet.</p>
+            {errorMsg && (
+              <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm mb-6 text-left max-w-xl mx-auto border border-red-100 font-mono overflow-auto">
+                <strong>Debug Info:</strong> {errorMsg}
+              </div>
+            )}
             <button 
               onClick={() => {
                 if (onBackToStore) onBackToStore();
@@ -174,6 +201,11 @@ export default function MyOrders({ onBackToStore }) {
                             <a href={`https://shiprocket.co/tracking/${order.shiprocketShipmentId}`} target="_blank" rel="noreferrer" className="text-xs text-emerald-700 hover:underline flex items-center justify-center gap-1 mt-2">
                               Track Package <ExternalLink size={12} />
                             </a>
+                          </div>
+                        ) : order.shiprocketStatus === 'failed_to_create' ? (
+                          <div className="bg-red-50 border border-red-100 p-4 rounded-xl mt-2 text-center">
+                            <span className="block text-xs font-bold text-red-800 uppercase tracking-wider mb-1">Shipping Error</span>
+                            <span className="font-bold text-sm text-red-700">Label generation failed (Pending manual creation)</span>
                           </div>
                         ) : order.status === 'paid' ? (
                           <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl mt-2 text-center">

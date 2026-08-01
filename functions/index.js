@@ -51,8 +51,9 @@ exports.createRazorpayOrder = functions.https.onRequest((req, res) => {
       const order = await razorpayInstance.orders.create(options);
 
       // Save order and address to Firestore
-      const orderRef = await admin.firestore().collection('orders').add({
-        userId: userId || 'anonymous',
+      const uid = userId || 'anonymous';
+      const orderRef = await admin.firestore().collection('users').doc(uid).collection('orders').add({
+        userId: uid,
         items: items || [],
         amount: amount,
         address: address || {}, // Store the delivery address
@@ -83,7 +84,10 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
     }
 
     try {
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature, firestoreOrderId } = req.body.data;
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature, firestoreOrderId, userId } = req.body.data;
+
+      const uid = userId || 'anonymous';
+      const orderDocRef = admin.firestore().collection('users').doc(uid).collection('orders').doc(firestoreOrderId);
 
       const body = razorpay_order_id + "|" + razorpay_payment_id;
       const expectedSignature = crypto
@@ -95,7 +99,7 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
 
       if (!isAuthentic) {
         if (firestoreOrderId) {
-          await admin.firestore().collection('orders').doc(firestoreOrderId).update({
+          await orderDocRef.update({
             status: 'failed_verification',
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
           });
@@ -105,7 +109,7 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
 
       // 1. Mark as Paid
       if (firestoreOrderId) {
-        await admin.firestore().collection('orders').doc(firestoreOrderId).update({
+        await orderDocRef.update({
           status: 'paid',
           razorpayPaymentId: razorpay_payment_id,
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -113,12 +117,12 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
       }
 
       // 2. Fetch Order Details for Shiprocket
-      const orderDoc = await admin.firestore().collection('orders').doc(firestoreOrderId).get();
-      if (!orderDoc.exists) {
+      const orderSnap = await orderDocRef.get();
+      if (!orderSnap.exists) {
          return res.status(200).send({ data: { success: true, message: 'Payment verified but order missing in DB' } });
       }
       
-      const orderData = orderDoc.data();
+      const orderData = orderSnap.data();
       const address = orderData.address || {};
       const items = orderData.items || [];
 
@@ -181,9 +185,11 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
         const srData = await createOrderRes.json();
         
         // 4. Update Firestore with Shipping Details
-        await admin.firestore().collection('orders').doc(firestoreOrderId).update({
-          shiprocketOrderId: srData.order_id || null,
-          shiprocketShipmentId: srData.shipment_id || null,
+        await orderDocRef.update({
+          status: 'paid', // Update status to paid
+          razorpayPaymentId: razorpay_payment_id,
+          shiprocketOrderId: srData.order_id,
+          shiprocketShipmentId: srData.shipment_id,
           shiprocketStatus: srData.status || srData.status_code || null,
           shiprocketResponse: JSON.stringify(srData),
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -198,8 +204,15 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
 
       } catch (shippingError) {
         console.error("Failed to create Shiprocket Order:", shippingError);
+        
+        await orderDocRef.update({
+          status: 'paid',
+          razorpayPaymentId: razorpay_payment_id,
+          shiprocketStatus: 'failed_to_create',
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
         // We still return success: true because the PAYMENT was successful, just shipping failed.
-        // You would manually retry or fix shipping in the dashboard later.
         return res.status(200).send({ 
           data: { 
             success: true, 
@@ -236,8 +249,8 @@ exports.razorpayWebhook = functions.https.onRequest(async (req, res) => {
       const rzpOrderId = payload.payload.order.entity.id;
       const rzpPaymentId = payload.payload.payment.entity.id;
 
-      // Find the order in Firestore
-      const snapshot = await admin.firestore().collection('orders').where('razorpayOrderId', '==', rzpOrderId).limit(1).get();
+      // Find the order in Firestore using a Collection Group query
+      const snapshot = await admin.firestore().collectionGroup('orders').where('razorpayOrderId', '==', rzpOrderId).limit(1).get();
       if (!snapshot.empty) {
         const orderRef = snapshot.docs[0].ref;
         const orderData = snapshot.docs[0].data();
@@ -267,23 +280,26 @@ exports.razorpayWebhook = functions.https.onRequest(async (req, res) => {
 });
 
 exports.shiprocketWebhook = functions.https.onRequest(async (req, res) => {
-  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+  // Always accept any test ping or preflight
+  if (req.method === 'GET' || req.method === 'OPTIONS') {
+    return res.status(200).json({ success: true, message: 'Webhook active' });
+  }
 
   try {
-    const data = req.body;
+    const data = req.body || {};
     const awb = data.awb;
     const currentStatus = data.current_status;
 
     if (awb && currentStatus) {
       // Find order by AWB / Shipment ID (Shiprocket often sends AWB in webhook)
-      const snapshot = await admin.firestore().collection('orders').where('shiprocketShipmentId', '==', data.shipment_id || data.awb).limit(1).get();
+      const snapshot = await admin.firestore().collectionGroup('orders').where('shiprocketShipmentId', '==', data.shipment_id || data.awb).limit(1).get();
       
       // Fallback: search by shiprocket order_id
       let orderRef;
       if (!snapshot.empty) {
         orderRef = snapshot.docs[0].ref;
       } else if (data.order_id) {
-        const orderSnap = await admin.firestore().collection('orders').where('shiprocketOrderId', '==', data.order_id).limit(1).get();
+        const orderSnap = await admin.firestore().collectionGroup('orders').where('shiprocketOrderId', '==', data.order_id).limit(1).get();
         if (!orderSnap.empty) {
           orderRef = orderSnap.docs[0].ref;
         }
@@ -298,9 +314,10 @@ exports.shiprocketWebhook = functions.https.onRequest(async (req, res) => {
       }
     }
 
-    res.status(200).send('ok');
+    return res.status(200).json({ success: true });
   } catch (error) {
     console.error("Shiprocket Webhook Error:", error);
-    res.status(500).send('Error processing webhook');
+    // Always return 200 to Shiprocket so it doesn't think the endpoint is dead
+    return res.status(200).json({ success: false, error: 'Processed with errors' });
   }
 });

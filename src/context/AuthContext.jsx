@@ -163,11 +163,11 @@ export function AuthProvider({ children }) {
     logout,
     resetPassword,
     requireAuth,
-    updateCart: async (newCount) => {
+    updateCartItems: async (newCartItems) => {
       if (!currentUser) return;
       const docRef = doc(db, 'users', currentUser.uid);
-      await setDoc(docRef, { cartCount: newCount }, { merge: true });
-      setUserProfile(prev => ({ ...prev, cartCount: newCount }));
+      await setDoc(docRef, { cartItems: newCartItems }, { merge: true });
+      setUserProfile(prev => ({ ...prev, cartItems: newCartItems }));
     },
     openAuthModal: () => setIsModalOpen(true),
     refreshProfile: () => currentUser && fetchProfile(currentUser.uid)

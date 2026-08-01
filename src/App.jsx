@@ -17,8 +17,14 @@ import MyOrders from './components/checkout/MyOrders';
 function App() {
   const [currentView, setCurrentView] = useState('home'); // 'home' | 'store' | 'checkout' | 'order-success'
   const [storeSubView, setStoreSubView] = useState('catalog'); // 'catalog' | 'drain-clips'
-  const [lastOrderId, setLastOrderId] = useState(null);
-  const [checkoutData, setCheckoutData] = useState(null);
+  const [lastOrderId, setLastOrderId] = useState(() => {
+    const saved = localStorage.getItem('lastOrderId');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [checkoutData, setCheckoutData] = useState(() => {
+    const saved = localStorage.getItem('checkoutData');
+    return saved ? JSON.parse(saved) : null;
+  });
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -65,11 +71,15 @@ function App() {
     } else if (view === 'checkout') {
       setCurrentView('checkout');
       setCheckoutData(additionalData);
+      if (additionalData) localStorage.setItem('checkoutData', JSON.stringify(additionalData));
+      else localStorage.removeItem('checkoutData');
       window.location.hash = '#checkout';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (view === 'order-success') {
       setCurrentView('order-success');
       setLastOrderId(additionalData);
+      if (additionalData) localStorage.setItem('lastOrderId', JSON.stringify(additionalData));
+      else localStorage.removeItem('lastOrderId');
       window.location.hash = '#order-success';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (view === 'orders') {
