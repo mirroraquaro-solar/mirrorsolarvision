@@ -13,6 +13,9 @@ import QuoteForm from './components/sections/QuoteForm';
 import CheckoutPage from './components/checkout/CheckoutPage';
 import OrderSuccess from './components/checkout/OrderSuccess';
 import MyOrders from './components/checkout/MyOrders';
+import NotificationPopup from './components/ui/NotificationPopup';
+import SplashScreen from './components/ui/SplashScreen';
+import PartnerRegistration from './pages/PartnerRegistration';
 
 function App() {
   const [currentView, setCurrentView] = useState('home'); // 'home' | 'store' | 'checkout' | 'order-success'
@@ -45,6 +48,9 @@ function App() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (hash === '#orders') {
         setCurrentView('orders');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (hash === '#partner-registration') {
+        setCurrentView('partner-registration');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         // Return to home if hash is empty or points to another section
@@ -86,6 +92,10 @@ function App() {
       setCurrentView('orders');
       window.location.hash = '#orders';
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (view === 'partner-registration') {
+      setCurrentView('partner-registration');
+      window.location.hash = '#partner-registration';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       setCurrentView('home');
       window.location.hash = '#home';
@@ -94,7 +104,10 @@ function App() {
   };
 
   return (
-    <Layout onNavigate={handleNavigate}>
+    <>
+      <SplashScreen />
+      <Layout onNavigate={handleNavigate}>
+        <NotificationPopup />
       {currentView === 'home' ? (
         <>
           <Hero />
@@ -127,8 +140,11 @@ function App() {
         />
       ) : currentView === 'orders' ? (
         <MyOrders onBackToStore={() => handleNavigate('store')} />
+      ) : currentView === 'partner-registration' ? (
+        <PartnerRegistration onBack={() => handleNavigate('home')} />
       ) : null}
-    </Layout>
+      </Layout>
+    </>
   );
 }
 
