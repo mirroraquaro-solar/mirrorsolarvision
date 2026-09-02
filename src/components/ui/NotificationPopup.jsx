@@ -43,7 +43,7 @@ export default function NotificationPopup() {
 
         <a 
           href="#partner-registration" 
-          onClick={(e) => {
+          onClick={() => {
             // Optional: close popup on click
             setIsVisible(false);
           }}

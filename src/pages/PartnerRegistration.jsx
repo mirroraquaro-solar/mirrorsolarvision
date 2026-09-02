@@ -3,7 +3,7 @@ import { ExternalLink, Briefcase, Zap, ShieldCheck, ArrowRight } from 'lucide-re
 
 export default function PartnerRegistration({ onBack }) {
   return (
-    <div className="min-h-screen bg-gray-50 pt-[100px] pb-20 px-4 sm:px-8">
+    <div className="min-h-screen bg-gray-50 pt-[125px] pb-20 px-4 sm:px-8">
       <div className="max-w-4xl mx-auto">
         
         {/* Header Section */}

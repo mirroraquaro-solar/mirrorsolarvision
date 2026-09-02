@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { db } from '../../config/firebase';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { ShoppingBag, Package, Loader, ArrowLeft, ExternalLink, Truck } from 'lucide-react';
 
 export default function MyOrders({ onBackToStore }) {
