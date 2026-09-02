@@ -24,6 +24,7 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
     city: '',
     state: ''
   });
+  const [step, setStep] = useState(1); // 1 = Address, 2 = Payment
 
   if (!checkoutData) {
     return (
@@ -35,8 +36,6 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
       </div>
     );
   }
-
-  const [step, setStep] = useState(1); // 1 = Address, 2 = Payment
 
   const handleAddressSubmit = (e) => {
     e.preventDefault();
