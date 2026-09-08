@@ -12,11 +12,10 @@ import { CONFIRMED_BULK_COMBO, INDIVIDUAL_PRODUCTS } from '../../data/bulkComboD
 export default function StoreTeaser({ onNavigateToStore }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const totalSlides = 3;
+  const totalSlides = 2;
 
   const combo = CONFIRMED_BULK_COMBO;
   const drainClips = INDIVIDUAL_PRODUCTS.find(p => p.id === 'msv-drain-clips') || INDIVIDUAL_PRODUCTS[0];
-  const cleaner = INDIVIDUAL_PRODUCTS.find(p => p.id === 'msv-cleaning-liquid') || INDIVIDUAL_PRODUCTS[1];
 
   const handleGoToStore = () => {
     if (onNavigateToStore) {
@@ -63,15 +62,15 @@ export default function StoreTeaser({ onNavigateToStore }) {
             Mirror Solar Store Products
           </h2>
           <p className="text-xs sm:text-sm md:text-base text-slate-600 leading-relaxed">
-            Explore our genuine solar accessories, panel cleaning concentrate, and complete installation combos.
+            Explore our genuine solar accessories, drain clips, and complete installation combos.
           </p>
         </div>
 
         {/* Quick Product Tabs on Top for Instant Mobile Navigation */}
-        <div className="flex items-center justify-center gap-1.5 sm:gap-3 max-w-xl mx-auto mb-5 px-2">
+        <div className="flex items-center justify-center gap-2 max-w-md mx-auto mb-5 px-2">
           <button
             onClick={() => setCurrentSlide(0)}
-            className={`flex-1 py-2 px-2.5 rounded-xl border text-[11px] sm:text-xs font-black transition-all cursor-pointer truncate ${
+            className={`flex-1 py-2 px-3 rounded-xl border text-xs sm:text-sm font-black transition-all cursor-pointer truncate ${
               currentSlide === 0
                 ? 'bg-[#0A2540] text-white border-[#0A2540] shadow-sm'
                 : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -81,23 +80,13 @@ export default function StoreTeaser({ onNavigateToStore }) {
           </button>
           <button
             onClick={() => setCurrentSlide(1)}
-            className={`flex-1 py-2 px-2.5 rounded-xl border text-[11px] sm:text-xs font-black transition-all cursor-pointer truncate ${
+            className={`flex-1 py-2 px-3 rounded-xl border text-xs sm:text-sm font-black transition-all cursor-pointer truncate ${
               currentSlide === 1
                 ? 'bg-[#0A2540] text-white border-[#0A2540] shadow-sm'
                 : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
             }`}
           >
-            2. Panel Cleaner
-          </button>
-          <button
-            onClick={() => setCurrentSlide(2)}
-            className={`flex-1 py-2 px-2.5 rounded-xl border text-[11px] sm:text-xs font-black transition-all cursor-pointer truncate ${
-              currentSlide === 2
-                ? 'bg-[#0A2540] text-white border-[#0A2540] shadow-sm'
-                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-            }`}
-          >
-            3. Bulk Combo
+            2. Bulk Combo
           </button>
         </div>
 
@@ -241,114 +230,7 @@ export default function StoreTeaser({ onNavigateToStore }) {
               </div>
 
               {/* ========================================================= */}
-              {/* SLIDE 2: MSV SOLAR PANEL CLEANING LIQUID */}
-              {/* ========================================================= */}
-              <div className="w-full flex-shrink-0">
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-md hover:shadow-xl transition-all duration-300 p-4 sm:p-8 md:p-10 text-left">
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-8 items-center">
-                    
-                    {/* Left: Cleaner Bottle Image Container (5 cols) */}
-                    <div className="md:col-span-5 space-y-2">
-                      <div 
-                        onClick={handleGoToStore}
-                        className="bg-slate-50 border border-slate-100 rounded-2xl p-3 sm:p-5 h-44 sm:h-52 md:h-auto md:aspect-square flex items-center justify-center relative overflow-hidden cursor-pointer group hover:bg-slate-100/60 transition"
-                      >
-                        <img 
-                          src={cleaner.images[0]} 
-                          alt={cleaner.name} 
-                          className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105" 
-                        />
-                        <span className="absolute top-2.5 left-2.5 bg-emerald-500 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                          {cleaner.tag}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-500 text-center font-bold">
-                        1 Litre Concentrate • Makes 50L Solution
-                      </p>
-                    </div>
-
-                    {/* Right: Product Details & CTAs (7 cols) */}
-                    <div className="md:col-span-7 space-y-3 sm:space-y-4">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="bg-emerald-600 text-white text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                          CLEANING CONCENTRATE
-                        </span>
-                        <div className="flex items-center gap-1 text-amber-500 font-bold text-xs">
-                          <Star size={12} className="fill-amber-400 text-amber-400" />
-                          <span>4.8</span>
-                          <span className="text-slate-400 font-medium">(94 reviews)</span>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h3 
-                          onClick={handleGoToStore}
-                          className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 font-heading cursor-pointer hover:text-primary-600 transition"
-                        >
-                          {cleaner.name}
-                        </h3>
-                        <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed line-clamp-2">
-                          {cleaner.shortDesc}
-                        </p>
-                      </div>
-
-                      {/* Highlights */}
-                      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3 sm:p-4 space-y-1.5 text-xs font-bold text-slate-800">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2">
-                          <div className="flex items-center gap-1.5">
-                            <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
-                            <span>pH Neutral • 100% ARC Safe</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
-                            <span>1:50 Dilution Ratio with Water</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
-                            <span>Dissolves Bird Droppings & Dust</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
-                            <span>Streak-Free Spotless Drying</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Price & Actions */}
-                      <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div>
-                          <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Price</span>
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="text-2xl sm:text-3xl font-black text-slate-950 font-heading">₹1,499</span>
-                            <span className="text-[11px] sm:text-xs text-slate-500 font-semibold">(1 Litre Bottle)</span>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-3">
-                          <button
-                            onClick={handleGoToStore}
-                            className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2.5 sm:px-5 sm:py-3.5 rounded-xl text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
-                          >
-                            <span>VIEW IN STORE</span>
-                            <ArrowRight size={14} />
-                          </button>
-                          <button
-                            onClick={handleGoToStore}
-                            className="bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black px-4 py-2.5 sm:px-5 sm:py-3.5 rounded-xl text-xs sm:text-sm transition shadow-accent cursor-pointer text-center"
-                          >
-                            ORDER NOW
-                          </button>
-                        </div>
-                      </div>
-
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-
-              {/* ========================================================= */}
-              {/* SLIDE 3: BULK SOLAR INSTALLATION COMBO */}
+              {/* SLIDE 2: BULK SOLAR INSTALLATION COMBO */}
               {/* ========================================================= */}
               <div className="w-full flex-shrink-0">
                 <div className="bg-white rounded-3xl border border-slate-200 shadow-md hover:shadow-xl transition-all duration-300 p-4 sm:p-8 md:p-10 text-left">
@@ -444,7 +326,7 @@ export default function StoreTeaser({ onNavigateToStore }) {
 
           {/* Navigation Dots / Pills Indicator */}
           <div className="flex items-center justify-center gap-2 mt-5">
-            {[0, 1, 2].map((idx) => (
+            {[0, 1].map((idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentSlide(idx)}
