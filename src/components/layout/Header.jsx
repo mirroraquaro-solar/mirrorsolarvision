@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Phone, Zap, Menu, X, Package, User } from 'lucide-react';
+import { Phone, Zap, Menu, X, Package, User, Truck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { BUSINESS_CONTACT } from '../../data/bulkComboData';
 
@@ -122,12 +122,25 @@ export default function Header({ onNavigate }) {
             {/* Auth Dropdown or Button */}
             {isAuthenticated ? (
               <div className="relative group">
-                <button className="flex items-center gap-1.5 text-[14px] font-bold text-slate-900 hover:text-primary-600 transition-colors">
+                <button className="flex items-center gap-1.5 text-[14px] font-bold text-slate-900 hover:text-primary-600 transition-colors py-2 cursor-pointer">
                   <User size={16} className="text-primary-600" />
                   <span>{userProfile?.fullName?.split(' ')[0] || 'Profile'}</span>
                 </button>
-                <div className="absolute top-full right-0 mt-2 w-44 bg-white rounded-xl shadow-xl border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 overflow-hidden">
-                  <button onClick={logout} className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 font-medium">Sign Out</button>
+                <div className="absolute top-full right-0 mt-1 w-52 bg-white rounded-2xl shadow-xl border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 overflow-hidden z-50 p-1.5">
+                  <button 
+                    onClick={() => handleNavClick('orders')}
+                    className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-slate-800 hover:bg-slate-50 hover:text-primary-600 rounded-xl flex items-center gap-2.5 transition-colors cursor-pointer"
+                  >
+                    <Truck size={15} className="text-blue-600" />
+                    <span>My Orders & Tracking</span>
+                  </button>
+                  <div className="h-[1px] bg-slate-100 my-1" />
+                  <button 
+                    onClick={logout} 
+                    className="w-full text-left px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
+                  >
+                    Sign Out
+                  </button>
                 </div>
               </div>
             ) : (
@@ -214,6 +227,18 @@ export default function Header({ onNavigate }) {
             </span>
             <span className="text-[10px] bg-accent-500 text-slate-950 font-black px-2 py-0.5 rounded-full uppercase">Store</span>
           </a>
+
+          {/* Mobile Track Orders Link */}
+          <button 
+            onClick={() => handleNavClick('orders')} 
+            className="py-2.5 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-900 rounded-xl text-xs font-extrabold flex items-center justify-between transition-colors text-left"
+          >
+            <span className="flex items-center gap-2">
+              <Truck size={16} className="text-blue-600" />
+              <span>My Orders & Tracking</span>
+            </span>
+            <span className="text-[10px] bg-blue-100 text-blue-700 font-black px-2 py-0.5 rounded-full uppercase">Track</span>
+          </button>
 
           <button onClick={() => scrollToSection('projects')} className="py-2 text-left text-sm font-semibold text-slate-700 hover:text-primary-600">Projects</button>
           <button onClick={() => scrollToSection('testimonials')} className="py-2 text-left text-sm font-semibold text-slate-700 hover:text-primary-600">Testimonials</button>
