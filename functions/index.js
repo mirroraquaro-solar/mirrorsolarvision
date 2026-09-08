@@ -52,15 +52,34 @@ exports.createRazorpayOrder = functions.https.onRequest((req, res) => {
 
       // Save order and address to Firestore
       const uid = userId || 'anonymous';
-      const orderRef = await admin.firestore().collection('users').doc(uid).collection('orders').add({
+      const cleanPhone = (address?.phone || '').replace(/[^0-9]/g, '');
+      const customerEmail = address?.email || 'info@mirrorsolarvision.com';
+      const customerName = address?.fullName || 'Customer';
+
+      const orderDataToSave = {
         userId: uid,
+        customerName: customerName,
+        customerPhone: cleanPhone,
+        customerEmail: customerEmail,
         items: items || [],
         amount: amount,
-        address: address || {}, // Store the delivery address
+        address: address || {}, // Store delivery address
         razorpayOrderId: order.id,
         status: 'created',
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      };
+
+      const orderRef = await admin.firestore().collection('users').doc(uid).collection('orders').add(orderDataToSave);
+
+      // Also mirror to root 'orders' collection for instant lookup by order ID / phone
+      try {
+        await admin.firestore().collection('orders').doc(orderRef.id).set({
+          ...orderDataToSave,
+          firestoreOrderId: orderRef.id
+        });
+      } catch (rootSaveErr) {
+        console.warn("Could not write to root orders collection:", rootSaveErr);
+      }
 
       res.status(200).send({
         data: {
@@ -87,7 +106,8 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
       const { razorpay_order_id, razorpay_payment_id, razorpay_signature, firestoreOrderId, userId } = req.body.data;
 
       const uid = userId || 'anonymous';
-      const orderDocRef = admin.firestore().collection('users').doc(uid).collection('orders').doc(firestoreOrderId);
+      const userOrderDocRef = admin.firestore().collection('users').doc(uid).collection('orders').doc(firestoreOrderId);
+      const rootOrderDocRef = admin.firestore().collection('orders').doc(firestoreOrderId);
 
       const body = razorpay_order_id + "|" + razorpay_payment_id;
       const expectedSignature = crypto
@@ -99,25 +119,33 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
 
       if (!isAuthentic) {
         if (firestoreOrderId) {
-          await orderDocRef.update({
+          const failUpdate = {
             status: 'failed_verification',
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
-          });
+          };
+          await userOrderDocRef.update(failUpdate).catch(() => {});
+          await rootOrderDocRef.update(failUpdate).catch(() => {});
         }
         return res.status(400).send({ data: { error: 'Invalid Signature' } });
       }
 
       // 1. Mark as Paid
+      const paidUpdate = {
+        status: 'paid',
+        razorpayPaymentId: razorpay_payment_id,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      };
       if (firestoreOrderId) {
-        await orderDocRef.update({
-          status: 'paid',
-          razorpayPaymentId: razorpay_payment_id,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+        await userOrderDocRef.update(paidUpdate).catch(() => {});
+        await rootOrderDocRef.update(paidUpdate).catch(() => {});
       }
 
       // 2. Fetch Order Details for Shiprocket
-      const orderSnap = await orderDocRef.get();
+      let orderSnap = await userOrderDocRef.get();
+      if (!orderSnap.exists) {
+        orderSnap = await rootOrderDocRef.get();
+      }
+
       if (!orderSnap.exists) {
          return res.status(200).send({ data: { success: true, message: 'Payment verified but order missing in DB' } });
       }
@@ -125,6 +153,12 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
       const orderData = orderSnap.data();
       const address = orderData.address || {};
       const items = orderData.items || [];
+      const cleanPhone = (address.phone || orderData.customerPhone || '9999999999').replace(/[^0-9]/g, '');
+      const custEmail = address.email || orderData.customerEmail || 'orders@mirrorsolarvision.com';
+      const custName = (address.fullName || orderData.customerName || 'Customer').trim();
+      const nameParts = custName.split(' ');
+      const firstName = nameParts[0] || 'Customer';
+      const lastName = nameParts.slice(1).join(' ') || '';
 
       // 3. Create Shiprocket Order
       try {
@@ -132,31 +166,31 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
         
         // Map items to Shiprocket format
         const orderItems = items.map(item => ({
-          name: item.name,
-          sku: item.id,
-          units: item.quantity,
-          selling_price: item.price,
+          name: item.name || 'Solar Product',
+          sku: item.id || `SKU_${Date.now()}`,
+          units: item.quantity || 1,
+          selling_price: item.price || (orderData.amount / (items.length || 1)),
           discount: 0,
           tax: 0,
           hsn: ''
         }));
 
         const shiprocketPayload = {
-          order_id: firestoreOrderId, // Unique ID
+          order_id: firestoreOrderId, // Unique Order ID in Shiprocket
           order_date: new Date().toISOString(),
-          pickup_location: "work", // Matches the name in Shiprocket dashboard
+          pickup_location: "MIRROR SOLAR VISION, opposite Vijayalakshmi cinema hall, ELURU, 534001, opposite V max cinema hall, West Godavari, Andhra Pradesh, India, 534001", // Matches warehouse/pickup name in Shiprocket dashboard
           channel_id: "",
-          comment: "Created via Mirror Solar Store",
-          billing_customer_name: address.fullName || "Customer",
-          billing_last_name: "",
-          billing_address: address.flat || "Address",
+          comment: `Mirror Solar Store Order - Customer Phone: ${cleanPhone}`,
+          billing_customer_name: firstName,
+          billing_last_name: lastName,
+          billing_address: address.flat || address.area || "Address line",
           billing_address_2: address.area || "",
           billing_city: address.city || "City",
-          billing_pincode: address.pincode || "110001",
-          billing_state: address.state || "State",
+          billing_pincode: address.pincode || "520001",
+          billing_state: address.state || "Andhra Pradesh",
           billing_country: "India",
-          billing_email: "test@example.com", // You might want to pass email in address too
-          billing_phone: address.phone || "9999999999",
+          billing_email: custEmail,
+          billing_phone: cleanPhone.length === 10 ? cleanPhone : "9999999999",
           shipping_is_billing: true,
           order_items: orderItems,
           payment_method: "Prepaid",
@@ -179,40 +213,48 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
         if (!createOrderRes.ok) {
           const errData = await createOrderRes.text();
           console.error("Shiprocket creation failed:", errData);
-          throw new Error("Shiprocket returned error");
+          throw new Error("Shiprocket returned error: " + errData);
         }
 
         const srData = await createOrderRes.json();
         
-        // 4. Update Firestore with Shipping Details
-        await orderDocRef.update({
-          status: 'paid', // Update status to paid
+        // 4. Update Firestore with Shipping Details in both user subcollection and root collection
+        const shippingSuccessUpdate = {
+          status: 'paid',
           razorpayPaymentId: razorpay_payment_id,
-          shiprocketOrderId: srData.order_id,
-          shiprocketShipmentId: srData.shipment_id,
-          shiprocketStatus: srData.status || srData.status_code || null,
+          shiprocketOrderId: srData.order_id || null,
+          shiprocketShipmentId: srData.shipment_id || null,
+          shiprocketAwb: srData.awb_code || null,
+          shiprocketStatus: srData.status || srData.status_code || 'PROCESSING',
           shiprocketResponse: JSON.stringify(srData),
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+        };
+
+        await userOrderDocRef.update(shippingSuccessUpdate).catch(() => {});
+        await rootOrderDocRef.update(shippingSuccessUpdate).catch(() => {});
 
         return res.status(200).send({ 
           data: { 
             success: true, 
-            shiprocketShipmentId: srData.shipment_id
+            shiprocketShipmentId: srData.shipment_id,
+            shiprocketOrderId: srData.order_id
           } 
         });
 
       } catch (shippingError) {
         console.error("Failed to create Shiprocket Order:", shippingError);
         
-        await orderDocRef.update({
+        const shippingFailUpdate = {
           status: 'paid',
           razorpayPaymentId: razorpay_payment_id,
           shiprocketStatus: 'failed_to_create',
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+        };
 
-        // We still return success: true because the PAYMENT was successful, just shipping failed.
+        await userOrderDocRef.update(shippingFailUpdate).catch(() => {});
+        await rootOrderDocRef.update(shippingFailUpdate).catch(() => {});
+
+        // We still return success: true because the PAYMENT was successful
         return res.status(200).send({ 
           data: { 
             success: true, 
@@ -220,7 +262,6 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
           } 
         });
       }
-
     } catch (error) {
       console.error(error);
       res.status(500).send({ data: { error: 'Verification Failed' } });

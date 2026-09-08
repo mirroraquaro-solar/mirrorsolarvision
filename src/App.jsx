@@ -14,12 +14,15 @@ import NotificationPopup from './components/ui/NotificationPopup';
 import PartnerRegistration from './pages/PartnerRegistration';
 
 function App() {
-  const [currentView, setCurrentView] = useState('home'); // 'home' | 'store' | 'partner-registration'
+  const [currentView, setCurrentView] = useState('home'); // 'home' | 'store' | 'orders' | 'partner-registration'
 
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
-      if (hash === '#store' || hash === '#bulk-combos' || hash === '#bulk-combo' || hash === '#drain-clips') {
+      if (hash === '#orders' || hash === '#my-orders' || hash === '#track') {
+        setCurrentView('orders');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (hash === '#store' || hash === '#bulk-combos' || hash === '#bulk-combo' || hash === '#drain-clips') {
         setCurrentView('store');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (hash === '#partner-registration') {
@@ -41,7 +44,11 @@ function App() {
   }, [currentView]);
 
   const handleNavigate = (view) => {
-    if (view === 'store' || view === 'bulk-combos') {
+    if (view === 'orders' || view === 'my-orders' || view === 'track') {
+      setCurrentView('orders');
+      window.location.hash = '#orders';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (view === 'store' || view === 'bulk-combos') {
       setCurrentView('store');
       window.location.hash = '#store';
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -73,6 +80,12 @@ function App() {
           </>
         ) : currentView === 'store' ? (
           <MirrorSolarStore 
+            initialView="store"
+            onBackToHome={() => handleNavigate('home')}
+          />
+        ) : currentView === 'orders' ? (
+          <MirrorSolarStore 
+            initialView="orders"
             onBackToHome={() => handleNavigate('home')}
           />
         ) : currentView === 'partner-registration' ? (

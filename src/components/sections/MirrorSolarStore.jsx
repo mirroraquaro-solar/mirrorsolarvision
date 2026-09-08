@@ -13,15 +13,17 @@ import {
   X, 
   Phone, 
   Send,
-  Eye 
+  Eye,
+  Truck
 } from 'lucide-react';
 import { CONFIRMED_BULK_COMBO, INDIVIDUAL_PRODUCTS, BUSINESS_CONTACT } from '../../data/bulkComboData';
 import CheckoutPage from '../checkout/CheckoutPage';
 import OrderSuccess from '../checkout/OrderSuccess';
+import MyOrders from '../checkout/MyOrders';
 
-export default function MirrorSolarStore({ onBackToHome }) {
-  // Navigation / View state: 'store' | 'checkout' | 'success'
-  const [viewMode, setViewMode] = useState('store');
+export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }) {
+  // Navigation / View state: 'store' | 'checkout' | 'success' | 'orders'
+  const [viewMode, setViewMode] = useState(initialView);
   const [checkoutData, setCheckoutData] = useState(null);
   const [completedOrder, setCompletedOrder] = useState(null);
 
@@ -188,6 +190,18 @@ export default function MirrorSolarStore({ onBackToHome }) {
     'YSR (Kadapa)'
   ];
 
+  // If in My Orders / Tracking View
+  if (viewMode === 'orders') {
+    return (
+      <MyOrders 
+        onBackToStore={() => {
+          setViewMode('store');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+      />
+    );
+  }
+
   // If in Checkout View
   if (viewMode === 'checkout') {
     return (
@@ -212,7 +226,7 @@ export default function MirrorSolarStore({ onBackToHome }) {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         onViewOrders={() => {
-          setViewMode('store');
+          setViewMode('orders');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
       />
@@ -247,11 +261,23 @@ export default function MirrorSolarStore({ onBackToHome }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            {/* Track Orders Button */}
+            <button
+              onClick={() => {
+                setViewMode('orders');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="inline-flex items-center gap-1.5 bg-[#172A45] hover:bg-[#1F3658] border border-slate-700 text-slate-200 hover:text-white text-xs sm:text-sm font-bold px-3 sm:px-3.5 py-2 rounded-xl shadow-sm transition-all cursor-pointer"
+            >
+              <Truck size={15} className="text-blue-400" />
+              <span>Track Orders</span>
+            </button>
+
             {/* Cart Drawer Button */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="inline-flex items-center gap-2 bg-[#172A45] hover:bg-[#1F3658] border border-slate-700 text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-xl shadow-sm transition-all relative cursor-pointer"
+              className="inline-flex items-center gap-2 bg-[#172A45] hover:bg-[#1F3658] border border-slate-700 text-white text-xs sm:text-sm font-bold px-3.5 sm:px-4 py-2 rounded-xl shadow-sm transition-all relative cursor-pointer"
             >
               <ShoppingCart size={16} className="text-[#F58220]" />
               <span>Cart</span>
@@ -264,7 +290,7 @@ export default function MirrorSolarStore({ onBackToHome }) {
 
             <a 
               href={`tel:${BUSINESS_CONTACT.phoneRaw}`}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-accent-400 transition hidden sm:inline-flex"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-accent-400 transition hidden md:inline-flex"
             >
               <Phone size={14} className="text-emerald-400" />
               <span>{BUSINESS_CONTACT.phone}</span>

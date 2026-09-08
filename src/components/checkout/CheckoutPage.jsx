@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { ShieldCheck, ArrowLeft, Check, Lock, AlertCircle, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Check, Lock, AlertCircle, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { currentUser: user } = useAuth();
+  const { currentUser: user, userProfile } = useAuth();
 
   const cartItems = checkoutData?.items 
     ? checkoutData.items 
@@ -16,8 +16,9 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
 
   // Address State
   const [address, setAddress] = useState({
-    fullName: user?.displayName || '',
-    phone: '',
+    fullName: userProfile?.fullName || user?.displayName || '',
+    email: user?.email || '',
+    phone: userProfile?.phone || '',
     pincode: '',
     flat: '',
     area: '',
@@ -137,9 +138,30 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
             const verifyData = await verifyRes.json();
 
             if (verifyData.data && verifyData.data.success) {
+              const shipmentId = verifyData.data.shiprocketShipmentId || null;
+              
+              // Persist locally for immediate access & guest order tracking
+              try {
+                const existing = JSON.parse(localStorage.getItem('msv_recent_orders') || '[]');
+                const newOrderRecord = {
+                  id: data.firestoreOrderId,
+                  userId: effectiveUserId,
+                  shiprocketShipmentId: shipmentId,
+                  amount: totalAmount,
+                  items: cartItems,
+                  address: address,
+                  status: 'paid',
+                  createdAt: { seconds: Math.floor(Date.now() / 1000) }
+                };
+                const updatedList = [newOrderRecord, ...existing.filter(o => o.id !== data.firestoreOrderId)].slice(0, 30);
+                localStorage.setItem('msv_recent_orders', JSON.stringify(updatedList));
+              } catch (localErr) {
+                console.warn("Could not save recent order to localStorage:", localErr);
+              }
+
               onPaymentSuccess({
                  orderId: data.firestoreOrderId,
-                 shiprocketShipmentId: verifyData.data.shiprocketShipmentId
+                 shiprocketShipmentId: shipmentId
               });
             } else {
               setError("Payment verification failed. Please contact support.");
@@ -306,19 +328,32 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
 
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1">
-                          PIN Code * (Auto City/State)
+                          Email Address (Optional, for Courier/Invoice)
                         </label>
                         <input 
-                          type="text" 
-                          required 
-                          pattern="[0-9]{6}" 
-                          maxLength="6" 
-                          value={address.pincode} 
-                          onChange={handlePincodeChange} 
-                          className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm sm:text-base focus:border-primary-500 focus:ring-2 focus:ring-primary-100 outline-none transition placeholder-slate-400 font-mono" 
-                          placeholder="6-digit PIN code" 
+                          type="email" 
+                          value={address.email} 
+                          onChange={e => setAddress({...address, email: e.target.value})} 
+                          className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm sm:text-base focus:border-primary-500 focus:ring-2 focus:ring-primary-100 outline-none transition" 
+                          placeholder="e.g. name@example.com" 
                         />
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        PIN Code * (Auto City/State)
+                      </label>
+                      <input 
+                        type="text" 
+                        required 
+                        pattern="[0-9]{6}" 
+                        maxLength="6" 
+                        value={address.pincode} 
+                        onChange={handlePincodeChange} 
+                        className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm sm:text-base focus:border-primary-500 focus:ring-2 focus:ring-primary-100 outline-none transition placeholder-slate-400 font-mono" 
+                        placeholder="6-digit PIN code" 
+                      />
                     </div>
 
                     <div>
