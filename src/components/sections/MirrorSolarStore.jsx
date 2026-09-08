@@ -12,7 +12,8 @@ import {
   ZoomIn, 
   X, 
   Phone, 
-  Send 
+  Send,
+  Eye 
 } from 'lucide-react';
 import { CONFIRMED_BULK_COMBO, INDIVIDUAL_PRODUCTS, BUSINESS_CONTACT } from '../../data/bulkComboData';
 import CheckoutPage from '../checkout/CheckoutPage';
