@@ -123,30 +123,6 @@ export const INDIVIDUAL_PRODUCTS = [
       { label: 'Material', val: 'UV-Stabilized High-Density Polymer' },
       { label: 'Durability', val: '10+ Years Outdoor Weather Resistance' }
     ]
-  },
-  {
-    id: 'msv-cleaning-liquid',
-    name: 'MSV Premium Solar Panel Cleaning Liquid',
-    category: 'Cleaning & Wash',
-    tag: 'Eco-Friendly',
-    shortDesc: 'Concentrated anti-static solar panel glass cleaner for dust & scaling removal.',
-    fullDesc: 'Non-abrasive, biodegradable solar panel cleaning concentrate engineered to dissolve stubborn bird droppings, dust, pollen, and hard water mineral scaling without damaging the anti-reflective coating (ARC) on solar glass.',
-    rating: 4.8,
-    reviewsCount: 94,
-    stockStatus: 'In Stock • Ready to Ship',
-    images: [
-      '/assets/images/products/s4.jpeg'
-    ],
-    variants: [
-      { id: '1l-bottle', label: '1 Litre Concentrate', price: 1499, unit: 'Makes 50L Solution' }
-    ],
-    defaultVariantIdx: 0,
-    specs: [
-      { label: 'Formula', val: 'pH Neutral, Non-Ionic Anti-Static Formula' },
-      { label: 'Dilution Ratio', val: '1:50 with Normal Water' },
-      { label: 'Coating Safe', val: '100% Safe on Anti-Reflective Glass (ARC)' },
-      { label: 'Residue', val: 'Streak-Free Spotless Drying' }
-    ]
   }
 ];
 

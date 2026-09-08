@@ -2,41 +2,41 @@ import React, { useState } from 'react';
 import { 
   ArrowLeft, 
   CheckCircle2, 
-  Plus, 
-  Minus, 
-  Phone, 
-  Send, 
-  Eye, 
-  X, 
   ShoppingCart, 
   Star, 
   Check, 
   Trash2, 
   ChevronRight, 
-  Sparkles,
-  Edit3,
-  ZoomIn
+  Sparkles, 
+  Edit3, 
+  ZoomIn, 
+  X, 
+  Phone, 
+  Send 
 } from 'lucide-react';
 import { CONFIRMED_BULK_COMBO, INDIVIDUAL_PRODUCTS, BUSINESS_CONTACT } from '../../data/bulkComboData';
+import CheckoutPage from '../checkout/CheckoutPage';
+import OrderSuccess from '../checkout/OrderSuccess';
 
 export default function MirrorSolarStore({ onBackToHome }) {
-  // Drain Clips State (Product 1)
+  // Navigation / View state: 'store' | 'checkout' | 'success'
+  const [viewMode, setViewMode] = useState('store');
+  const [checkoutData, setCheckoutData] = useState(null);
+  const [completedOrder, setCompletedOrder] = useState(null);
+
+  // Drain Clips State
   const [selectedDrainClipVariantIdx, setSelectedDrainClipVariantIdx] = useState(0); // 0: 3kW, 1: 4kW, 2: 5kW, 3: 10kW
   const [isCustomKwMode, setIsCustomKwMode] = useState(false);
   const [customKwInput, setCustomKwInput] = useState(6);
   const [selectedDrainClipSize, setSelectedDrainClipSize] = useState('35mm');
 
-  // Cleaner State (Product 2)
-  const [selectedCleanerVariantIdx, setSelectedCleanerVariantIdx] = useState(0);
-
+  // Modals & Detail
   const [activeProductDetail, setActiveProductDetail] = useState(null);
   const [activeComboMaterialModal, setActiveComboMaterialModal] = useState(null);
 
-  // Cart State for Individual Products
+  // Cart State
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isIndividualCheckoutOpen, setIsIndividualCheckoutOpen] = useState(false);
-  const [individualOrderSubmitted, setIndividualOrderSubmitted] = useState(false);
   const [cartNotification, setCartNotification] = useState(null);
 
   // Bulk Combo State (Secondary Section)
@@ -45,7 +45,7 @@ export default function MirrorSolarStore({ onBackToHome }) {
   const [isComboOrderOpen, setIsComboOrderOpen] = useState(false);
   const [comboOrderSubmitted, setComboOrderSubmitted] = useState(false);
 
-  // Forms
+  // Form for Bulk Combo
   const [comboFormData, setComboFormData] = useState({
     name: '',
     companyName: '',
@@ -55,18 +55,7 @@ export default function MirrorSolarStore({ onBackToHome }) {
     message: ''
   });
 
-  const [checkoutFormData, setCheckoutFormData] = useState({
-    fullName: '',
-    phone: '',
-    pincode: '',
-    address: '',
-    district: '',
-    paymentMethod: 'cod'
-  });
-
   const drainClipsProduct = INDIVIDUAL_PRODUCTS.find(p => p.id === 'msv-drain-clips') || INDIVIDUAL_PRODUCTS[0];
-  const cleanerProduct = INDIVIDUAL_PRODUCTS.find(p => p.id === 'msv-cleaning-liquid') || INDIVIDUAL_PRODUCTS[1];
-
   const combo = CONFIRMED_BULK_COMBO;
   const comboUnitPrice = combo.price;
   const comboTotalPrice = comboUnitPrice * comboQuantity;
@@ -90,7 +79,6 @@ export default function MirrorSolarStore({ onBackToHome }) {
   };
 
   const activeDrainClipConfig = getActiveDrainClipConfig();
-  const activeCleanerVariant = cleanerProduct ? cleanerProduct.variants[selectedCleanerVariantIdx] : null;
 
   // Cart Calculations
   const cartTotalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -102,6 +90,26 @@ export default function MirrorSolarStore({ onBackToHome }) {
     const cartItemId = `msv-drain-clips-${selectedDrainClipSize}-${config.id}`;
     const variantLabel = `${selectedDrainClipSize} • ${config.label}`;
 
+    const newItem = {
+      cartItemId,
+      productId: 'msv-drain-clips',
+      name: drainClipsProduct.name,
+      variantLabel: variantLabel,
+      price: config.price,
+      image: drainClipsProduct.images[0],
+      quantity: 1
+    };
+
+    if (buyNow) {
+      setCheckoutData({
+        items: [newItem],
+        totalPrice: config.price
+      });
+      setViewMode('checkout');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     setCart(prev => {
       const existing = prev.find(item => item.cartItemId === cartItemId);
       if (existing) {
@@ -111,57 +119,11 @@ export default function MirrorSolarStore({ onBackToHome }) {
             : item
         );
       }
-      return [...prev, {
-        cartItemId,
-        productId: 'msv-drain-clips',
-        name: drainClipsProduct.name,
-        variantLabel: variantLabel,
-        price: config.price,
-        image: drainClipsProduct.images[0],
-        quantity: 1
-      }];
+      return [...prev, newItem];
     });
 
     setCartNotification(`${drainClipsProduct.name} (${variantLabel}) added to cart!`);
     setTimeout(() => setCartNotification(null), 3000);
-
-    if (buyNow) {
-      setIsCartOpen(true);
-    }
-  };
-
-  // Handlers for Panel Cleaner
-  const addToCartCleaner = (buyNow = false) => {
-    if (!cleanerProduct || !activeCleanerVariant) return;
-    const cartItemId = `msv-cleaning-liquid-${activeCleanerVariant.id}`;
-    const variantLabel = activeCleanerVariant.label;
-
-    setCart(prev => {
-      const existing = prev.find(item => item.cartItemId === cartItemId);
-      if (existing) {
-        return prev.map(item => 
-          item.cartItemId === cartItemId 
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      return [...prev, {
-        cartItemId,
-        productId: 'msv-cleaning-liquid',
-        name: cleanerProduct.name,
-        variantLabel: variantLabel,
-        price: activeCleanerVariant.price,
-        image: cleanerProduct.images[0],
-        quantity: 1
-      }];
-    });
-
-    setCartNotification(`${cleanerProduct.name} (${variantLabel}) added to cart!`);
-    setTimeout(() => setCartNotification(null), 3000);
-
-    if (buyNow) {
-      setIsCartOpen(true);
-    }
   };
 
   const updateCartQuantity = (cartItemId, delta) => {
@@ -178,17 +140,22 @@ export default function MirrorSolarStore({ onBackToHome }) {
     setCart(prev => prev.filter(item => item.cartItemId !== cartItemId));
   };
 
-  const generateComboWhatsAppUrl = (customQty) => {
-    const qty = customQty || comboQuantity;
-    const price = comboUnitPrice * qty;
-    const text = `Hello Mirror Solar Vision, I want to order ${qty} x ${combo.name} (Total: ₹${price.toLocaleString('en-IN')}). Please provide dispatch and payment details.`;
-    return `https://wa.me/${BUSINESS_CONTACT.phoneRaw}?text=${encodeURIComponent(text)}`;
+  const handleProceedToCheckout = () => {
+    if (cart.length === 0) return;
+    setCheckoutData({
+      items: cart,
+      totalPrice: cartTotalAmount
+    });
+    setIsCartOpen(false);
+    setViewMode('checkout');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const generateCartWhatsAppUrl = () => {
-    const itemsList = cart.map(i => `${i.quantity}x ${i.name} (${i.variantLabel}) - ₹${(i.price * i.quantity).toLocaleString('en-IN')}`).join('\n');
-    const text = `Hello Mirror Solar Vision, I want to place an order for the following items:\n\n${itemsList}\n\nTotal Order Value: ₹${cartTotalAmount.toLocaleString('en-IN')}\n\nName: ${checkoutFormData.fullName}\nPhone: ${checkoutFormData.phone}\nDistrict: ${checkoutFormData.district}\nAddress: ${checkoutFormData.address}`;
-    return `https://wa.me/${BUSINESS_CONTACT.phoneRaw}?text=${encodeURIComponent(text)}`;
+  const handlePaymentSuccess = (orderData) => {
+    setCompletedOrder(orderData);
+    setCart([]);
+    setViewMode('success');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const apDistricts = [
@@ -220,10 +187,41 @@ export default function MirrorSolarStore({ onBackToHome }) {
     'YSR (Kadapa)'
   ];
 
+  // If in Checkout View
+  if (viewMode === 'checkout') {
+    return (
+      <CheckoutPage 
+        checkoutData={checkoutData} 
+        onBack={() => {
+          setViewMode('store');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
+    );
+  }
+
+  // If in Order Success View
+  if (viewMode === 'success') {
+    return (
+      <OrderSuccess 
+        orderData={completedOrder} 
+        onContinueShopping={() => {
+          setViewMode('store');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onViewOrders={() => {
+          setViewMode('store');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+      />
+    );
+  }
+
   return (
     <div className="bg-slate-50 min-h-screen text-slate-900 pb-28 scroll-mt-20 relative" id="store">
       
-      {/* Top Header / Sticky Navigation Bar as shown in Image 3 */}
+      {/* Top Header / Sticky Navigation Bar */}
       <div className="bg-[#0A192F] text-white border-b border-slate-800 sticky top-[78px] lg:top-[96px] z-30 shadow-md">
         <div className="container-custom py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -241,7 +239,7 @@ export default function MirrorSolarStore({ onBackToHome }) {
               <span>Home</span>
             </button>
 
-            {/* Mirror Solar Store Logo Title from Image 3 */}
+            {/* Mirror Solar Store Logo Title */}
             <div className="flex items-center gap-1.5 font-heading font-black text-lg sm:text-xl tracking-tight text-white">
               <span>Mirror Solar</span>
               <span className="text-[#F58220]">Store</span>
@@ -249,7 +247,7 @@ export default function MirrorSolarStore({ onBackToHome }) {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Cart Drawer Button matching Image 3 */}
+            {/* Cart Drawer Button */}
             <button
               onClick={() => setIsCartOpen(true)}
               className="inline-flex items-center gap-2 bg-[#172A45] hover:bg-[#1F3658] border border-slate-700 text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-xl shadow-sm transition-all relative cursor-pointer"
@@ -292,7 +290,7 @@ export default function MirrorSolarStore({ onBackToHome }) {
             Store Catalog
           </h1>
           <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-            Genuine solar accessories, maintenance products, and complete installation bulk combos.
+            Genuine solar accessories, drain clips, and complete installation bulk combos with instant online checkout.
           </p>
         </div>
       </div>
@@ -300,36 +298,32 @@ export default function MirrorSolarStore({ onBackToHome }) {
       <div className="container-custom space-y-16">
         
         {/* ========================================================================= */}
-        {/* SECTION 1: INDIVIDUAL PRODUCTS — TWO HALVES (Drain Clips + Panels Cleaner) */}
+        {/* SECTION 1: INDIVIDUAL PRODUCTS (MSV Heavy-Duty Drain Clips) */}
         {/* ========================================================================= */}
         <section aria-label="Individual Solar Products Catalogue" className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 max-w-6xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 max-w-5xl mx-auto">
             <div>
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 font-heading">
-                Individual Products
+                Featured Product
               </h2>
               <p className="text-xs sm:text-sm text-slate-500">
-                Browse our genuine accessories and order directly with fast dispatch across Andhra Pradesh.
+                Order genuine anti-sludge drain clips directly with secure online payment & Shiprocket delivery tracking.
               </p>
             </div>
             <span className="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-full w-fit">
-              2 Products Available
+              1 Product Available
             </span>
           </div>
 
-          {/* TWO HALVES GRID: Left Half (Drain Clips) | Right Half (Panel Cleaner) */}
-          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-stretch">
-            
-            {/* ------------------------------------------------------------- */}
-            {/* FIRST HALF: MSV HEAVY-DUTY DRAIN CLIPS */}
-            {/* ------------------------------------------------------------- */}
-            <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-md transition-all duration-300 p-6 sm:p-7 flex flex-col justify-between text-left">
-              <div className="space-y-4">
-                
-                {/* Product Image Container */}
+          {/* DRAIN CLIPS PRODUCT CARD */}
+          <div className="max-w-5xl mx-auto">
+            <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-md transition-all duration-300 p-6 sm:p-8 flex flex-col md:flex-row gap-8 items-stretch text-left">
+              
+              {/* Product Image & Badges */}
+              <div className="w-full md:w-5/12 space-y-3">
                 <div 
                   onClick={() => setActiveProductDetail(drainClipsProduct)}
-                  className="bg-slate-50 rounded-2xl p-5 aspect-[4/3] flex items-center justify-center relative overflow-hidden border border-slate-100 cursor-pointer group hover:bg-slate-100/70 transition"
+                  className="bg-slate-50 rounded-2xl p-6 aspect-square flex items-center justify-center relative overflow-hidden border border-slate-100 cursor-pointer group hover:bg-slate-100/70 transition"
                 >
                   <img 
                     src={drainClipsProduct.images[0]} 
@@ -341,331 +335,216 @@ export default function MirrorSolarStore({ onBackToHome }) {
                   </span>
                 </div>
 
-                {/* Category & Star Rating */}
-                <div className="flex items-center justify-between text-xs pt-0.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    {drainClipsProduct.category}
-                  </span>
-                  <div className="flex items-center gap-1 text-amber-500 font-bold text-xs">
-                    <Star size={13} className="fill-amber-400 text-amber-400" />
-                    <span>{drainClipsProduct.rating}</span>
-                    <span className="text-slate-400 text-[11px]">({drainClipsProduct.reviewsCount} reviews)</span>
-                  </div>
-                </div>
-
-                {/* Title & Short Description */}
-                <div>
-                  <h3 
-                    onClick={() => setActiveProductDetail(drainClipsProduct)}
-                    className="text-xl sm:text-2xl font-extrabold text-slate-900 group-hover:text-primary-600 transition-colors font-heading cursor-pointer"
-                  >
-                    {drainClipsProduct.name}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">
-                    {drainClipsProduct.shortDesc}
-                  </p>
-                </div>
-
-                {/* Frame Thickness Selector (4 Sizes: 30mm, 33mm, 35mm, 40mm) */}
-                <div className="space-y-1.5 pt-1">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                      Frame Thickness:
-                    </label>
-                    <span className="text-[10px] font-bold text-primary-600 bg-primary-50 px-2 py-0.5 rounded">
-                      {selectedDrainClipSize} Selected
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {drainClipsProduct.sizes.map((sz) => (
-                      <button
-                        key={sz}
-                        type="button"
-                        onClick={() => setSelectedDrainClipSize(sz)}
-                        className={`py-1.5 rounded-xl border text-xs font-black transition cursor-pointer text-center ${
-                          selectedDrainClipSize === sz
-                            ? 'bg-[#0A2540] text-white border-[#0A2540] shadow-xs'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        {sz}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Solar Capacity: 3kW, 4kW, 5kW, 10kW & Manual Entry */}
-                <div className="space-y-2 pt-1">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                      Solar Capacity (kW):
-                    </label>
-                    <span className="text-[9px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                      4 Clips/kW • ₹25/clip
-                    </span>
-                  </div>
-
-                  {/* Preset Options Grid: 3kW, 4kW, 5kW, 10kW */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                    {drainClipsProduct.variants.map((variant, vIdx) => {
-                      const isSelected = !isCustomKwMode && selectedDrainClipVariantIdx === vIdx;
-                      return (
-                        <button
-                          key={variant.id}
-                          type="button"
-                          onClick={() => {
-                            setIsCustomKwMode(false);
-                            setSelectedDrainClipVariantIdx(vIdx);
-                          }}
-                          className={`p-2 rounded-xl border text-left transition cursor-pointer flex flex-col ${
-                            isSelected
-                              ? 'bg-primary-50 border-primary-500 text-primary-900 ring-1 ring-primary-500 shadow-xs'
-                              : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                          }`}
-                        >
-                          <span className="text-xs font-black">{variant.kw} kW</span>
-                          <span className="text-[10px] text-slate-500 font-semibold">{variant.clipsCount} Clips</span>
-                          <strong className="text-xs font-extrabold text-slate-900 mt-0.5">₹{variant.price}</strong>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Manual Entry Toggle & Input */}
-                  <div className="pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setIsCustomKwMode(prev => !prev)}
-                      className={`text-[11px] font-bold flex items-center gap-1 transition cursor-pointer mb-1.5 ${
-                        isCustomKwMode ? 'text-[#F58220] font-black' : 'text-slate-500 hover:text-slate-900'
-                      }`}
+                {/* Thumbnails */}
+                <div className="grid grid-cols-3 gap-2">
+                  {drainClipsProduct.images.map((img, idx) => (
+                    <div 
+                      key={idx}
+                      onClick={() => setActiveProductDetail(drainClipsProduct)}
+                      className="aspect-square bg-slate-50 border border-slate-200 rounded-xl p-1.5 flex items-center justify-center cursor-pointer hover:border-primary-500 transition"
                     >
-                      <Edit3 size={12} />
-                      <span>{isCustomKwMode ? '✓ Custom / Manual kW Active' : '+ Or Enter Custom / Manual kW'}</span>
-                    </button>
-
-                    {isCustomKwMode && (
-                      <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-3 space-y-1.5 animate-fade-in-up">
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="font-bold text-slate-700">Enter Capacity (kW):</span>
-                          <span className="font-black text-amber-800">
-                            {Number(customKwInput) || 1} kW = {(Number(customKwInput) || 1) * 4} Clips
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setCustomKwInput(prev => Math.max(1, (Number(prev) || 1) - 1))}
-                            className="w-8 h-8 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-800 font-bold flex items-center justify-center text-xs cursor-pointer"
-                          >
-                            -
-                          </button>
-                          
-                          <div className="relative flex-1">
-                            <input
-                              type="number"
-                              min="1"
-                              max="500"
-                              value={customKwInput}
-                              onChange={(e) => setCustomKwInput(e.target.value)}
-                              className="w-full bg-white border border-amber-300 px-3 py-1 rounded-lg text-center text-xs font-black text-slate-900 focus:outline-none focus:border-accent-500"
-                              placeholder="e.g. 6, 8, 12..."
-                            />
-                            <span className="absolute right-2.5 top-1 text-[11px] text-slate-400 font-bold pointer-events-none">kW</span>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => setCustomKwInput(prev => (Number(prev) || 1) + 1)}
-                            className="w-8 h-8 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-bold flex items-center justify-center text-xs cursor-pointer"
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                </div>
-
-              </div>
-
-              {/* Drain Clips Price & Action Buttons */}
-              <div className="pt-4 mt-4 border-t border-slate-100 space-y-3">
-                <div className="flex items-baseline justify-between">
-                  <div>
-                    <span className="text-[9px] font-bold uppercase text-slate-400 block">Price</span>
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-2xl font-black text-slate-950 font-heading">
-                        ₹{activeDrainClipConfig.price.toLocaleString('en-IN')}
-                      </span>
-                      <span className="text-[11px] text-slate-500 font-medium">
-                        ({activeDrainClipConfig.clipsCount} Clips • {selectedDrainClipSize})
-                      </span>
+                      <img src={img} alt="" className="max-h-full max-w-full object-contain" />
                     </div>
-                  </div>
-                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-                    In Stock
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => addToCartDrainClips(false)}
-                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2.5 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <ShoppingCart size={14} />
-                    <span>Add to Cart</span>
-                  </button>
-
-                  <button
-                    onClick={() => addToCartDrainClips(true)}
-                    className="w-full bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black py-2.5 rounded-xl text-xs transition shadow-xs cursor-pointer flex items-center justify-center gap-1"
-                  >
-                    <span>Buy Now</span>
-                  </button>
+                  ))}
                 </div>
               </div>
 
-            </div>
-
-            {/* ------------------------------------------------------------- */}
-            {/* SECOND HALF: MSV SOLAR PANEL CLEANER */}
-            {/* ------------------------------------------------------------- */}
-            {cleanerProduct && (
-              <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-md transition-all duration-300 p-6 sm:p-7 flex flex-col justify-between text-left">
+              {/* Product Config & Actions */}
+              <div className="w-full md:w-7/12 flex flex-col justify-between space-y-5">
                 <div className="space-y-4">
-                  
-                  {/* Product Image Container */}
-                  <div 
-                    onClick={() => setActiveProductDetail(cleanerProduct)}
-                    className="bg-slate-50 rounded-2xl p-5 aspect-[4/3] flex items-center justify-center relative overflow-hidden border border-slate-100 cursor-pointer group hover:bg-slate-100/70 transition"
-                  >
-                    <img 
-                      src={cleanerProduct.images[0]} 
-                      alt={cleanerProduct.name} 
-                      className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <span className="absolute top-3 left-3 bg-emerald-500 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wide shadow-xs">
-                      {cleanerProduct.tag}
-                    </span>
-                  </div>
-
-                  {/* Category & Star Rating */}
-                  <div className="flex items-center justify-between text-xs pt-0.5">
+                  {/* Category & Rating */}
+                  <div className="flex items-center justify-between text-xs">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      {cleanerProduct.category}
+                      {drainClipsProduct.category}
                     </span>
                     <div className="flex items-center gap-1 text-amber-500 font-bold text-xs">
                       <Star size={13} className="fill-amber-400 text-amber-400" />
-                      <span>{cleanerProduct.rating}</span>
-                      <span className="text-slate-400 text-[11px]">({cleanerProduct.reviewsCount} reviews)</span>
+                      <span>{drainClipsProduct.rating}</span>
+                      <span className="text-slate-400 text-[11px]">({drainClipsProduct.reviewsCount} reviews)</span>
                     </div>
                   </div>
 
-                  {/* Title & Short Description */}
+                  {/* Title & Description */}
                   <div>
                     <h3 
-                      onClick={() => setActiveProductDetail(cleanerProduct)}
-                      className="text-xl sm:text-2xl font-extrabold text-slate-900 group-hover:text-primary-600 transition-colors font-heading cursor-pointer"
+                      onClick={() => setActiveProductDetail(drainClipsProduct)}
+                      className="text-2xl sm:text-3xl font-extrabold text-slate-900 group-hover:text-primary-600 transition-colors font-heading cursor-pointer"
                     >
-                      {cleanerProduct.name}
+                      {drainClipsProduct.name}
                     </h3>
-                    <p className="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">
-                      {cleanerProduct.shortDesc}
+                    <p className="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">
+                      {drainClipsProduct.fullDesc}
                     </p>
                   </div>
 
-                  {/* Select Pack / Bottle Size */}
+                  {/* Frame Thickness Selector */}
                   <div className="space-y-1.5 pt-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                      Bottle Size & Concentration:
-                    </label>
-                    <div className="grid grid-cols-1 gap-2">
-                      {cleanerProduct.variants.map((variant, vIdx) => {
-                        const isSelected = selectedCleanerVariantIdx === vIdx;
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                        Frame Thickness:
+                      </label>
+                      <span className="text-[10px] font-bold text-primary-600 bg-primary-50 px-2 py-0.5 rounded">
+                        {selectedDrainClipSize} Selected
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      {drainClipsProduct.sizes.map((sz) => (
+                        <button
+                          key={sz}
+                          type="button"
+                          onClick={() => setSelectedDrainClipSize(sz)}
+                          className={`py-2 rounded-xl border text-xs font-black transition cursor-pointer text-center ${
+                            selectedDrainClipSize === sz
+                              ? 'bg-[#0A2540] text-white border-[#0A2540] shadow-xs'
+                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {sz}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Solar Capacity: 3kW, 4kW, 5kW, 10kW & Manual Entry */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                        Solar Capacity (kW):
+                      </label>
+                      <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                        4 Clips/kW • ₹25/clip
+                      </span>
+                    </div>
+
+                    {/* Preset Options Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {drainClipsProduct.variants.map((variant, vIdx) => {
+                        const isSelected = !isCustomKwMode && selectedDrainClipVariantIdx === vIdx;
                         return (
                           <button
                             key={variant.id}
                             type="button"
-                            onClick={() => setSelectedCleanerVariantIdx(vIdx)}
-                            className={`px-4 py-3 rounded-xl border text-xs font-bold transition flex items-center justify-between cursor-pointer ${
+                            onClick={() => {
+                              setIsCustomKwMode(false);
+                              setSelectedDrainClipVariantIdx(vIdx);
+                            }}
+                            className={`p-2.5 rounded-xl border text-left transition cursor-pointer flex flex-col ${
                               isSelected
-                                ? 'bg-primary-50 border-primary-500 text-primary-900 ring-1 ring-primary-500 shadow-xs'
+                                ? 'bg-primary-50 border-primary-500 text-primary-900 ring-2 ring-primary-500 shadow-xs'
                                 : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                             }`}
                           >
-                            <div className="flex items-center gap-2">
-                              <span className="font-extrabold text-sm">{variant.label}</span>
-                              <span className="text-[10px] text-slate-500 font-normal">({variant.unit})</span>
-                            </div>
-                            <span className="font-black text-slate-900 text-sm">₹{variant.price.toLocaleString('en-IN')}</span>
+                            <span className="text-xs font-black">{variant.kw} kW</span>
+                            <span className="text-[10px] text-slate-500 font-semibold">{variant.clipsCount} Clips</span>
+                            <strong className="text-sm font-extrabold text-slate-900 mt-1">₹{variant.price}</strong>
                           </button>
                         );
                       })}
                     </div>
-                  </div>
 
-                  {/* Key Features Highlights */}
-                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-1.5 text-[11px] text-slate-600">
-                    <div className="flex items-center gap-1.5 font-medium">
-                      <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />
-                      <span>pH Neutral • 100% Safe on ARC Glass Coating</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 font-medium">
-                      <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />
-                      <span>1:50 Dilution with water • Spotless streak-free drying</span>
+                    {/* Manual Entry Toggle & Input */}
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsCustomKwMode(prev => !prev)}
+                        className={`text-xs font-bold flex items-center gap-1 transition cursor-pointer mb-1.5 ${
+                          isCustomKwMode ? 'text-[#F58220] font-black' : 'text-slate-500 hover:text-slate-900'
+                        }`}
+                      >
+                        <Edit3 size={13} />
+                        <span>{isCustomKwMode ? '✓ Custom / Manual kW Active' : '+ Or Enter Custom / Manual kW'}</span>
+                      </button>
+
+                      {isCustomKwMode && (
+                        <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-3.5 space-y-2 animate-fade-in-up">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-slate-700">Enter Capacity (kW):</span>
+                            <span className="font-black text-amber-800">
+                              {Number(customKwInput) || 1} kW = {(Number(customKwInput) || 1) * 4} Clips
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setCustomKwInput(prev => Math.max(1, (Number(prev) || 1) - 1))}
+                              className="w-9 h-9 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-800 font-bold flex items-center justify-center text-sm cursor-pointer"
+                            >
+                              -
+                            </button>
+                            
+                            <div className="relative flex-1">
+                              <input
+                                type="number"
+                                min="1"
+                                max="500"
+                                value={customKwInput}
+                                onChange={(e) => setCustomKwInput(e.target.value)}
+                                className="w-full bg-white border border-amber-300 px-3 py-1.5 rounded-lg text-center text-sm font-black text-slate-900 focus:outline-none focus:border-accent-500"
+                                placeholder="e.g. 6, 8, 12..."
+                              />
+                              <span className="absolute right-3 top-1.5 text-xs text-slate-400 font-bold pointer-events-none">kW</span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => setCustomKwInput(prev => (Number(prev) || 1) + 1)}
+                              className="w-9 h-9 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-bold flex items-center justify-center text-sm cursor-pointer"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-
                 </div>
 
-                {/* Cleaner Price & Action Buttons */}
-                <div className="pt-4 mt-4 border-t border-slate-100 space-y-3">
+                {/* Price & Action Buttons */}
+                <div className="pt-4 border-t border-slate-100 space-y-3">
                   <div className="flex items-baseline justify-between">
                     <div>
-                      <span className="text-[9px] font-bold uppercase text-slate-400 block">Price</span>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-2xl font-black text-slate-950 font-heading">
-                          ₹{activeCleanerVariant.price.toLocaleString('en-IN')}
+                      <span className="text-[10px] font-bold uppercase text-slate-400 block">Total Price</span>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-black text-slate-950 font-heading">
+                          ₹{activeDrainClipConfig.price.toLocaleString('en-IN')}
                         </span>
-                        <span className="text-[11px] text-slate-500 font-medium">
-                          ({activeCleanerVariant.label})
+                        <span className="text-xs text-slate-500 font-medium">
+                          ({activeDrainClipConfig.clipsCount} Clips • {selectedDrainClipSize})
                         </span>
                       </div>
                     </div>
-                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-                      In Stock
+                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md">
+                      In Stock • Ready to Ship
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     <button
-                      onClick={() => addToCartCleaner(false)}
-                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2.5 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-1.5"
+                      onClick={() => addToCartDrainClips(false)}
+                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 rounded-xl text-xs sm:text-sm transition cursor-pointer flex items-center justify-center gap-2"
                     >
-                      <ShoppingCart size={14} />
+                      <ShoppingCart size={16} />
                       <span>Add to Cart</span>
                     </button>
 
                     <button
-                      onClick={() => addToCartCleaner(true)}
-                      className="w-full bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black py-2.5 rounded-xl text-xs transition shadow-xs cursor-pointer flex items-center justify-center gap-1"
+                      onClick={() => addToCartDrainClips(true)}
+                      className="w-full bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black py-3 rounded-xl text-xs sm:text-sm transition shadow-md cursor-pointer flex items-center justify-center gap-1.5"
                     >
-                      <span>Buy Now</span>
+                      <span>Buy Now (₹{activeDrainClipConfig.price.toLocaleString('en-IN')})</span>
                     </button>
                   </div>
                 </div>
 
               </div>
-            )}
 
+            </div>
           </div>
         </section>
 
         {/* ========================================================================= */}
-        {/* SECTION 2: FEATURED BULK COMBO — SECONDARY (Appears BELOW Products) */}
+        {/* SECTION 2: FEATURED BULK COMBO — SECONDARY */}
         {/* ========================================================================= */}
         <section aria-label="Featured Bulk Solar Installation Combo" className="space-y-6 pt-8 border-t-2 border-slate-200/80">
           
@@ -696,7 +575,6 @@ export default function MirrorSolarStore({ onBackToHome }) {
                       className="bg-white rounded-xl p-2 border border-slate-200/80 hover:border-primary-500 hover:shadow-md flex flex-col items-center justify-between transition-all duration-200 cursor-pointer group relative overflow-hidden"
                       title={`Click to inspect ${mat.name} (${mat.countLabel})`}
                     >
-                      {/* Photo Container */}
                       <div className="w-full aspect-square flex items-center justify-center p-1 relative">
                         <img 
                           src={mat.image} 
@@ -708,7 +586,6 @@ export default function MirrorSolarStore({ onBackToHome }) {
                         </div>
                       </div>
 
-                      {/* Name & Package Count on Photo */}
                       <div className="w-full text-center mt-1 space-y-0.5">
                         <span className="text-[10px] font-bold text-slate-800 block truncate leading-tight">
                           {mat.name.split(' ')[0]}
@@ -744,7 +621,6 @@ export default function MirrorSolarStore({ onBackToHome }) {
                 </div>
 
                 <div>
-                  {/* Title without 15000 */}
                   <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
                     Bulk Solar Installation Combo
                   </h3>
@@ -809,17 +685,6 @@ export default function MirrorSolarStore({ onBackToHome }) {
                   </button>
                 </div>
 
-                <a
-                  href={generateComboWhatsAppUrl(1)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" className="text-emerald-600">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                  </svg>
-                  <span>Order on WhatsApp (+91 86391 03947)</span>
-                </a>
               </div>
 
             </div>
@@ -843,8 +708,6 @@ export default function MirrorSolarStore({ onBackToHome }) {
             </button>
 
             <div className="space-y-5">
-              
-              {/* Big High-Res Image Container */}
               <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-6 aspect-video sm:aspect-[16/10] flex items-center justify-center relative overflow-hidden shadow-inner">
                 <img 
                   src={activeComboMaterialModal.image} 
@@ -856,7 +719,6 @@ export default function MirrorSolarStore({ onBackToHome }) {
                 </span>
               </div>
 
-              {/* Title & Included Count */}
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-[10px] font-bold text-accent-600 bg-accent-50 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
@@ -872,7 +734,6 @@ export default function MirrorSolarStore({ onBackToHome }) {
                 </p>
               </div>
 
-              {/* Detailed Description */}
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
                 <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
                   Component Specifications & Function:
@@ -882,7 +743,6 @@ export default function MirrorSolarStore({ onBackToHome }) {
                 </p>
               </div>
 
-              {/* Switch Between All 6 Components Carousel Tabs */}
               <div>
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
                   Inspect Other Included Components:
@@ -908,8 +768,7 @@ export default function MirrorSolarStore({ onBackToHome }) {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="pt-2 flex flex-col sm:flex-row gap-3">
+              <div className="pt-2 flex gap-3">
                 <button
                   onClick={() => {
                     setActiveComboMaterialModal(null);
@@ -919,404 +778,6 @@ export default function MirrorSolarStore({ onBackToHome }) {
                   className="flex-1 bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black py-3.5 rounded-xl shadow-accent text-xs sm:text-sm transition cursor-pointer text-center"
                 >
                   ORDER BULK COMBO (₹15,000)
-                </button>
-
-                <a
-                  href={generateComboWhatsAppUrl(1)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 bg-[#25D366] hover:bg-[#20BA56] text-white font-bold py-3.5 rounded-xl text-xs sm:text-sm transition text-center flex items-center justify-center gap-1.5"
-                >
-                  ORDER ON WHATSAPP
-                </a>
-              </div>
-
-            </div>
-
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* SLIDE-OVER CART DRAWER */}
-      {/* ========================================================================= */}
-      {isCartOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden animate-fade-in">
-          <div 
-            className="absolute inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity" 
-            onClick={() => setIsCartOpen(false)}
-          />
-
-          <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-            <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between text-left">
-              
-              {/* Header */}
-              <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ShoppingCart size={20} className="text-primary-600" />
-                  <h3 className="text-lg font-black text-slate-900 font-heading">
-                    Shopping Cart ({cartItemsCount})
-                  </h3>
-                </div>
-                <button 
-                  onClick={() => setIsCartOpen(false)}
-                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold transition cursor-pointer"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              {/* Items */}
-              <div className="p-6 overflow-y-auto flex-1 space-y-4">
-                {cart.length === 0 ? (
-                  <div className="text-center py-16 space-y-3">
-                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
-                      <ShoppingCart size={28} />
-                    </div>
-                    <h4 className="text-base font-bold text-slate-800">Your cart is empty</h4>
-                    <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                      Explore our products above and add items to your cart.
-                    </p>
-                  </div>
-                ) : (
-                  cart.map((item) => (
-                    <div 
-                      key={item.cartItemId}
-                      className="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80"
-                    >
-                      <div className="w-14 h-14 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center shrink-0">
-                        <img src={item.image} alt={item.name} className="max-h-full max-w-full object-contain" />
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <h5 className="font-bold text-xs text-slate-900 truncate">{item.name}</h5>
-                        <span className="text-[10px] font-semibold text-slate-500 block">{item.variantLabel}</span>
-                        <strong className="text-xs font-black text-slate-900 block mt-0.5">
-                          ₹{(item.price * item.quantity).toLocaleString('en-IN')}
-                        </strong>
-                      </div>
-
-                      {/* Stepper & Remove */}
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center bg-white border border-slate-200 rounded-lg p-0.5">
-                          <button
-                            onClick={() => updateCartQuantity(item.cartItemId, -1)}
-                            className="w-5 h-5 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded text-xs font-bold"
-                          >
-                            -
-                          </button>
-                          <span className="px-2 text-xs font-black text-slate-900">{item.quantity}</span>
-                          <button
-                            onClick={() => updateCartQuantity(item.cartItemId, 1)}
-                            className="w-5 h-5 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded text-xs font-bold"
-                          >
-                            +
-                          </button>
-                        </div>
-
-                        <button 
-                          onClick={() => removeFromCart(item.cartItemId)}
-                          className="text-slate-400 hover:text-red-600 p-1 transition"
-                          title="Remove item"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              {/* Footer */}
-              {cart.length > 0 && (
-                <div className="p-6 border-t border-slate-200 bg-slate-50 space-y-4">
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-xs font-bold text-slate-600">Subtotal:</span>
-                    <span className="text-2xl font-black text-slate-950 font-heading">
-                      ₹{cartTotalAmount.toLocaleString('en-IN')}
-                    </span>
-                  </div>
-
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => {
-                        setIsCartOpen(false);
-                        setIsIndividualCheckoutOpen(true);
-                        setIndividualOrderSubmitted(false);
-                      }}
-                      className="w-full bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black py-3.5 rounded-xl text-sm transition shadow-accent cursor-pointer flex items-center justify-center gap-2"
-                    >
-                      <span>PROCEED TO CHECKOUT</span>
-                      <ChevronRight size={16} />
-                    </button>
-
-                    <a
-                      href={generateCartWhatsAppUrl()}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full bg-[#25D366] hover:bg-[#20BA56] text-white font-bold py-3 rounded-xl text-xs transition flex items-center justify-center gap-1.5"
-                    >
-                      <span>Order Cart on WhatsApp</span>
-                    </a>
-                  </div>
-                </div>
-              )}
-
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* MODAL: INDIVIDUAL PRODUCT CHECKOUT */}
-      {/* ========================================================================= */}
-      {isIndividualCheckoutOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in-up">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-lg w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto text-left relative">
-            
-            <button 
-              onClick={() => setIsIndividualCheckoutOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center font-bold transition cursor-pointer"
-            >
-              <X size={18} />
-            </button>
-
-            {individualOrderSubmitted ? (
-              <div className="text-center py-6 space-y-4">
-                <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl font-black">
-                  ✓
-                </div>
-                <h3 className="text-2xl font-extrabold text-slate-900 font-heading">
-                  Order Successfully Placed!
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                  Thank you, <strong className="text-slate-900">{checkoutFormData.fullName || 'Customer'}</strong>. Your order of <strong className="text-slate-900">₹{cartTotalAmount.toLocaleString('en-IN')}</strong> has been registered. Our dispatch team will call you shortly for delivery confirmation.
-                </p>
-                <div className="pt-3 flex flex-col sm:flex-row gap-3 justify-center">
-                  <a
-                    href={generateCartWhatsAppUrl()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20BA56] text-white font-bold px-6 py-3 rounded-xl text-xs sm:text-sm transition"
-                  >
-                    Confirm via WhatsApp
-                  </a>
-                  <button
-                    onClick={() => {
-                      setIsIndividualCheckoutOpen(false);
-                      setIndividualOrderSubmitted(false);
-                      setCart([]);
-                    }}
-                    className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold px-6 py-3 rounded-xl text-xs sm:text-sm transition cursor-pointer"
-                  >
-                    Done
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <form onSubmit={(e) => { e.preventDefault(); setIndividualOrderSubmitted(true); }} className="space-y-4">
-                <div>
-                  <span className="text-xs font-bold text-accent-600 uppercase tracking-wider block mb-1">
-                    Checkout & Delivery
-                  </span>
-                  <h3 className="text-2xl font-extrabold text-slate-900 font-heading">
-                    Order Details
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Fast delivery across Andhra Pradesh.
-                  </p>
-                </div>
-
-                {/* Cart Mini Summary */}
-                <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-2">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-                    Order Items ({cartItemsCount}):
-                  </span>
-                  <div className="space-y-1 max-h-32 overflow-y-auto">
-                    {cart.map(i => (
-                      <div key={i.cartItemId} className="flex justify-between text-xs">
-                        <span className="text-slate-700">{i.quantity}x {i.name} ({i.variantLabel})</span>
-                        <strong className="text-slate-900">₹{(i.price * i.quantity).toLocaleString('en-IN')}</strong>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="pt-2 border-t border-slate-200 flex justify-between items-baseline font-bold text-xs">
-                    <span>Total Payable:</span>
-                    <span className="text-base font-black text-slate-950">₹{cartTotalAmount.toLocaleString('en-IN')}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Your Full Name"
-                      value={checkoutFormData.fullName}
-                      onChange={(e) => setCheckoutFormData({ ...checkoutFormData, fullName: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl text-sm focus:outline-none focus:border-primary-500"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-                        Mobile Number *
-                      </label>
-                      <input
-                        type="tel"
-                        required
-                        placeholder="10-digit mobile"
-                        value={checkoutFormData.phone}
-                        onChange={(e) => setCheckoutFormData({ ...checkoutFormData, phone: e.target.value })}
-                        className="w-full bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl text-sm focus:outline-none focus:border-primary-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-                        Pincode *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="6-digit pincode"
-                        value={checkoutFormData.pincode}
-                        onChange={(e) => setCheckoutFormData({ ...checkoutFormData, pincode: e.target.value })}
-                        className="w-full bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl text-sm focus:outline-none focus:border-primary-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-                      Delivery District *
-                    </label>
-                    <select
-                      required
-                      value={checkoutFormData.district}
-                      onChange={(e) => setCheckoutFormData({ ...checkoutFormData, district: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl text-sm focus:outline-none focus:border-primary-500"
-                    >
-                      <option value="">Select District</option>
-                      {apDistricts.map((d, i) => (
-                        <option key={i} value={d}>{d}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-                      Full Delivery Address *
-                    </label>
-                    <textarea
-                      required
-                      rows={2}
-                      placeholder="Door No, Street Name, Landmark..."
-                      value={checkoutFormData.address}
-                      onChange={(e) => setCheckoutFormData({ ...checkoutFormData, address: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl text-sm focus:outline-none focus:border-primary-500 resize-none"
-                    ></textarea>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black py-3.5 rounded-xl text-sm transition-all shadow-accent mt-2 flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Check size={16} />
-                  <span>PLACE ORDER (₹{cartTotalAmount.toLocaleString('en-IN')})</span>
-                </button>
-              </form>
-            )}
-
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* MODAL: PRODUCT QUICK VIEW / FULL SPECS */}
-      {/* ========================================================================= */}
-      {activeProductDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in-up">
-          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto text-left relative">
-            
-            <button 
-              onClick={() => setActiveProductDetail(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center font-bold transition cursor-pointer"
-            >
-              <X size={18} />
-            </button>
-
-            <div className="space-y-5">
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-2xl bg-slate-50 border border-slate-200 p-2 flex items-center justify-center shrink-0">
-                  <img src={activeProductDetail.images[0]} alt={activeProductDetail.name} className="max-h-full max-w-full object-contain" />
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold text-accent-600 bg-accent-50 px-2.5 py-0.5 rounded-full uppercase">
-                    {activeProductDetail.category}
-                  </span>
-                  <h3 className="text-xl font-extrabold text-slate-900 mt-1">
-                    {activeProductDetail.name}
-                  </h3>
-                  <div className="flex items-center gap-1 text-amber-500 font-bold text-xs mt-0.5">
-                    <Star size={13} className="fill-amber-400 text-amber-400" />
-                    <span>{activeProductDetail.rating}</span>
-                    <span className="text-slate-400">({activeProductDetail.reviewsCount} customer reviews)</span>
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-xs text-slate-600 leading-relaxed">
-                {activeProductDetail.fullDesc}
-              </p>
-
-              {/* Technical Specs */}
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
-                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
-                  Technical Specifications:
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  {activeProductDetail.specs.map((spec, sidx) => (
-                    <div key={sidx} className="flex items-start gap-1.5">
-                      <CheckCircle2 size={13} className="text-primary-600 shrink-0 mt-0.5" />
-                      <span><strong className="text-slate-800">{spec.label}:</strong> {spec.val}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Action */}
-              <div className="pt-2 flex gap-3">
-                <button
-                  onClick={() => {
-                    if (activeProductDetail.id === 'msv-drain-clips') {
-                      addToCartDrainClips(true);
-                    } else {
-                      addToCartCleaner(true);
-                    }
-                    setActiveProductDetail(null);
-                  }}
-                  className="flex-1 bg-gradient-to-r from-accent-500 to-[#F58220] text-slate-950 font-black py-3 rounded-xl text-xs sm:text-sm shadow-accent cursor-pointer"
-                >
-                  Buy Now
-                </button>
-                <button
-                  onClick={() => {
-                    if (activeProductDetail.id === 'msv-drain-clips') {
-                      addToCartDrainClips(false);
-                    } else {
-                      addToCartCleaner(false);
-                    }
-                    setActiveProductDetail(null);
-                  }}
-                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 rounded-xl text-xs sm:text-sm cursor-pointer"
-                >
-                  Add to Cart
                 </button>
               </div>
 
@@ -1353,7 +814,6 @@ export default function MirrorSolarStore({ onBackToHome }) {
                 </p>
               </div>
 
-              {/* 6 Included Materials Clean List */}
               <div className="divide-y divide-slate-100 bg-slate-50 rounded-2xl border border-slate-200/80 overflow-hidden">
                 {combo.materialsIncluded.map((mat) => (
                   <div 
@@ -1385,7 +845,6 @@ export default function MirrorSolarStore({ onBackToHome }) {
                 ))}
               </div>
 
-              {/* Combo Quantity Stepper */}
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
@@ -1398,50 +857,39 @@ export default function MirrorSolarStore({ onBackToHome }) {
                         if (comboQuantity > 1) setComboQuantity(prev => prev - 1);
                       }}
                       disabled={comboQuantity <= 1}
-                      className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-30 text-slate-800 font-bold flex items-center justify-center text-sm cursor-pointer"
+                      className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 disabled:opacity-30 text-slate-700 font-bold flex items-center justify-center text-sm cursor-pointer"
                     >
-                      <Minus size={14} />
+                      -
                     </button>
-                    <span className="text-base font-extrabold text-slate-900 px-3 min-w-[50px] text-center">
-                      {comboQuantity}
-                    </span>
+                    <span className="text-sm font-extrabold text-slate-900 px-2">{comboQuantity}</span>
                     <button
                       onClick={() => setComboQuantity(prev => prev + 1)}
                       className="w-8 h-8 rounded-lg bg-primary-600 hover:bg-primary-700 text-white font-bold flex items-center justify-center text-sm cursor-pointer"
                     >
-                      <Plus size={14} />
+                      +
                     </button>
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-slate-200 text-xs font-bold text-slate-700 flex items-center justify-between">
-                  <span>Order Calculation:</span>
+                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-200 font-bold">
+                  <span className="text-slate-500">Total Combo Calculation:</span>
                   <span className="text-sm font-extrabold text-slate-900">
-                    {comboQuantity} Combo{comboQuantity > 1 ? 's' : ''} = <strong className="text-accent-600 font-black">₹{comboTotalPrice.toLocaleString('en-IN')}</strong>
+                    {comboQuantity} × ₹15,000 = <strong className="text-accent-600 font-black">₹{comboTotalPrice.toLocaleString('en-IN')}</strong>
                   </span>
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="pt-2 flex flex-col sm:flex-row gap-3">
+              <div className="pt-2 flex gap-3">
                 <button
                   onClick={() => {
                     setIsComboDetailOpen(false);
                     setIsComboOrderOpen(true);
                     setComboOrderSubmitted(false);
                   }}
-                  className="flex-1 bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black py-3.5 px-6 rounded-xl shadow-accent text-sm transition cursor-pointer"
+                  className="flex-1 bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black py-3.5 rounded-xl shadow-accent text-xs sm:text-sm transition cursor-pointer text-center"
                 >
-                  ORDER NOW
+                  PROCEED TO ORDER (₹{comboTotalPrice.toLocaleString('en-IN')})
                 </button>
-                <a
-                  href={generateComboWhatsAppUrl(comboQuantity)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 bg-[#25D366] hover:bg-[#20BA56] text-white font-bold py-3.5 px-6 rounded-xl text-sm transition text-center flex items-center justify-center gap-1.5"
-                >
-                  ORDER ON WHATSAPP
-                </a>
               </div>
 
             </div>
@@ -1451,7 +899,7 @@ export default function MirrorSolarStore({ onBackToHome }) {
       )}
 
       {/* ========================================================================= */}
-      {/* MODAL: BULK COMBO ORDER PLACEMENT ("ORDER NOW") */}
+      {/* MODAL: BULK COMBO ORDER FORM */}
       {/* ========================================================================= */}
       {isComboOrderOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in-up">
@@ -1470,33 +918,31 @@ export default function MirrorSolarStore({ onBackToHome }) {
                   ✓
                 </div>
                 <h3 className="text-2xl font-extrabold text-slate-900 font-heading">
-                  Order Request Submitted!
+                  Bulk Order Received!
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                  Thank you, <strong className="text-slate-900">{comboFormData.name || 'Customer'}</strong>. We have received your order request for <strong className="text-slate-900">{comboQuantity}x {combo.name}</strong> (Total: ₹{comboTotalPrice.toLocaleString('en-IN')}). Our logistics dispatch team will call you within 2 hours.
+                  Thank you, <strong className="text-slate-900">{comboFormData.name}</strong>. We have registered your order for <strong className="text-slate-900">{comboQuantity} × Bulk Combo (₹{comboTotalPrice.toLocaleString('en-IN')})</strong>. Our logistics manager will call you on <strong className="text-slate-900">{comboFormData.phone}</strong> to confirm dispatch details.
                 </p>
-                <div className="pt-3 flex flex-col sm:flex-row gap-3 justify-center">
-                  <a
-                    href={generateComboWhatsAppUrl(comboQuantity)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20BA56] text-white font-bold px-6 py-3 rounded-xl text-xs sm:text-sm transition"
-                  >
-                    Confirm on WhatsApp
-                  </a>
+                <div className="pt-3">
                   <button
                     onClick={() => {
                       setIsComboOrderOpen(false);
                       setComboOrderSubmitted(false);
                     }}
-                    className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold px-6 py-3 rounded-xl text-xs sm:text-sm transition cursor-pointer"
+                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 rounded-xl text-xs sm:text-sm transition cursor-pointer"
                   >
                     Done
                   </button>
                 </div>
               </div>
             ) : (
-              <form onSubmit={(e) => { e.preventDefault(); setComboOrderSubmitted(true); }} className="space-y-4">
+              <form 
+                onSubmit={(e) => { 
+                  e.preventDefault(); 
+                  setComboOrderSubmitted(true); 
+                }} 
+                className="space-y-4"
+              >
                 <div>
                   <span className="text-xs font-bold text-accent-600 uppercase tracking-wider block mb-1">
                     Bulk Order Placement
@@ -1509,7 +955,6 @@ export default function MirrorSolarStore({ onBackToHome }) {
                   </p>
                 </div>
 
-                {/* Summary with Quantity Stepper */}
                 <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-700">Quantity:</span>
@@ -1636,10 +1081,208 @@ export default function MirrorSolarStore({ onBackToHome }) {
                   className="w-full bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black py-3.5 rounded-xl text-sm transition-all shadow-accent mt-2 flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Send size={15} className="fill-slate-950" />
-                  <span>SUBMIT ORDER (₹{comboTotalPrice.toLocaleString('en-IN')})</span>
+                  <span>SUBMIT BULK ORDER (₹{comboTotalPrice.toLocaleString('en-IN')})</span>
                 </button>
               </form>
             )}
+
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SLIDE-OVER CART DRAWER */}
+      {/* ========================================================================= */}
+      {isCartOpen && (
+        <div className="fixed inset-0 z-50 overflow-hidden animate-fade-in">
+          <div 
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity" 
+            onClick={() => setIsCartOpen(false)}
+          />
+
+          <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
+            <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between text-left">
+              
+              {/* Header */}
+              <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShoppingCart size={20} className="text-primary-600" />
+                  <h3 className="text-lg font-black text-slate-900 font-heading">
+                    Shopping Cart ({cartItemsCount})
+                  </h3>
+                </div>
+                <button 
+                  onClick={() => setIsCartOpen(false)}
+                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold transition cursor-pointer"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Items */}
+              <div className="p-6 overflow-y-auto flex-1 space-y-4">
+                {cart.length === 0 ? (
+                  <div className="text-center py-16 space-y-3">
+                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+                      <ShoppingCart size={28} />
+                    </div>
+                    <h4 className="text-base font-bold text-slate-800">Your cart is empty</h4>
+                    <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                      Explore our products above and add items to your cart.
+                    </p>
+                  </div>
+                ) : (
+                  cart.map((item) => (
+                    <div 
+                      key={item.cartItemId}
+                      className="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80"
+                    >
+                      <div className="w-14 h-14 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center shrink-0">
+                        <img src={item.image} alt={item.name} className="max-h-full max-w-full object-contain" />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <h5 className="font-bold text-xs text-slate-900 truncate">{item.name}</h5>
+                        <span className="text-[10px] font-semibold text-slate-500 block">{item.variantLabel}</span>
+                        <strong className="text-xs font-black text-slate-900 block mt-0.5">
+                          ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                        </strong>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center bg-white border border-slate-200 rounded-lg p-0.5">
+                          <button
+                            onClick={() => updateCartQuantity(item.cartItemId, -1)}
+                            className="w-5 h-5 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded text-xs font-bold"
+                          >
+                            -
+                          </button>
+                          <span className="px-2 text-xs font-black text-slate-900">{item.quantity}</span>
+                          <button
+                            onClick={() => updateCartQuantity(item.cartItemId, 1)}
+                            className="w-5 h-5 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded text-xs font-bold"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <button 
+                          onClick={() => removeFromCart(item.cartItemId)}
+                          className="text-slate-400 hover:text-red-600 p-1 transition"
+                          title="Remove item"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Footer with Direct Razorpay Checkout */}
+              {cart.length > 0 && (
+                <div className="p-6 border-t border-slate-200 bg-slate-50 space-y-4">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xs font-bold text-slate-600">Subtotal:</span>
+                    <span className="text-2xl font-black text-slate-950 font-heading">
+                      ₹{cartTotalAmount.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+
+                  <div>
+                    <button
+                      onClick={handleProceedToCheckout}
+                      className="w-full bg-[#FFD814] hover:bg-[#F7CA00] text-slate-950 font-black py-3.5 rounded-xl text-sm transition shadow-md cursor-pointer flex items-center justify-center gap-2 border border-[#FCD200]"
+                    >
+                      <ShoppingCart size={16} />
+                      <span>PROCEED TO CHECKOUT (₹{cartTotalAmount.toLocaleString('en-IN')})</span>
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: PRODUCT QUICK VIEW / FULL SPECS */}
+      {/* ========================================================================= */}
+      {activeProductDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in-up">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto text-left relative">
+            
+            <button 
+              onClick={() => setActiveProductDetail(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center font-bold transition cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="space-y-5">
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-2xl bg-slate-50 border border-slate-200 p-2 flex items-center justify-center shrink-0">
+                  <img src={activeProductDetail.images[0]} alt={activeProductDetail.name} className="max-h-full max-w-full object-contain" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-accent-600 bg-accent-50 px-2.5 py-0.5 rounded-full uppercase">
+                    {activeProductDetail.category}
+                  </span>
+                  <h3 className="text-xl font-extrabold text-slate-900 mt-1">
+                    {activeProductDetail.name}
+                  </h3>
+                  <div className="flex items-center gap-1 text-amber-500 font-bold text-xs mt-0.5">
+                    <Star size={13} className="fill-amber-400 text-amber-400" />
+                    <span>{activeProductDetail.rating}</span>
+                    <span className="text-slate-400">({activeProductDetail.reviewsCount} customer reviews)</span>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {activeProductDetail.fullDesc}
+              </p>
+
+              {/* Technical Specs */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
+                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                  Technical Specifications:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  {activeProductDetail.specs.map((spec, sidx) => (
+                    <div key={sidx} className="flex items-start gap-1.5">
+                      <CheckCircle2 size={13} className="text-primary-600 shrink-0 mt-0.5" />
+                      <span><strong className="text-slate-800">{spec.label}:</strong> {spec.val}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action */}
+              <div className="pt-2 flex gap-3">
+                <button
+                  onClick={() => {
+                    addToCartDrainClips(true);
+                    setActiveProductDetail(null);
+                  }}
+                  className="flex-1 bg-gradient-to-r from-accent-500 to-[#F58220] text-slate-950 font-black py-3 rounded-xl text-xs sm:text-sm shadow-accent cursor-pointer text-center"
+                >
+                  Buy Now
+                </button>
+                <button
+                  onClick={() => {
+                    addToCartDrainClips(false);
+                    setActiveProductDetail(null);
+                  }}
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 rounded-xl text-xs sm:text-sm cursor-pointer text-center"
+                >
+                  Add to Cart
+                </button>
+              </div>
+
+            </div>
 
           </div>
         </div>

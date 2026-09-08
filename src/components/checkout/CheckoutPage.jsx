@@ -67,18 +67,13 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
   };
 
   const handlePayment = async () => {
-    if (!user) {
-      requireAuth(() => {}, "Please login to complete your checkout.");
-      return;
-    }
-    
     setLoading(true);
     setError(null);
     try {
+      const effectiveUserId = user?.uid || `guest_${address.phone ? address.phone.replace(/[^0-9]/g, '') : Date.now()}`;
+      
       // 1. Call Backend to create Razorpay Order & Save Address
-      // Ensure your backend is deployed and replace with your actual function URL
       const createOrderURL = 'https://us-central1-mirror-solar-vision.cloudfunctions.net/createRazorpayOrder';
-      // const createOrderURL = 'http://127.0.0.1:5001/mirror-solar-vision/us-central1/createRazorpayOrder'; // For local testing
       
       const res = await fetch(createOrderURL, {
         method: 'POST',
@@ -87,21 +82,21 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
           data: {
             amount: totalAmount,
             items: cartItems,
-            userId: user.uid,
+            userId: effectiveUserId,
             address: address // Send address to backend for Shiprocket
           },
-          // Fallback for older deployed cloud functions
           amount: totalAmount,
           items: cartItems,
-          userId: user.uid,
+          userId: effectiveUserId,
           address: address
         })
       });
 
-      const { data } = await res.json();
+      const responseData = await res.json();
+      const data = responseData.data || responseData;
       
       if (!data || !data.id) {
-        throw new Error('Failed to create order on backend. Are functions deployed?');
+        throw new Error(data?.error || 'Failed to create order on backend.');
       }
 
       // 2. Initialize Razorpay Checkout with the backend order_id
@@ -126,13 +121,13 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_signature: response.razorpay_signature,
                   firestoreOrderId: data.firestoreOrderId,
-                  userId: user.uid
+                  userId: effectiveUserId
                 },
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_signature: response.razorpay_signature,
                 firestoreOrderId: data.firestoreOrderId,
-                userId: user.uid
+                userId: effectiveUserId
               })
             });
 
