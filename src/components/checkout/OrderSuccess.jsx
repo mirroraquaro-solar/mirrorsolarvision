@@ -1,9 +1,62 @@
 import React from 'react';
-import { CheckCircle, Package, Truck, ExternalLink, ArrowRight, ShoppingBag } from 'lucide-react';
+import { CheckCircle, Package, Truck, ExternalLink, ArrowRight, ShoppingBag, MessageSquare, Share2, FileText } from 'lucide-react';
+import { BUSINESS_CONTACT } from '../../data/bulkComboData';
 
 const OrderSuccess = ({ orderData, onContinueShopping, onViewOrders }) => {
   const orderId = orderData?.orderId || (typeof orderData === 'string' ? orderData : orderData?.id || 'N/A');
   const shipmentId = orderData?.shiprocketShipmentId;
+  const amount = orderData?.amount || 0;
+  const items = orderData?.items || [];
+  const address = orderData?.address || {};
+  const paymentId = orderData?.razorpayPaymentId || orderData?.paymentId || '';
+
+  const customerName = address.fullName || 'Customer';
+  const customerPhone = address.phone || '';
+  const fullAddressText = [address.flat, address.area, address.city, address.state, address.pincode].filter(Boolean).join(', ');
+
+  // Format Items for WhatsApp Receipt
+  const itemsListText = items.length > 0 
+    ? items.map((it, idx) => `  ${idx + 1}. *${it.name}* (Qty: ${it.quantity}${it.variantLabel ? ` - ${it.variantLabel}` : ''}) - ₹${Number(it.price || 0).toLocaleString('en-IN')}`).join('\n')
+    : `  • Solar Store Product (Total: ₹${Number(amount).toLocaleString('en-IN')})`;
+
+  const dateStr = new Date().toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const whatsappReceipt = `🧾 *MIRROR SOLAR VISION — ORDER INVOICE*
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ *Status:* Paid & Confirmed
+📦 *Order ID:* ${orderId}
+💳 *Razorpay Payment ID:* ${paymentId || 'Verified Online'}
+📅 *Date:* ${dateStr}
+
+👤 *Customer Details:*
+• *Name:* ${customerName}
+• *Phone:* ${customerPhone}
+${fullAddressText ? `• *Address:* ${fullAddressText}` : ''}
+
+🛒 *Ordered Items:*
+${itemsListText}
+
+💰 *Total Amount Paid:* ₹${Number(amount).toLocaleString('en-IN')} (Prepaid)
+
+${shipmentId ? `🚚 *Shiprocket Tracking ID:* ${shipmentId}\n🔗 *Live Courier Track:* https://shiprocket.co/tracking/${shipmentId}` : '🚚 *Shipment:* Processing for Dispatch'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+📞 *Mirror Solar Support:* +91 86391 03947
+🏢 *Address:* Opposite Vmax Cinema Hall, Eluru, AP
+🌐 *Website:* https://mirrorsolarvision.com`;
+
+  const businessWhatsAppUrl = `https://wa.me/918639103947?text=${encodeURIComponent(
+    `*NEW ORDER BOOKING CONFIRMATION*\n\n${whatsappReceipt}`
+  )}`;
+
+  const customerShareWhatsAppUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(
+    `*My Mirror Solar Vision Order Invoice:*\n\n${whatsappReceipt}`
+  )}`;
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -19,7 +72,7 @@ const OrderSuccess = ({ orderData, onContinueShopping, onViewOrders }) => {
           Thank you for ordering with Mirror Solar Vision. Your order is confirmed and shipping is being prepared.
         </p>
 
-        <div className="space-y-3.5 mb-8 text-left">
+        <div className="space-y-3.5 mb-6 text-left">
           {/* Order ID Card */}
           <div className="bg-slate-50 rounded-2xl p-4.5 border border-slate-200 flex items-start gap-4">
             <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 shrink-0 mt-0.5">
@@ -28,6 +81,11 @@ const OrderSuccess = ({ orderData, onContinueShopping, onViewOrders }) => {
             <div className="min-w-0 flex-1">
               <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Order ID / Reference</p>
               <p className="text-slate-900 font-mono font-bold text-sm sm:text-base break-all mt-0.5">{orderId}</p>
+              {amount > 0 && (
+                <p className="text-xs font-extrabold text-emerald-700 mt-1">
+                  Amount Paid: ₹{Number(amount).toLocaleString('en-IN')}
+                </p>
+              )}
             </div>
           </div>
 
@@ -47,7 +105,7 @@ const OrderSuccess = ({ orderData, onContinueShopping, onViewOrders }) => {
                     Tracking ID: <span className="font-mono text-blue-900">{shipmentId}</span>
                   </p>
                   <p className="text-xs text-slate-600 mt-1">
-                    Courier details and live updates are tracked via Shiprocket. You will also receive an SMS.
+                    Courier details and live updates are tracked via Shiprocket.
                   </p>
                 </div>
               </div>
@@ -75,6 +133,40 @@ const OrderSuccess = ({ orderData, onContinueShopping, onViewOrders }) => {
               </div>
             </div>
           )}
+
+          {/* WhatsApp Bill / Notification Card */}
+          <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-4 space-y-2.5">
+            <div className="flex items-center gap-2 text-emerald-900">
+              <MessageSquare size={16} className="text-emerald-600 shrink-0" />
+              <span className="text-xs font-black uppercase tracking-wider">WhatsApp Bill & Confirmation</span>
+            </div>
+            
+            <p className="text-xs text-emerald-800 leading-relaxed">
+              Get an instant official digital invoice with full product breakdown sent directly via WhatsApp.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <a
+                href={businessWhatsAppUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 px-3 rounded-xl shadow-xs transition-all text-center"
+              >
+                <MessageSquare size={13} />
+                <span>Notify Our Office</span>
+              </a>
+
+              <a
+                href={customerShareWhatsAppUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-1.5 bg-white hover:bg-emerald-100 border border-emerald-300 text-emerald-900 font-bold text-xs py-2.5 px-3 rounded-xl transition-all text-center"
+              >
+                <Share2 size={13} className="text-emerald-600" />
+                <span>Save / Share Bill</span>
+              </a>
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-col gap-3">

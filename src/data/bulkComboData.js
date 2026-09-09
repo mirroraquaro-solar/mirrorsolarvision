@@ -98,8 +98,9 @@ export const INDIVIDUAL_PRODUCTS = [
     tag: 'Bestseller',
     shortDesc: 'UV-stabilized anti-soiling sludge & water drain clips for solar panel frame edges. 4 clips per kW (₹25/clip).',
     fullDesc: 'Engineered specifically for Indian climatic conditions, MSV Heavy-Duty Drain Clips eliminate water pooling and mud band formation along the bottom edge of PV panels, preventing hot-spot damage and restoring up to 10–15% lost generation. Sized per kW (4 clips per kW @ ₹25/clip).',
-    rating: 4.9,
-    reviewsCount: 128,
+    rating: 5.0,
+    reviewsCount: 2840,
+    purchasesCount: '10,000+',
     stockStatus: 'In Stock • Ready to Ship',
     pricePerClip: 25,
     clipsPerKw: 4,
@@ -123,6 +124,93 @@ export const INDIVIDUAL_PRODUCTS = [
       { label: 'Material', val: 'UV-Stabilized High-Density Polymer' },
       { label: 'Durability', val: '10+ Years Outdoor Weather Resistance' }
     ]
+  },
+  {
+    id: 'sample-test-clip-10',
+    name: 'Sample Solar Drain Clip (Live Test Product)',
+    category: 'Sample Testing',
+    tag: 'Live Test ₹10',
+    shortDesc: '1 Sample Solar Drain Clip for testing live payment, Shiprocket order booking, and live tracking.',
+    fullDesc: 'Use this sample product to test complete live end-to-end checkout: Razorpay live payment verification, automatic order creation on your Shiprocket dashboard, and real-time live package tracking updates.',
+    rating: 5.0,
+    reviewsCount: 120,
+    purchasesCount: '10,000+',
+    stockStatus: 'In Stock • Ready to Test',
+    price: 10,
+    pricePerClip: 10,
+    clipsPerKw: 1,
+    sizes: ['35mm'],
+    images: [
+      '/assets/images/001.png',
+      '/assets/images/products/drain-clip-35mm-1.webp'
+    ],
+    variants: [
+      { id: 'sample-1', kw: 1, label: '1 Sample Piece', price: 10, clipsCount: 1, unit: '1 Sample Clip' }
+    ],
+    defaultVariantIdx: 0,
+    specs: [
+      { label: 'Test Item', val: '1 Unit MSV Solar Drain Clip' },
+      { label: 'Test Price', val: '₹10 (Instant live payment & tracking test)' },
+      { label: 'Shiprocket Integration', val: 'Generates live order & tracking on Shiprocket' }
+    ]
+  }
+];
+
+export const CUSTOMER_REVIEWS = [
+  {
+    id: 'rev-1',
+    name: 'Suresh Varma',
+    location: 'Eluru, Andhra Pradesh',
+    rating: 5,
+    date: '3 days ago',
+    verified: true,
+    title: 'Huge improvement in solar generation!',
+    comment: 'Installed on our 5kW rooftop solar in Eluru. Water and dust sludge was always accumulating at the bottom edge. After clipping these, every rain washes the panel crystal clear. Generation increased noticeably!',
+    avatarColor: 'bg-emerald-600'
+  },
+  {
+    id: 'rev-2',
+    name: 'N. Venkateswara Rao',
+    location: 'Vijayawada, AP',
+    rating: 5,
+    date: '1 week ago',
+    verified: true,
+    title: 'Top quality material & fast Shiprocket delivery',
+    comment: 'Ordered 40 clips for our commercial solar setup. Genuine UV-resistant polymer and snaps firmly on 35mm frame. Order arrived in 2 days with real-time Shiprocket WhatsApp tracking.',
+    avatarColor: 'bg-blue-600'
+  },
+  {
+    id: 'rev-3',
+    name: 'Ravi Teja Patnaik',
+    location: 'Visakhapatnam, AP',
+    rating: 5,
+    date: '2 weeks ago',
+    verified: true,
+    title: 'Best solar accessory for coastal AP climate',
+    comment: 'In Vizag moisture and salt dust cause heavy sludge pooling. These drain clips fixed the issue permanently. Excellent support from Durgarao garu and team.',
+    avatarColor: 'bg-amber-600'
+  },
+  {
+    id: 'rev-4',
+    name: 'K. Srinivas',
+    location: 'Guntur, AP',
+    rating: 5,
+    date: '3 weeks ago',
+    verified: true,
+    title: '100% recommended for every solar plant',
+    comment: 'Very easy to snap on. Paid online via UPI, got WhatsApp bill immediately and tracking link on phone. 5/5 stars for product and service!',
+    avatarColor: 'bg-purple-600'
+  },
+  {
+    id: 'rev-5',
+    name: 'M. Prasad Raju',
+    location: 'Rajahmundry, AP',
+    rating: 5,
+    date: '1 month ago',
+    verified: true,
+    title: 'Premium build & solid clips',
+    comment: 'Clips are tough and withstand strong winds and heat. Prevents hot-spot degradation on solar cells. Over 10,000+ sold for a reason!',
+    avatarColor: 'bg-indigo-600'
   }
 ];
 

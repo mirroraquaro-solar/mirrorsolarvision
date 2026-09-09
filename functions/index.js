@@ -40,12 +40,15 @@ exports.createRazorpayOrder = functions.https.onRequest((req, res) => {
 
     try {
       // We now expect 'address' to be passed from the frontend CheckoutPage
-      const { amount, items, userId, address } = req.body.data; 
+      const { amount, items, userId, address } = req.body.data || req.body; 
       
+      // Clean, official Website Booking ID format (e.g. MSV-729401)
+      const bookingId = `MSV-${Date.now().toString().slice(-6)}`;
+
       const options = {
         amount: amount * 100, // paise
         currency: "INR",
-        receipt: `receipt_${Date.now()}`,
+        receipt: bookingId,
       };
 
       const order = await razorpayInstance.orders.create(options);
@@ -58,6 +61,8 @@ exports.createRazorpayOrder = functions.https.onRequest((req, res) => {
 
       const orderDataToSave = {
         userId: uid,
+        bookingId: bookingId,
+        firestoreOrderId: bookingId,
         customerName: customerName,
         customerPhone: cleanPhone,
         customerEmail: customerEmail,
@@ -69,24 +74,17 @@ exports.createRazorpayOrder = functions.https.onRequest((req, res) => {
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       };
 
-      const orderRef = await admin.firestore().collection('users').doc(uid).collection('orders').add(orderDataToSave);
-
-      // Also mirror to root 'orders' collection for instant lookup by order ID / phone
-      try {
-        await admin.firestore().collection('orders').doc(orderRef.id).set({
-          ...orderDataToSave,
-          firestoreOrderId: orderRef.id
-        });
-      } catch (rootSaveErr) {
-        console.warn("Could not write to root orders collection:", rootSaveErr);
-      }
+      // Save using bookingId as document ID for 100% consistent matching
+      await admin.firestore().collection('users').doc(uid).collection('orders').doc(bookingId).set(orderDataToSave);
+      await admin.firestore().collection('orders').doc(bookingId).set(orderDataToSave);
 
       res.status(200).send({
         data: {
           id: order.id,
           currency: order.currency,
           amount: order.amount,
-          firestoreOrderId: orderRef.id
+          firestoreOrderId: bookingId,
+          bookingId: bookingId
         }
       });
     } catch (error) {
@@ -103,7 +101,7 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
     }
 
     try {
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature, firestoreOrderId, userId } = req.body.data;
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature, firestoreOrderId, userId } = req.body.data || req.body;
 
       const uid = userId || 'anonymous';
       const userOrderDocRef = admin.firestore().collection('users').doc(uid).collection('orders').doc(firestoreOrderId);
@@ -151,9 +149,10 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
       }
       
       const orderData = orderSnap.data();
+      const orderBookingId = orderData.bookingId || firestoreOrderId;
       const address = orderData.address || {};
       const items = orderData.items || [];
-      const cleanPhone = (address.phone || orderData.customerPhone || '9999999999').replace(/[^0-9]/g, '');
+      const cleanPhone = (address.phone || orderData.customerPhone || '9849810668').replace(/[^0-9]/g, '');
       const custEmail = address.email || orderData.customerEmail || 'orders@mirrorsolarvision.com';
       const custName = (address.fullName || orderData.customerName || 'Customer').trim();
       const nameParts = custName.split(' ');
@@ -167,30 +166,39 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
         // Map items to Shiprocket format
         const orderItems = items.map(item => ({
           name: item.name || 'Solar Product',
-          sku: item.id || `SKU_${Date.now()}`,
-          units: item.quantity || 1,
-          selling_price: item.price || (orderData.amount / (items.length || 1)),
+          sku: (item.productId || item.cartItemId || item.id || `SKU_${Date.now()}`).substring(0, 50),
+          units: Number(item.quantity) || 1,
+          selling_price: Number(item.price) || (orderData.amount / (items.length || 1)),
           discount: 0,
           tax: 0,
           hsn: ''
         }));
 
+        // Format order_date in Shiprocket expected format: 'YYYY-MM-DD HH:MM'
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const hh = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const formattedOrderDate = `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+
         const shiprocketPayload = {
-          order_id: firestoreOrderId, // Unique Order ID in Shiprocket
-          order_date: new Date().toISOString(),
-          pickup_location: "MIRROR SOLAR VISION, opposite Vijayalakshmi cinema hall, ELURU, 534001, opposite V max cinema hall, West Godavari, Andhra Pradesh, India, 534001", // Matches warehouse/pickup name in Shiprocket dashboard
+          order_id: orderBookingId, // Pass official MSV-XXXXXX Booking ID to Shiprocket
+          order_date: formattedOrderDate,
+          pickup_location: "work", // Matches exact primary pickup location nickname in Shiprocket
           channel_id: "",
-          comment: `Mirror Solar Store Order - Customer Phone: ${cleanPhone}`,
+          comment: `Mirror Solar Store Booking ID: ${orderBookingId} - Phone: ${cleanPhone}`,
           billing_customer_name: firstName,
-          billing_last_name: lastName,
-          billing_address: address.flat || address.area || "Address line",
-          billing_address_2: address.area || "",
-          billing_city: address.city || "City",
-          billing_pincode: address.pincode || "520001",
+          billing_last_name: lastName || "Customer",
+          billing_address: address.flat || address.area || "Main Road",
+          billing_address_2: address.area || address.city || "Area",
+          billing_city: address.city || "Eluru",
+          billing_pincode: address.pincode || "534001",
           billing_state: address.state || "Andhra Pradesh",
           billing_country: "India",
           billing_email: custEmail,
-          billing_phone: cleanPhone.length === 10 ? cleanPhone : "9999999999",
+          billing_phone: cleanPhone.length === 10 ? cleanPhone : "9849810668",
           shipping_is_billing: true,
           order_items: orderItems,
           payment_method: "Prepaid",
@@ -198,8 +206,10 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
           length: 10,
           breadth: 10,
           height: 10,
-          weight: 1 // in kg
+          weight: 0.5 // in kg
         };
+
+        console.log("Sending Shiprocket Payload with Booking ID:", orderBookingId);
 
         const createOrderRes = await fetch('https://apiv2.shiprocket.in/v1/external/orders/create/adhoc', {
           method: 'POST',
@@ -217,10 +227,12 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
         }
 
         const srData = await createOrderRes.json();
+        console.log("Shiprocket Order Created Successfully:", JSON.stringify(srData));
         
         // 4. Update Firestore with Shipping Details in both user subcollection and root collection
         const shippingSuccessUpdate = {
           status: 'paid',
+          bookingId: orderBookingId,
           razorpayPaymentId: razorpay_payment_id,
           shiprocketOrderId: srData.order_id || null,
           shiprocketShipmentId: srData.shipment_id || null,
@@ -236,6 +248,7 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
         return res.status(200).send({ 
           data: { 
             success: true, 
+            bookingId: orderBookingId,
             shiprocketShipmentId: srData.shipment_id,
             shiprocketOrderId: srData.order_id
           } 
@@ -248,6 +261,7 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
           status: 'paid',
           razorpayPaymentId: razorpay_payment_id,
           shiprocketStatus: 'failed_to_create',
+          shiprocketError: shippingError.message || String(shippingError),
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
         };
 
@@ -258,7 +272,7 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
         return res.status(200).send({ 
           data: { 
             success: true, 
-            warning: "Payment successful but failed to create shipping label."
+            warning: "Payment successful but failed to create shipping label: " + shippingError.message
           } 
         });
       }
@@ -328,37 +342,111 @@ exports.shiprocketWebhook = functions.https.onRequest(async (req, res) => {
 
   try {
     const data = req.body || {};
-    const awb = data.awb;
-    const currentStatus = data.current_status;
+    console.log("Shiprocket Webhook Payload received:", JSON.stringify(data));
 
-    if (awb && currentStatus) {
-      // Find order by AWB / Shipment ID (Shiprocket often sends AWB in webhook)
-      const snapshot = await admin.firestore().collectionGroup('orders').where('shiprocketShipmentId', '==', data.shipment_id || data.awb).limit(1).get();
-      
-      // Fallback: search by shiprocket order_id
-      let orderRef;
-      if (!snapshot.empty) {
-        orderRef = snapshot.docs[0].ref;
-      } else if (data.order_id) {
-        const orderSnap = await admin.firestore().collectionGroup('orders').where('shiprocketOrderId', '==', data.order_id).limit(1).get();
-        if (!orderSnap.empty) {
-          orderRef = orderSnap.docs[0].ref;
+    const awb = data.awb || data.awb_code || null;
+    const currentStatus = (data.current_status || data.shipment_status || data.status || data.current_status_id || '').toString().trim();
+    const shipmentId = data.shipment_id ? String(data.shipment_id) : null;
+    const orderId = data.order_id ? String(data.order_id) : null;
+
+    if (currentStatus || awb) {
+      const updatePayload = {
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      };
+      if (currentStatus) updatePayload.shiprocketStatus = currentStatus;
+      if (awb) updatePayload.shiprocketAwb = awb;
+      if (shipmentId) updatePayload.shiprocketShipmentId = shipmentId;
+      if (data.courier_name) updatePayload.courierName = data.courier_name;
+      if (data.etd) updatePayload.estimatedDelivery = data.etd;
+
+      // 1. Try finding by Firestore Order ID directly in root 'orders'
+      if (orderId) {
+        try {
+          const rootDoc = await admin.firestore().collection('orders').doc(orderId).get();
+          if (rootDoc.exists) {
+            await rootDoc.ref.update(updatePayload);
+            const userId = rootDoc.data()?.userId;
+            if (userId && userId !== 'anonymous') {
+              await admin.firestore().collection('users').doc(userId).collection('orders').doc(orderId).update(updatePayload).catch(() => {});
+            }
+          }
+        } catch (e) {
+          console.warn("Could not update root doc by order_id:", e);
         }
       }
 
-      if (orderRef) {
-        await orderRef.update({
-          shiprocketStatus: currentStatus,
-          shiprocketAwb: awb,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+      // 2. Also search via collectionGroup query by shipment_id, awb, or order_id
+      const queryList = [];
+      if (shipmentId) {
+        queryList.push(admin.firestore().collectionGroup('orders').where('shiprocketShipmentId', '==', shipmentId).get());
+        queryList.push(admin.firestore().collectionGroup('orders').where('shiprocketShipmentId', '==', Number(shipmentId)).get());
+      }
+      if (awb) {
+        queryList.push(admin.firestore().collectionGroup('orders').where('shiprocketAwb', '==', awb).get());
+      }
+      if (orderId) {
+        queryList.push(admin.firestore().collectionGroup('orders').where('shiprocketOrderId', '==', orderId).get());
+      }
+
+      const results = await Promise.all(queryList);
+      for (const snap of results) {
+        for (const docSnap of snap.docs) {
+          await docSnap.ref.update(updatePayload).catch(() => {});
+          // Also sync to root orders if it's a subcollection doc
+          const docId = docSnap.id;
+          await admin.firestore().collection('orders').doc(docId).update(updatePayload).catch(() => {});
+        }
       }
     }
 
-    return res.status(200).json({ success: true });
+    return res.status(200).json({ success: true, message: 'Webhook processed' });
   } catch (error) {
     console.error("Shiprocket Webhook Error:", error);
-    // Always return 200 to Shiprocket so it doesn't think the endpoint is dead
     return res.status(200).json({ success: false, error: 'Processed with errors' });
   }
+});
+
+// Live on-demand tracking lookup endpoint from Shiprocket
+exports.getShiprocketTracking = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    if (req.method !== 'POST' && req.method !== 'GET') {
+      return res.status(405).send('Method Not Allowed');
+    }
+
+    try {
+      const trackingId = req.query.trackingId || req.body?.data?.trackingId || req.body?.trackingId;
+      if (!trackingId) {
+        return res.status(400).send({ data: { error: 'Tracking ID (AWB or Shipment ID) required' } });
+      }
+
+      const token = await getShiprocketToken();
+      // Try tracking via AWB or Shipment ID
+      const trackRes = await fetch(`https://apiv2.shiprocket.in/v1/external/courier/track/awb/${trackingId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!trackRes.ok) {
+        // Fallback to shipment track
+        const shipTrackRes = await fetch(`https://apiv2.shiprocket.in/v1/external/courier/track/shipment/${trackingId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const shipData = await shipTrackRes.json();
+        return res.status(200).send({ data: shipData });
+      }
+
+      const data = await trackRes.json();
+      return res.status(200).send({ data });
+    } catch (error) {
+      console.error("Shiprocket Tracking fetch error:", error);
+      res.status(500).send({ data: { error: 'Failed to fetch tracking info' } });
+    }
+  });
 });

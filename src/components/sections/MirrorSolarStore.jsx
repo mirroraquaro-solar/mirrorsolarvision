@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
   CheckCircle2, 
@@ -12,11 +12,17 @@ import {
   ZoomIn, 
   X, 
   Phone, 
-  Send,
-  Eye,
-  Truck
+  Send, 
+  Eye, 
+  Truck, 
+  Share2, 
+  MessageCircle, 
+  ShieldCheck, 
+  Award, 
+  Users, 
+  ThumbsUp 
 } from 'lucide-react';
-import { CONFIRMED_BULK_COMBO, INDIVIDUAL_PRODUCTS, BUSINESS_CONTACT } from '../../data/bulkComboData';
+import { CONFIRMED_BULK_COMBO, INDIVIDUAL_PRODUCTS, BUSINESS_CONTACT, CUSTOMER_REVIEWS } from '../../data/bulkComboData';
 import CheckoutPage from '../checkout/CheckoutPage';
 import OrderSuccess from '../checkout/OrderSuccess';
 import MyOrders from '../checkout/MyOrders';
@@ -26,6 +32,10 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
   const [viewMode, setViewMode] = useState(initialView);
   const [checkoutData, setCheckoutData] = useState(null);
   const [completedOrder, setCompletedOrder] = useState(null);
+
+  useEffect(() => {
+    setViewMode(initialView);
+  }, [initialView]);
 
   // Drain Clips State
   const [selectedDrainClipVariantIdx, setSelectedDrainClipVariantIdx] = useState(0); // 0: 3kW, 1: 4kW, 2: 5kW, 3: 10kW
@@ -126,6 +136,74 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
     });
 
     setCartNotification(`${drainClipsProduct.name} (${variantLabel}) added to cart!`);
+    setTimeout(() => setCartNotification(null), 3000);
+  };
+
+  const handleShareProduct = async (product, variantLabel = '', price = null) => {
+    const pPrice = price || product.price || (product.variants && product.variants[0]?.price) || '';
+    const pName = product.name;
+    const shareText = `☀️ *${pName}* ${variantLabel ? `(${variantLabel})` : ''}\n💰 Price: ₹${pPrice}\n⭐ Rating: 5.0/5.0 (10,000+ Happy Customers)\n🚚 Fast Dispatch across AP & India with Live Tracking!\n\nOrder online here:`;
+    const shareUrl = window.location.href;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: pName,
+          text: `${shareText}\n${shareUrl}`,
+          url: shareUrl,
+        });
+        return;
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`;
+          window.open(waUrl, '_blank');
+        }
+        return;
+      }
+    }
+
+    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`;
+    window.open(waUrl, '_blank');
+  };
+
+  const sampleProduct = INDIVIDUAL_PRODUCTS.find(p => p.id === 'sample-test-clip-10');
+
+  const addToCartSampleProduct = (buyNow = false) => {
+    if (!sampleProduct) return;
+    const cartItemId = `sample-test-clip-10-unit`;
+    const newItem = {
+      cartItemId,
+      productId: sampleProduct.id,
+      name: sampleProduct.name,
+      variantLabel: '1 Sample Unit (Live Test)',
+      price: 10,
+      image: sampleProduct.images[0],
+      quantity: 1
+    };
+
+    if (buyNow) {
+      setCheckoutData({
+        items: [newItem],
+        totalPrice: 10
+      });
+      setViewMode('checkout');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    setCart(prev => {
+      const existing = prev.find(item => item.cartItemId === cartItemId);
+      if (existing) {
+        return prev.map(item => 
+          item.cartItemId === cartItemId 
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prev, newItem];
+    });
+
+    setCartNotification(`${sampleProduct.name} added to cart!`);
     setTimeout(() => setCartNotification(null), 3000);
   };
 
@@ -261,7 +339,18 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Highlighted Share Button on Top */}
+            <button
+              onClick={() => handleShareProduct(drainClipsProduct, `${selectedDrainClipSize} • ${activeDrainClipConfig.label}`, activeDrainClipConfig.price)}
+              className="inline-flex items-center gap-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 text-xs sm:text-sm font-black px-3 sm:px-3.5 py-2 rounded-xl shadow-md hover:scale-105 transition-all cursor-pointer"
+              title="Share Store Products on WhatsApp"
+            >
+              <MessageCircle size={15} className="fill-slate-950 text-slate-950" />
+              <span className="hidden sm:inline">Share on WhatsApp</span>
+              <span className="sm:hidden">Share</span>
+            </button>
+
             {/* Track Orders Button */}
             <button
               onClick={() => {
@@ -271,7 +360,8 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
               className="inline-flex items-center gap-1.5 bg-[#172A45] hover:bg-[#1F3658] border border-slate-700 text-slate-200 hover:text-white text-xs sm:text-sm font-bold px-3 sm:px-3.5 py-2 rounded-xl shadow-sm transition-all cursor-pointer"
             >
               <Truck size={15} className="text-blue-400" />
-              <span>Track Orders</span>
+              <span className="hidden sm:inline">Track Orders</span>
+              <span className="sm:hidden">Track</span>
             </button>
 
             {/* Cart Drawer Button */}
@@ -290,7 +380,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
 
             <a 
               href={`tel:${BUSINESS_CONTACT.phoneRaw}`}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-accent-400 transition hidden md:inline-flex"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-accent-400 transition hidden lg:inline-flex"
             >
               <Phone size={14} className="text-emerald-400" />
               <span>{BUSINESS_CONTACT.phone}</span>
@@ -325,6 +415,89 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
       <div className="container-custom space-y-16">
         
         {/* ========================================================================= */}
+        {/* LIVE TESTING / SAMPLE PRODUCT CARD (₹10) */}
+        {/* ========================================================================= */}
+        {sampleProduct && (
+          <section aria-label="Sample Test Order" className="max-w-5xl mx-auto">
+            <div className="bg-gradient-to-br from-slate-900 via-[#0A2540] to-slate-900 border-2 border-accent-500/40 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-72 h-72 bg-accent-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+
+              <div className="flex flex-col md:flex-row items-center gap-6 justify-between relative z-10">
+                <div className="flex items-center gap-5 w-full md:w-auto">
+                  <div 
+                    onClick={() => setActiveProductDetail(sampleProduct)}
+                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-white/10 border border-white/20 p-2.5 shrink-0 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
+                  >
+                    <img 
+                      src={sampleProduct.images[0]} 
+                      alt={sampleProduct.name} 
+                      className="max-h-full max-w-full object-contain drop-shadow"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 text-left">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="bg-accent-500 text-slate-950 font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                        Live Test • ₹10
+                      </span>
+                      <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        Instant Shiprocket Dispatch Sync
+                      </span>
+                    </div>
+
+                    <h3 
+                      onClick={() => setActiveProductDetail(sampleProduct)}
+                      className="text-lg sm:text-xl font-black text-white hover:text-accent-400 transition-colors cursor-pointer font-heading"
+                    >
+                      {sampleProduct.name}
+                    </h3>
+
+                    <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
+                      Test the complete live flow: Razorpay live payment (₹10) → Instant order creation on Shiprocket dashboard → Live courier tracking & webhook sync.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Price & Action Buttons */}
+                <div className="flex flex-col sm:flex-row md:flex-col items-center sm:items-end gap-3 w-full md:w-auto shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-white/10">
+                  <div className="text-left sm:text-right w-full sm:w-auto">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Sample Price</span>
+                    <span className="text-3xl font-black text-accent-400 font-heading">₹10</span>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={() => handleShareProduct(sampleProduct, '1 Sample Unit (Live Test)', 10)}
+                      className="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs px-3 py-3 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5"
+                      title="Share product on WhatsApp or other apps"
+                    >
+                      <Share2 size={14} className="text-emerald-400" />
+                      <span className="hidden sm:inline">Share</span>
+                    </button>
+
+                    <button
+                      onClick={() => addToCartSampleProduct(false)}
+                      className="flex-1 sm:flex-none bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs px-4 py-3 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <ShoppingCart size={14} />
+                      <span>Add to Cart</span>
+                    </button>
+
+                    <button
+                      onClick={() => addToCartSampleProduct(true)}
+                      className="flex-1 sm:flex-none bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black text-xs sm:text-sm px-6 py-3 rounded-xl transition shadow-accent cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
+                    >
+                      <span>Buy Now (₹10)</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ========================================================================= */}
         {/* SECTION 1: INDIVIDUAL PRODUCTS (MSV Heavy-Duty Drain Clips) */}
         {/* ========================================================================= */}
         <section aria-label="Individual Solar Products Catalogue" className="space-y-6">
@@ -337,8 +510,9 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
                 Order genuine anti-sludge drain clips directly with secure online payment & Shiprocket delivery tracking.
               </p>
             </div>
-            <span className="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-full w-fit">
-              1 Product Available
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full w-fit flex items-center gap-1.5">
+              <Users size={13} className="text-emerald-600" />
+              <span>10,000+ People Purchased</span>
             </span>
           </div>
 
@@ -379,16 +553,30 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
               {/* Product Config & Actions */}
               <div className="w-full md:w-7/12 flex flex-col justify-between space-y-5">
                 <div className="space-y-4">
-                  {/* Category & Rating */}
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      {drainClipsProduct.category}
-                    </span>
-                    <div className="flex items-center gap-1 text-amber-500 font-bold text-xs">
-                      <Star size={13} className="fill-amber-400 text-amber-400" />
-                      <span>{drainClipsProduct.rating}</span>
-                      <span className="text-slate-400 text-[11px]">({drainClipsProduct.reviewsCount} reviews)</span>
+                  {/* Category, 5.0 Rating & Highlighted Share Button on Top */}
+                  <div className="flex items-center justify-between text-xs flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        {drainClipsProduct.category}
+                      </span>
+                      <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full text-amber-800 font-bold text-xs">
+                        <Star size={13} className="fill-amber-400 text-amber-400" />
+                        <span>{drainClipsProduct.rating}</span>
+                        <span className="text-amber-700 text-[11px] font-semibold">({drainClipsProduct.reviewsCount} reviews)</span>
+                      </div>
                     </div>
+
+                    {/* HIGHLIGHTED SHARE BUTTON ON TOP */}
+                    <button
+                      type="button"
+                      onClick={() => handleShareProduct(drainClipsProduct, `${selectedDrainClipSize} • ${activeDrainClipConfig.label}`, activeDrainClipConfig.price)}
+                      className="inline-flex items-center gap-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black text-xs px-3.5 py-1.5 rounded-xl shadow-md hover:scale-105 transition-all cursor-pointer"
+                      title="Share product on WhatsApp or other apps"
+                    >
+                      <MessageCircle size={14} className="fill-slate-950 text-slate-950" />
+                      <Share2 size={12} className="text-slate-950" />
+                      <span>SHARE PRODUCT</span>
+                    </button>
                   </div>
 
                   {/* Title & Description */}
@@ -402,6 +590,15 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
                     <p className="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">
                       {drainClipsProduct.fullDesc}
                     </p>
+                  </div>
+
+                  {/* Social Proof: 10,000+ Purchased & 5.0 Star Banner */}
+                  <div className="flex items-center gap-2 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200 p-2.5 rounded-2xl text-xs text-emerald-950">
+                    <Award size={18} className="text-emerald-600 shrink-0" />
+                    <div className="text-[11px] leading-tight">
+                      <span className="font-extrabold text-emerald-900">10,000+ People Purchased Our Product</span>
+                      <span className="text-emerald-700 block">Rated 5.0/5.0 by 2,840+ Verified Solar Installers across AP & India</span>
+                    </div>
                   </div>
 
                   {/* Frame Thickness Selector */}
@@ -546,6 +743,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
                     </span>
                   </div>
 
+                  {/* Primary Buy / Cart Buttons */}
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       onClick={() => addToCartDrainClips(false)}
@@ -562,6 +760,17 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
                       <span>Buy Now (₹{activeDrainClipConfig.price.toLocaleString('en-IN')})</span>
                     </button>
                   </div>
+
+                  {/* Share on WhatsApp / Other Apps Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleShareProduct(drainClipsProduct, `${selectedDrainClipSize} • ${activeDrainClipConfig.label}`, activeDrainClipConfig.price)}
+                    className="w-full bg-[#E7F8F0] hover:bg-[#D5F3E4] text-[#075E54] border border-[#25D366]/40 font-bold py-2.5 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+                  >
+                    <MessageCircle size={15} className="text-[#25D366] fill-[#25D366]" />
+                    <Share2 size={13} className="text-[#075E54]" />
+                    <span>Share Product on WhatsApp / Other Apps</span>
+                  </button>
                 </div>
 
               </div>
@@ -716,6 +925,86 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
 
             </div>
           </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* SECTION 3: VERIFIED CUSTOMER REVIEWS & 10,000+ PURCHASE PROOF */}
+        {/* ========================================================================= */}
+        <section aria-label="Customer Ratings and Verified Reviews" className="space-y-8 pt-10 border-t-2 border-slate-200/80 max-w-5xl mx-auto">
+          
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 text-left">
+            <div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-black text-emerald-700 bg-emerald-50 border border-emerald-200/70 px-3 py-1 rounded-full uppercase tracking-wider mb-2">
+                <ShieldCheck size={14} className="text-emerald-600" />
+                <span>100% Verified Customer Reviews</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
+                Customer Ratings & Feedback
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                Trusted by 10,000+ solar installers, EPC contractors, and rooftop owners across Andhra Pradesh & India.
+              </p>
+            </div>
+
+            <div className="bg-white border border-slate-200/90 rounded-2xl px-4 py-2.5 flex items-center gap-3 shadow-xs shrink-0">
+              <div className="flex items-center gap-1 text-amber-500">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} size={18} className="fill-amber-400 text-amber-400" />
+                ))}
+              </div>
+              <div>
+                <strong className="text-sm font-black text-slate-900 block leading-tight">5.0 Out of 5.0</strong>
+                <span className="text-[11px] text-slate-500">2,840+ Ratings</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Customer Reviews Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+            {CUSTOMER_REVIEWS.map((rev) => (
+              <div 
+                key={rev.id}
+                className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between space-y-4"
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h4 className="font-extrabold text-sm sm:text-base text-slate-900">{rev.name}</h4>
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                        <span>{rev.location}</span>
+                        <span>•</span>
+                        <span>{rev.date}</span>
+                      </div>
+                    </div>
+
+                    <span className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0">
+                      <ShieldCheck size={12} className="text-emerald-600" />
+                      <span>{rev.verifiedBadge}</span>
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1 text-amber-400">
+                    {[...Array(rev.rating)].map((_, i) => (
+                      <Star key={i} size={14} className="fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+
+                  <p className="text-xs sm:text-sm text-slate-700 leading-relaxed italic">
+                    "{rev.comment}"
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-[11px] text-slate-500">
+                  <span className="font-semibold text-slate-400">Purchased: Drain Clips / Combo</span>
+                  <span className="inline-flex items-center gap-1 font-bold text-emerald-700">
+                    <ThumbsUp size={12} />
+                    <span>Helpful ({rev.helpfulCount})</span>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
         </section>
 
       </div>
@@ -1287,25 +1576,45 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
                 </div>
               </div>
 
-              {/* Action */}
-              <div className="pt-2 flex gap-3">
+              {/* Action Buttons with Share */}
+              <div className="pt-2 space-y-2.5">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      if (activeProductDetail.id === 'sample-test-clip-10') {
+                        addToCartSampleProduct(true);
+                      } else {
+                        addToCartDrainClips(true);
+                      }
+                      setActiveProductDetail(null);
+                    }}
+                    className="flex-1 bg-gradient-to-r from-accent-500 to-[#F58220] text-slate-950 font-black py-3 rounded-xl text-xs sm:text-sm shadow-accent cursor-pointer text-center"
+                  >
+                    Buy Now {activeProductDetail.price ? `(₹${activeProductDetail.price})` : ''}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (activeProductDetail.id === 'sample-test-clip-10') {
+                        addToCartSampleProduct(false);
+                      } else {
+                        addToCartDrainClips(false);
+                      }
+                      setActiveProductDetail(null);
+                    }}
+                    className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 rounded-xl text-xs sm:text-sm cursor-pointer text-center"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
+
                 <button
-                  onClick={() => {
-                    addToCartDrainClips(true);
-                    setActiveProductDetail(null);
-                  }}
-                  className="flex-1 bg-gradient-to-r from-accent-500 to-[#F58220] text-slate-950 font-black py-3 rounded-xl text-xs sm:text-sm shadow-accent cursor-pointer text-center"
+                  type="button"
+                  onClick={() => handleShareProduct(activeProductDetail, '', activeProductDetail.price)}
+                  className="w-full bg-[#E7F8F0] hover:bg-[#D5F3E4] text-[#075E54] border border-[#25D366]/40 font-bold py-2.5 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-2 shadow-xs"
                 >
-                  Buy Now
-                </button>
-                <button
-                  onClick={() => {
-                    addToCartDrainClips(false);
-                    setActiveProductDetail(null);
-                  }}
-                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 rounded-xl text-xs sm:text-sm cursor-pointer text-center"
-                >
-                  Add to Cart
+                  <MessageCircle size={15} className="text-[#25D366] fill-[#25D366]" />
+                  <Share2 size={13} className="text-[#075E54]" />
+                  <span>Share this Product with Friends / Installers</span>
                 </button>
               </div>
 

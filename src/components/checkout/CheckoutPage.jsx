@@ -143,8 +143,10 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
               // Persist locally for immediate access & guest order tracking
               try {
                 const existing = JSON.parse(localStorage.getItem('msv_recent_orders') || '[]');
+                const bookingId = data.bookingId || data.firestoreOrderId || `MSV-${Date.now().toString().slice(-6)}`;
                 const newOrderRecord = {
                   id: data.firestoreOrderId,
+                  bookingId: bookingId,
                   userId: effectiveUserId,
                   shiprocketShipmentId: shipmentId,
                   amount: totalAmount,
@@ -161,7 +163,12 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
 
               onPaymentSuccess({
                  orderId: data.firestoreOrderId,
-                 shiprocketShipmentId: shipmentId
+                 bookingId: data.bookingId || data.firestoreOrderId,
+                 shiprocketShipmentId: shipmentId,
+                 amount: totalAmount,
+                 items: cartItems,
+                 address: address,
+                 razorpayPaymentId: response.razorpay_payment_id
               });
             } else {
               setError("Payment verification failed. Please contact support.");
