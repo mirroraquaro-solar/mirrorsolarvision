@@ -29,7 +29,7 @@ import CheckoutPage from '../checkout/CheckoutPage';
 import OrderSuccess from '../checkout/OrderSuccess';
 import MyOrders from '../checkout/MyOrders';
 
-export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }) {
+export default function MirrorSolarStore({ onBackToHome, initialView = 'store', onNavigate }) {
   // Navigation / View state: 'store' | 'checkout' | 'success' | 'orders'
   const [viewMode, setViewMode] = useState(initialView);
   const [checkoutData, setCheckoutData] = useState(null);
@@ -263,8 +263,23 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
     return (
       <MyOrders 
         onBackToStore={() => {
-          setViewMode('store');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          if (onNavigate) {
+            onNavigate('store');
+          } else {
+            setViewMode('store');
+            window.location.hash = '#store';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }}
+        onBackToHome={() => {
+          if (onNavigate) {
+            onNavigate('home');
+          } else if (onBackToHome) {
+            onBackToHome();
+          } else {
+            window.location.hash = '#home';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
         }}
       />
     );
@@ -868,9 +883,9 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
 
           {/* Customer Reviews Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-            {[...liveReviews, ...CUSTOMER_REVIEWS].map((rev, rIdx) => (
+            {[...liveReviews, ...CUSTOMER_REVIEWS].map((rev) => (
               <div 
-                key={rev.id}
+                key={rev.id || rev.orderId || Math.random()}
                 className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between space-y-4"
               >
                 <div className="space-y-2.5">

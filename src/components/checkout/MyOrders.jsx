@@ -7,14 +7,11 @@ import {
   Package, 
   Loader, 
   ArrowLeft, 
-  ExternalLink, 
   Truck, 
   Search, 
   RefreshCw, 
-  CheckCircle2, 
-  Clock, 
-  AlertCircle,
   Check,
+  Copy,
   MapPin,
   Users,
   MessageCircle,
@@ -24,10 +21,12 @@ import {
   Headphones,
   Star,
   Send,
-  X
+  X,
+  AlertCircle,
+  ExternalLink
 } from 'lucide-react';
 
-export default function MyOrders({ onBackToStore }) {
+export default function MyOrders({ onBackToStore, onBackToHome }) {
   const { currentUser: user, userProfile } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +34,8 @@ export default function MyOrders({ onBackToStore }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState('');
+  const [copiedId, setCopiedId] = useState(null);
+  const [shareNotification, setShareNotification] = useState(null);
 
   // Optional Review Modal State for Bookers
   const [reviewModalOrder, setReviewModalOrder] = useState(null);
@@ -224,16 +225,21 @@ export default function MyOrders({ onBackToStore }) {
 
     try {
       const cleanDigits = queryTerm.replace(/[^0-9]/g, '');
+      const lowerTerm = queryTerm.toLowerCase();
 
       // Check if it's already in loaded orders
       let found = orders.find(
         (o) => 
-          o.bookingId?.toLowerCase() === queryTerm.toLowerCase() ||
-          o.id?.toLowerCase() === queryTerm.toLowerCase() ||
+          o.bookingId?.toLowerCase() === lowerTerm ||
+          o.id?.toLowerCase() === lowerTerm ||
+          o.firestoreOrderId?.toLowerCase() === lowerTerm ||
           o.shiprocketShipmentId?.toString() === queryTerm ||
           o.shiprocketAwb?.toString() === queryTerm ||
-          o.razorpayOrderId?.toLowerCase() === queryTerm.toLowerCase() ||
-          (cleanDigits.length >= 10 && (o.customerPhone === cleanDigits || o.address?.phone?.replace(/[^0-9]/g, '') === cleanDigits))
+          o.razorpayOrderId?.toLowerCase() === lowerTerm ||
+          (cleanDigits.length >= 10 && (
+            o.customerPhone === cleanDigits || 
+            o.address?.phone?.replace(/[^0-9]/g, '') === cleanDigits
+          ))
       );
 
       if (found) {
@@ -243,43 +249,100 @@ export default function MyOrders({ onBackToStore }) {
 
       let newlyFound = [];
 
-      // 1. Search by doc ID in root 'orders'
+      // 1. Search in localStorage 'msv_recent_orders'
       try {
-        const rootDocRef = doc(db, 'orders', queryTerm);
-        const rootSnap = await getDoc(rootDocRef);
-        if (rootSnap.exists()) {
-          newlyFound.push({ id: rootSnap.id, ...rootSnap.data() });
+        const local = JSON.parse(localStorage.getItem('msv_recent_orders') || '[]');
+        for (const loc of local) {
+          const locDigits = (loc.address?.phone || loc.customerPhone || '').replace(/[^0-9]/g, '');
+          if (
+            loc.id?.toLowerCase() === lowerTerm ||
+            loc.bookingId?.toLowerCase() === lowerTerm ||
+            loc.firestoreOrderId?.toLowerCase() === lowerTerm ||
+            loc.shiprocketShipmentId?.toString() === queryTerm ||
+            loc.shiprocketAwb?.toString() === queryTerm ||
+            (cleanDigits.length >= 10 && locDigits.includes(cleanDigits))
+          ) {
+            if (!newlyFound.some((n) => n.id === loc.id)) {
+              newlyFound.push(loc);
+            }
+          }
         }
-      } catch {
-        // Continue searching other criteria
+      } catch (localErr) {
+        console.warn('LocalStorage search error:', localErr);
       }
 
-      // 2. Search by phone number in root 'orders' if 10 digits
-      if (cleanDigits.length >= 10) {
+      // 2. Search by doc ID in root 'orders'
+      if (db) {
         try {
-          const phoneQ = query(collection(db, 'orders'), where('customerPhone', '==', cleanDigits));
-          const phoneSnap = await getDocs(phoneQ);
-          phoneSnap.forEach((d) => {
-            if (!newlyFound.find((o) => o.id === d.id)) {
-              newlyFound.push({ id: d.id, ...d.data() });
+          const rootDocRef = doc(db, 'orders', queryTerm);
+          const rootSnap = await getDoc(rootDocRef);
+          if (rootSnap.exists()) {
+            const data = { id: rootSnap.id, ...rootSnap.data() };
+            if (!newlyFound.some((n) => n.id === data.id)) {
+              newlyFound.push(data);
+            }
+          }
+        } catch {
+          // Continue searching other criteria
+        }
+
+        // 3. Search by bookingId in root 'orders'
+        try {
+          const bookingQ = query(collection(db, 'orders'), where('bookingId', '==', queryTerm));
+          const bookingSnap = await getDocs(bookingQ);
+          bookingSnap.forEach((d) => {
+            const data = { id: d.id, ...d.data() };
+            if (!newlyFound.some((n) => n.id === data.id)) {
+              newlyFound.push(data);
             }
           });
         } catch {
-          // Continue searching
+          // Continue
         }
-      }
 
-      // 3. Search by Shiprocket Shipment ID
-      try {
-        const srQ = query(collection(db, 'orders'), where('shiprocketShipmentId', '==', queryTerm));
-        const srSnap = await getDocs(srQ);
-        srSnap.forEach((d) => {
-          if (!newlyFound.find((o) => o.id === d.id)) {
-            newlyFound.push({ id: d.id, ...d.data() });
+        // 4. Search by phone number in root 'orders' if 10 digits
+        if (cleanDigits.length >= 10) {
+          try {
+            const phoneQ = query(collection(db, 'orders'), where('customerPhone', '==', cleanDigits));
+            const phoneSnap = await getDocs(phoneQ);
+            phoneSnap.forEach((d) => {
+              const data = { id: d.id, ...d.data() };
+              if (!newlyFound.some((n) => n.id === data.id)) {
+                newlyFound.push(data);
+              }
+            });
+          } catch {
+            // Continue
           }
-        });
-      } catch {
-        // Continue
+        }
+
+        // 5. Search by Shiprocket Shipment ID
+        try {
+          const srQ = query(collection(db, 'orders'), where('shiprocketShipmentId', '==', queryTerm));
+          const srSnap = await getDocs(srQ);
+          srSnap.forEach((d) => {
+            const data = { id: d.id, ...d.data() };
+            if (!newlyFound.some((n) => n.id === data.id)) {
+              newlyFound.push(data);
+            }
+          });
+        } catch {
+          // Continue
+        }
+
+        // 6. Search by Shiprocket AWB
+        try {
+          const awbQ = query(collection(db, 'orders'), where('shiprocketAwb', '==', queryTerm));
+          const awbSnap = await getDocs(awbQ);
+          awbSnap.forEach((d) => {
+            const data = { id: d.id, ...d.data() };
+            if (!newlyFound.some((n) => n.id === data.id)) {
+              newlyFound.push(data);
+            }
+          });
+        } catch {
+          // Continue
+        }
       }
 
       if (newlyFound.length > 0) {
@@ -291,7 +354,7 @@ export default function MyOrders({ onBackToStore }) {
         return;
       }
 
-      setSearchError(`No order found matching "${queryTerm}". Please check the Booking ID, 10-digit mobile number, or Tracking ID.`);
+      setSearchError(`No order found matching "${queryTerm}". Please verify the Booking ID (e.g. MSV-...), 10-digit phone number, or Courier AWB.`);
     } catch (err) {
       console.error('Search error:', err);
       setSearchError('Search failed. Please check your connection and try again.');
@@ -301,6 +364,7 @@ export default function MyOrders({ onBackToStore }) {
   };
 
   const copyToClipboard = (text, id) => {
+    if (!text) return;
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -346,12 +410,13 @@ export default function MyOrders({ onBackToStore }) {
           <button
             onClick={() => {
               if (onBackToStore) onBackToStore();
+              else if (onBackToHome) onBackToHome();
               else window.location.hash = '#store';
             }}
             className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-black text-slate-800 hover:text-primary-600 transition-colors cursor-pointer uppercase tracking-tight"
           >
             <ArrowLeft size={18} />
-            <span>ORDER DETAILS</span>
+            <span>ORDER DETAILS & TRACKING</span>
           </button>
 
           <div className="flex items-center gap-3">
@@ -509,6 +574,8 @@ export default function MyOrders({ onBackToStore }) {
               const awb = order.shiprocketAwb || order.awb || null;
               const trackingCode = shipmentId || awb;
               const bookingId = order.bookingId || order.firestoreOrderId || order.id || 'MSV-ORD';
+              const orderKey = order.bookingId || order.firestoreOrderId || order.id || `ORD-${order.id}`;
+              const isReviewed = !!submittedReviews[orderKey];
 
               const rawStatus = (order.shiprocketStatus || order.status || 'PAID').toString().toUpperCase();
 
@@ -539,32 +606,32 @@ export default function MyOrders({ onBackToStore }) {
               let tooltipLabel = 'Order Packed';
               let tooltipPosition = '12%';
               let progressPercent = 10;
-              let statusHeadline = 'Order Placed';
+              let _statusHeadline = 'Order Placed';
 
               if (rawStatus.includes('DELIVERED')) {
                 currentMilestoneIdx = 3;
                 tooltipLabel = 'Delivered';
                 tooltipPosition = '88%';
                 progressPercent = 100;
-                statusHeadline = 'Delivered to Customer';
+                _statusHeadline = 'Delivered to Customer';
               } else if (rawStatus.includes('OUT_FOR_DELIVERY') || rawStatus.includes('OUT FOR DELIVERY')) {
                 currentMilestoneIdx = 2;
                 tooltipLabel = 'Out for Delivery';
                 tooltipPosition = '63%';
                 progressPercent = 66;
-                statusHeadline = 'Out for Delivery Today';
+                _statusHeadline = 'Out for Delivery Today';
               } else if (rawStatus.includes('PICKED UP') || rawStatus.includes('SHIPPED') || rawStatus.includes('IN_TRANSIT') || rawStatus.includes('IN TRANSIT') || !!trackingCode) {
                 currentMilestoneIdx = 1;
                 tooltipLabel = 'Shipped & In Transit';
                 tooltipPosition = '38%';
                 progressPercent = 33;
-                statusHeadline = 'Shipped & In Transit';
+                _statusHeadline = 'Shipped & In Transit';
               } else {
                 currentMilestoneIdx = 0;
                 tooltipLabel = 'Order Packed';
                 tooltipPosition = '12%';
                 progressPercent = 10;
-                statusHeadline = 'Order Placed';
+                _statusHeadline = 'Order Placed';
               }
 
               const items = Array.isArray(order.items) ? order.items : [];
@@ -575,7 +642,7 @@ export default function MyOrders({ onBackToStore }) {
                   key={order.id}
                   className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden hover:shadow-md transition-all"
                 >
-                  {/* 1. PRODUCT DETAILS HEADER (Exact Layout from Image) */}
+                  {/* 1. PRODUCT DETAILS HEADER */}
                   <div className="p-4 sm:p-5 border-b border-slate-100 flex items-start justify-between gap-3 bg-white">
                     <div className="flex items-start gap-3.5 min-w-0">
                       <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-50 border border-slate-200 p-1.5 shrink-0 flex items-center justify-center overflow-hidden">
@@ -589,6 +656,14 @@ export default function MyOrders({ onBackToStore }) {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 text-xs text-slate-800 font-mono font-bold">
                           <span>Order #{bookingId}</span>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(bookingId, order.id)}
+                            className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition cursor-pointer"
+                            title="Copy Order / Booking ID"
+                          >
+                            {copiedId === order.id ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                          </button>
                           <ChevronRight size={15} className="text-slate-400 shrink-0" />
                         </div>
 
@@ -746,10 +821,17 @@ export default function MyOrders({ onBackToStore }) {
 
                     <div className="flex items-center gap-2 shrink-0 flex-wrap">
                       {trackingCode && (
-                        <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-800 border border-blue-200 text-xs font-bold py-2 px-3 rounded-xl">
+                        <a
+                          href={`https://shiprocket.co/tracking/${trackingCode}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-xs font-bold py-2 px-3 rounded-xl transition cursor-pointer"
+                          title="View Live Tracking on Shiprocket"
+                        >
                           <Truck size={13} className="text-blue-600" />
                           <span>AWB: {trackingCode}</span>
-                        </span>
+                          <ExternalLink size={11} className="text-blue-500" />
+                        </a>
                       )}
 
                       <button

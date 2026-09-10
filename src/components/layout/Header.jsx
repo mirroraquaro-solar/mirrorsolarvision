@@ -87,6 +87,16 @@ export default function Header({ onNavigate }) {
               <span>Mirror Solar Store</span>
             </a>
 
+            {/* Track Order Direct Link */}
+            <a 
+              href="#orders" 
+              onClick={(e) => { e.preventDefault(); handleNavClick('orders'); }} 
+              className="inline-flex items-center gap-1.5 text-[14px] font-bold text-slate-800 hover:text-primary-600 transition-colors"
+            >
+              <Truck size={15} className="text-primary-600" />
+              <span>Track Order</span>
+            </a>
+
             <button 
               onClick={() => scrollToSection('projects')}
               className="text-[14px] font-semibold text-slate-700 hover:text-primary-600 transition-colors cursor-pointer"

@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { 
   CheckCircle, 
   Package, 
@@ -12,7 +12,7 @@ import {
   Check, 
   Send 
 } from 'lucide-react';
-import { BUSINESS_CONTACT } from '../../data/bulkComboData';
+// import { BUSINESS_CONTACT } from '../../data/bulkComboData';
 import { db } from '../../config/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -34,8 +34,8 @@ const OrderSuccess = ({ orderData, onContinueShopping, onViewOrders }) => {
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewTitle, setReviewTitle] = useState('');
   const [reviewComment, setReviewComment] = useState('');
-  const [reviewerName, setReviewerName] = useState(customerName !== 'Valued Customer' ? customerName : '');
-  const [reviewerLocation, setReviewerLocation] = useState(customerCity);
+  const reviewerName = customerName !== 'Valued Customer' ? customerName : '';
+  const reviewerLocation = customerCity;
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewSubmitted, setReviewSubmitted] = useState(() => {
     try {

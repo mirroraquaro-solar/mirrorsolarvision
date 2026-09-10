@@ -92,12 +92,14 @@ function App() {
           key="view-store"
           initialView="store"
           onBackToHome={() => handleNavigate('home')}
+          onNavigate={handleNavigate}
         />
       ) : currentView === 'orders' ? (
         <MirrorSolarStore 
           key="view-orders"
           initialView="orders"
           onBackToHome={() => handleNavigate('home')}
+          onNavigate={handleNavigate}
         />
       ) : currentView === 'partner-registration' ? (
         <PartnerRegistration 

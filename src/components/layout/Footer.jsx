@@ -211,7 +211,18 @@ export default function Footer({ onNavigate }) {
                   </a>
                 </li>
                 <li>
-                  <a href="#orders" onClick={(e) => { e.preventDefault(); onNavigate ? onNavigate('orders') : (window.location.hash = '#orders'); }} className="text-accent-400 font-semibold hover:underline py-0.5 inline-block">
+                  <a 
+                    href="#orders" 
+                    onClick={(e) => { 
+                      e.preventDefault(); 
+                      if (onNavigate) {
+                        onNavigate('orders');
+                      } else {
+                        window.location.hash = '#orders';
+                      }
+                    }} 
+                    className="text-accent-400 font-semibold hover:underline py-0.5 inline-block"
+                  >
                     Track Orders →
                   </a>
                 </li>
