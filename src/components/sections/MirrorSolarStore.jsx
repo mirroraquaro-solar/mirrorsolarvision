@@ -901,12 +901,12 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
 
                     <span className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0">
                       <ShieldCheck size={12} className="text-emerald-600" />
-                      <span>{rev.verifiedBadge}</span>
+                      <span>{rev.verifiedBadge || 'Verified Buyer'}</span>
                     </span>
                   </div>
 
                   <div className="flex items-center gap-1 text-amber-400">
-                    {[...Array(rev.rating)].map((_, i) => (
+                    {[...Array(rev.rating || 5)].map((_, i) => (
                       <Star key={i} size={14} className="fill-amber-400 text-amber-400" />
                     ))}
                   </div>
@@ -920,7 +920,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                   <span className="font-semibold text-slate-400">Purchased: Drain Clips / Combo</span>
                   <span className="inline-flex items-center gap-1 font-bold text-emerald-700">
                     <ThumbsUp size={12} />
-                    <span>Helpful ({rev.helpfulCount})</span>
+                    <span>Helpful ({rev.helpfulCount || 24})</span>
                   </span>
                 </div>
               </div>

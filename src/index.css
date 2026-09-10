@@ -147,4 +147,14 @@
     0% { transform: translateX(0); }
     100% { transform: translateX(-50%); }
   }
+
+  .animate-marquee-ltr {
+    animation: marquee-ltr 65s linear infinite;
+  }
+
+  @keyframes marquee-ltr {
+    0% { transform: translateX(calc(-50% - 12px)); }
+    100% { transform: translateX(0); }
+  }
 }
+
