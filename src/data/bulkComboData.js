@@ -124,35 +124,6 @@ export const INDIVIDUAL_PRODUCTS = [
       { label: 'Material', val: 'UV-Stabilized High-Density Polymer' },
       { label: 'Durability', val: '10+ Years Outdoor Weather Resistance' }
     ]
-  },
-  {
-    id: 'sample-test-clip-10',
-    name: 'Sample Solar Drain Clip (Live Test Product)',
-    category: 'Sample Testing',
-    tag: 'Live Test ₹10',
-    shortDesc: '1 Sample Solar Drain Clip for testing live payment, Shiprocket order booking, and live tracking.',
-    fullDesc: 'Use this sample product to test complete live end-to-end checkout: Razorpay live payment verification, automatic order creation on your Shiprocket dashboard, and real-time live package tracking updates.',
-    rating: 5.0,
-    reviewsCount: 120,
-    purchasesCount: '10,000+',
-    stockStatus: 'In Stock • Ready to Test',
-    price: 10,
-    pricePerClip: 10,
-    clipsPerKw: 1,
-    sizes: ['35mm'],
-    images: [
-      '/assets/images/001.png',
-      '/assets/images/products/drain-clip-35mm-1.webp'
-    ],
-    variants: [
-      { id: 'sample-1', kw: 1, label: '1 Sample Piece', price: 10, clipsCount: 1, unit: '1 Sample Clip' }
-    ],
-    defaultVariantIdx: 0,
-    specs: [
-      { label: 'Test Item', val: '1 Unit MSV Solar Drain Clip' },
-      { label: 'Test Price', val: '₹10 (Instant live payment & tracking test)' },
-      { label: 'Shiprocket Integration', val: 'Generates live order & tracking on Shiprocket' }
-    ]
   }
 ];
 

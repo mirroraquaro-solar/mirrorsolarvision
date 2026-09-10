@@ -23,6 +23,8 @@ import {
   ThumbsUp 
 } from 'lucide-react';
 import { CONFIRMED_BULK_COMBO, INDIVIDUAL_PRODUCTS, BUSINESS_CONTACT, CUSTOMER_REVIEWS } from '../../data/bulkComboData';
+import { db } from '../../config/firebase';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import CheckoutPage from '../checkout/CheckoutPage';
 import OrderSuccess from '../checkout/OrderSuccess';
 import MyOrders from '../checkout/MyOrders';
@@ -32,6 +34,35 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
   const [viewMode, setViewMode] = useState(initialView);
   const [checkoutData, setCheckoutData] = useState(null);
   const [completedOrder, setCompletedOrder] = useState(null);
+  const [liveReviews, setLiveReviews] = useState([]);
+
+  useEffect(() => {
+    const fetchLiveReviews = async () => {
+      let list = [];
+      try {
+        const localList = JSON.parse(localStorage.getItem('msv_custom_reviews_list') || '[]');
+        if (Array.isArray(localList)) list.push(...localList);
+      } catch (e) {
+        console.warn('Local reviews load error:', e);
+      }
+      try {
+        if (db) {
+          const q = query(collection(db, 'product_reviews'), orderBy('createdAt', 'desc'), limit(20));
+          const snap = await getDocs(q);
+          snap.forEach((doc) => {
+            const data = doc.data();
+            if (!list.find((r) => r.orderId === data.orderId || r.id === doc.id)) {
+              list.push({ id: doc.id, ...data });
+            }
+          });
+        }
+      } catch (err) {
+        console.warn('Firestore live reviews load error:', err);
+      }
+      setLiveReviews(list);
+    };
+    fetchLiveReviews();
+  }, []);
 
   useEffect(() => {
     setViewMode(initialView);
@@ -164,47 +195,6 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
 
     const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`;
     window.open(waUrl, '_blank');
-  };
-
-  const sampleProduct = INDIVIDUAL_PRODUCTS.find(p => p.id === 'sample-test-clip-10');
-
-  const addToCartSampleProduct = (buyNow = false) => {
-    if (!sampleProduct) return;
-    const cartItemId = `sample-test-clip-10-unit`;
-    const newItem = {
-      cartItemId,
-      productId: sampleProduct.id,
-      name: sampleProduct.name,
-      variantLabel: '1 Sample Unit (Live Test)',
-      price: 10,
-      image: sampleProduct.images[0],
-      quantity: 1
-    };
-
-    if (buyNow) {
-      setCheckoutData({
-        items: [newItem],
-        totalPrice: 10
-      });
-      setViewMode('checkout');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    setCart(prev => {
-      const existing = prev.find(item => item.cartItemId === cartItemId);
-      if (existing) {
-        return prev.map(item => 
-          item.cartItemId === cartItemId 
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      return [...prev, newItem];
-    });
-
-    setCartNotification(`${sampleProduct.name} added to cart!`);
-    setTimeout(() => setCartNotification(null), 3000);
   };
 
   const updateCartQuantity = (cartItemId, delta) => {
@@ -414,89 +404,6 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
 
       <div className="container-custom space-y-16">
         
-        {/* ========================================================================= */}
-        {/* LIVE TESTING / SAMPLE PRODUCT CARD (₹10) */}
-        {/* ========================================================================= */}
-        {sampleProduct && (
-          <section aria-label="Sample Test Order" className="max-w-5xl mx-auto">
-            <div className="bg-gradient-to-br from-slate-900 via-[#0A2540] to-slate-900 border-2 border-accent-500/40 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-72 h-72 bg-accent-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
-
-              <div className="flex flex-col md:flex-row items-center gap-6 justify-between relative z-10">
-                <div className="flex items-center gap-5 w-full md:w-auto">
-                  <div 
-                    onClick={() => setActiveProductDetail(sampleProduct)}
-                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-white/10 border border-white/20 p-2.5 shrink-0 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
-                  >
-                    <img 
-                      src={sampleProduct.images[0]} 
-                      alt={sampleProduct.name} 
-                      className="max-h-full max-w-full object-contain drop-shadow"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5 text-left">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="bg-accent-500 text-slate-950 font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                        Live Test • ₹10
-                      </span>
-                      <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        Instant Shiprocket Dispatch Sync
-                      </span>
-                    </div>
-
-                    <h3 
-                      onClick={() => setActiveProductDetail(sampleProduct)}
-                      className="text-lg sm:text-xl font-black text-white hover:text-accent-400 transition-colors cursor-pointer font-heading"
-                    >
-                      {sampleProduct.name}
-                    </h3>
-
-                    <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
-                      Test the complete live flow: Razorpay live payment (₹10) → Instant order creation on Shiprocket dashboard → Live courier tracking & webhook sync.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Price & Action Buttons */}
-                <div className="flex flex-col sm:flex-row md:flex-col items-center sm:items-end gap-3 w-full md:w-auto shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-white/10">
-                  <div className="text-left sm:text-right w-full sm:w-auto">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Sample Price</span>
-                    <span className="text-3xl font-black text-accent-400 font-heading">₹10</span>
-                  </div>
-
-                  <div className="flex items-center gap-2.5 w-full sm:w-auto">
-                    <button
-                      type="button"
-                      onClick={() => handleShareProduct(sampleProduct, '1 Sample Unit (Live Test)', 10)}
-                      className="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs px-3 py-3 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5"
-                      title="Share product on WhatsApp or other apps"
-                    >
-                      <Share2 size={14} className="text-emerald-400" />
-                      <span className="hidden sm:inline">Share</span>
-                    </button>
-
-                    <button
-                      onClick={() => addToCartSampleProduct(false)}
-                      className="flex-1 sm:flex-none bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs px-4 py-3 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5"
-                    >
-                      <ShoppingCart size={14} />
-                      <span>Add to Cart</span>
-                    </button>
-
-                    <button
-                      onClick={() => addToCartSampleProduct(true)}
-                      className="flex-1 sm:flex-none bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black text-xs sm:text-sm px-6 py-3 rounded-xl transition shadow-accent cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
-                    >
-                      <span>Buy Now (₹10)</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
-
         {/* ========================================================================= */}
         {/* SECTION 1: INDIVIDUAL PRODUCTS (MSV Heavy-Duty Drain Clips) */}
         {/* ========================================================================= */}
@@ -961,7 +868,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
 
           {/* Customer Reviews Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-            {CUSTOMER_REVIEWS.map((rev) => (
+            {[...liveReviews, ...CUSTOMER_REVIEWS].map((rev, rIdx) => (
               <div 
                 key={rev.id}
                 className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between space-y-4"
@@ -1581,11 +1488,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
                 <div className="flex gap-3">
                   <button
                     onClick={() => {
-                      if (activeProductDetail.id === 'sample-test-clip-10') {
-                        addToCartSampleProduct(true);
-                      } else {
-                        addToCartDrainClips(true);
-                      }
+                      addToCartDrainClips(true);
                       setActiveProductDetail(null);
                     }}
                     className="flex-1 bg-gradient-to-r from-accent-500 to-[#F58220] text-slate-950 font-black py-3 rounded-xl text-xs sm:text-sm shadow-accent cursor-pointer text-center"
@@ -1594,11 +1497,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store' }
                   </button>
                   <button
                     onClick={() => {
-                      if (activeProductDetail.id === 'sample-test-clip-10') {
-                        addToCartSampleProduct(false);
-                      } else {
-                        addToCartDrainClips(false);
-                      }
+                      addToCartDrainClips(false);
                       setActiveProductDetail(null);
                     }}
                     className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 rounded-xl text-xs sm:text-sm cursor-pointer text-center"

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { db } from '../../config/firebase';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { 
   ShoppingBag, 
   Package, 
@@ -14,33 +14,110 @@ import {
   CheckCircle2, 
   Clock, 
   AlertCircle,
-  Copy,
   Check,
   MapPin,
-  Phone,
-  User,
   Users,
-  Calendar,
-  MessageSquare,
   MessageCircle,
   Share2,
   ChevronRight,
   ShieldCheck,
   Headphones,
-  Star
+  Star,
+  Send,
+  X
 } from 'lucide-react';
-import { BUSINESS_CONTACT } from '../../data/bulkComboData';
 
 export default function MyOrders({ onBackToStore }) {
-  const { currentUser: user, userProfile, openAuthModal } = useAuth();
+  const { currentUser: user, userProfile } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState('');
-  const [copiedId, setCopiedId] = useState(null);
-  const [shareNotification, setShareNotification] = useState(null);
+
+  // Optional Review Modal State for Bookers
+  const [reviewModalOrder, setReviewModalOrder] = useState(null);
+  const [reviewModalItem, setReviewModalItem] = useState(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewHoverRating, setReviewHoverRating] = useState(0);
+  const [reviewTitle, setReviewTitle] = useState("");
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewerName, setReviewerName] = useState("");
+  const [reviewerCity, setReviewerCity] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [submittedReviews, setSubmittedReviews] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("msv_submitted_reviews") || "{}");
+    } catch {
+      return {};
+    }
+  });
+
+  const handleOpenReviewModal = (order, item) => {
+    const defaultName = order?.address?.fullName || userProfile?.fullName || user?.displayName || "Customer";
+    const defaultCity = order?.address?.city ? (order.address.city + ", " + (order.address.state || "AP")) : "Andhra Pradesh";
+    setReviewModalOrder(order);
+    setReviewModalItem(item || (order?.items && order.items[0]) || {});
+    setReviewRating(5);
+    setReviewHoverRating(0);
+    setReviewTitle("");
+    setReviewComment("");
+    setReviewerName(defaultName !== "Customer" ? defaultName : "");
+    setReviewerCity(defaultCity);
+  };
+
+  const handleCloseReviewModal = () => {
+    setReviewModalOrder(null);
+    setReviewModalItem(null);
+    setIsSubmittingReview(false);
+  };
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (!reviewModalOrder || isSubmittingReview) return;
+    setIsSubmittingReview(true);
+    const orderKey = reviewModalOrder.bookingId || reviewModalOrder.id;
+    const reviewData = {
+      orderId: reviewModalOrder.id || orderKey,
+      bookingId: orderKey,
+      productId: reviewModalItem?.productId || reviewModalItem?.id || "msv-drain-clips",
+      productName: reviewModalItem?.name || "MSV Heavy-Duty Drain Clips",
+      variantLabel: reviewModalItem?.variantLabel || "",
+      rating: Number(reviewRating) || 5,
+      title: reviewTitle.trim() || "Verified Order Review",
+      comment: reviewComment.trim() || "High quality solar hardware, fast shipping, and excellent support.",
+      name: reviewerName.trim() || reviewModalOrder?.address?.fullName || "Verified Buyer",
+      location: reviewerCity.trim() || (reviewModalOrder?.address?.city ? (reviewModalOrder.address.city + ", AP") : "Andhra Pradesh"),
+      verified: true,
+      verifiedBadge: "Verified Order Buyer",
+      date: "Just now",
+      source: "my_orders",
+      createdAt: new Date().toISOString()
+    };
+    try {
+      if (db) {
+        await addDoc(collection(db, "product_reviews"), {
+          ...reviewData,
+          serverCreatedAt: serverTimestamp()
+        });
+      }
+    } catch (err) {
+      console.warn("Firestore review save warning:", err);
+    }
+    try {
+      const stored = JSON.parse(localStorage.getItem("msv_submitted_reviews") || "{}");
+      stored[orderKey] = reviewData;
+      localStorage.setItem("msv_submitted_reviews", JSON.stringify(stored));
+      setSubmittedReviews(stored);
+      const allReviewsList = JSON.parse(localStorage.getItem("msv_custom_reviews_list") || "[]");
+      localStorage.setItem("msv_custom_reviews_list", JSON.stringify([reviewData, ...allReviewsList]));
+    } catch (localErr) {
+      console.warn("localStorage save warning:", localErr);
+    }
+    setIsSubmittingReview(false);
+    handleCloseReviewModal();
+  };
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -693,11 +770,147 @@ export default function MyOrders({ onBackToStore }) {
                         <Share2 size={12} className="text-slate-950" />
                         <span>Share Product</span>
                       </button>
+
+                      {/* Optional Product Review Button for Bookers */}
+                      {isReviewed ? (
+                        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold py-2 px-3 rounded-xl">
+                          <Star size={12} className="fill-emerald-500 text-emerald-500" />
+                          <span>Reviewed ⭐⭐⭐⭐⭐</span>
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleOpenReviewModal(order, firstItem)}
+                          className="inline-flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs py-2 px-3.5 rounded-xl transition-all cursor-pointer shadow-xs"
+                          title="Write an optional review for this product"
+                        >
+                          <Star size={13} className="fill-amber-400 text-amber-500" />
+                          <span>Rate Product</span>
+                          <span className="text-[10px] text-amber-700/80 font-normal">(Optional)</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
               );
             })}
+          </div>
+        )}
+        {/* OPTIONAL REVIEW MODAL */}
+        {reviewModalOrder && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 relative space-y-4 text-left">
+              <button
+                onClick={handleCloseReviewModal}
+                className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-amber-500/10 text-amber-600 shrink-0">
+                  <Star size={20} className="fill-amber-500 text-amber-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-900 font-heading">
+                    Rate & Review Product <span className="text-xs text-slate-500 font-semibold">(Optional)</span>
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Order #{reviewModalOrder.bookingId || reviewModalOrder.id} • {reviewModalItem?.name || "MSV Solar Product"}
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmitReview} className="space-y-4 pt-1">
+                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-slate-700">Select Rating:</span>
+                  <div className="flex items-center gap-1.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setReviewRating(star)}
+                        onMouseEnter={() => setReviewHoverRating(star)}
+                        onMouseLeave={() => setReviewHoverRating(0)}
+                        className="p-1 rounded-md hover:scale-110 transition-transform cursor-pointer"
+                      >
+                        <Star
+                          size={24}
+                          className={
+                            (reviewHoverRating || reviewRating) >= star
+                              ? "fill-amber-400 text-amber-400 transition-colors"
+                              : "text-slate-300 transition-colors"
+                          }
+                        />
+                      </button>
+                    ))}
+                    <span className="text-xs font-black text-amber-700 ml-1.5">
+                      {reviewRating === 5 ? "5.0 (Excellent)" : reviewRating === 4 ? "4.0 (Very Good)" : reviewRating === 3 ? "3.0 (Good)" : (reviewRating + ".0")}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5">
+                  {["⚡ Fast Delivery", "💯 Top UV Quality", "👍 Easy Snap-on", "🛡️ Heavy-Duty", "💧 Prevents Sludge"].map((tag, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        if (!reviewComment.includes(tag)) {
+                          setReviewComment(prev => prev ? (prev + " • " + tag) : tag);
+                        }
+                      }}
+                      className="text-[11px] font-bold px-3 py-1 rounded-full bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-900 border border-slate-200 transition-colors cursor-pointer"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Review Headline (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={reviewTitle}
+                    onChange={(e) => setReviewTitle(e.target.value)}
+                    placeholder="e.g., Solved panel sludge issues on our rooftop!"
+                    className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Detailed Review (Optional)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="Share your feedback about the product durability, fit, and delivery speed..."
+                    className="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 resize-none font-medium"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={handleCloseReviewModal}
+                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingReview}
+                    className="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black text-xs px-5 py-2.5 rounded-xl shadow-xs transition cursor-pointer disabled:opacity-50"
+                  >
+                    <Send size={13} />
+                    <span>{isSubmittingReview ? "Submitting..." : "Submit Review"}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
       </div>
