@@ -7,7 +7,6 @@ import {
   Package, 
   Loader, 
   ArrowLeft, 
-  Truck, 
   Search, 
   RefreshCw, 
   Check,
@@ -22,8 +21,7 @@ import {
   Star,
   Send,
   X,
-  AlertCircle,
-  ExternalLink
+  AlertCircle
 } from 'lucide-react';
 
 export default function MyOrders({ onBackToStore, onBackToHome }) {
@@ -820,20 +818,6 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                     )}
 
                     <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                      {trackingCode && (
-                        <a
-                          href={`https://shiprocket.co/tracking/${trackingCode}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-xs font-bold py-2 px-3 rounded-xl transition cursor-pointer"
-                          title="View Live Tracking on Shiprocket"
-                        >
-                          <Truck size={13} className="text-blue-600" />
-                          <span>AWB: {trackingCode}</span>
-                          <ExternalLink size={11} className="text-blue-500" />
-                        </a>
-                      )}
-
                       <button
                         onClick={handleRefresh}
                         className="inline-flex items-center justify-center gap-1 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold py-2 px-3 rounded-xl transition-colors cursor-pointer"
@@ -853,7 +837,7 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                         <span>Share Product</span>
                       </button>
 
-                      {/* Optional Product Review Button for Bookers */}
+                      {/* Product Review Button for Bookers */}
                       {isReviewed ? (
                         <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold py-2 px-3 rounded-xl">
                           <Star size={12} className="fill-emerald-500 text-emerald-500" />
@@ -863,11 +847,10 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                         <button
                           onClick={() => handleOpenReviewModal(order, firstItem)}
                           className="inline-flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs py-2 px-3.5 rounded-xl transition-all cursor-pointer shadow-xs"
-                          title="Write an optional review for this product"
+                          title="Rate this product"
                         >
                           <Star size={13} className="fill-amber-400 text-amber-500" />
                           <span>Rate Product</span>
-                          <span className="text-[10px] text-amber-700/80 font-normal">(Optional)</span>
                         </button>
                       )}
                     </div>
@@ -877,7 +860,7 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
             })}
           </div>
         )}
-        {/* OPTIONAL REVIEW MODAL */}
+        {/* REVIEW MODAL */}
         {reviewModalOrder && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
             <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 relative space-y-4 text-left">
@@ -894,7 +877,7 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-slate-900 font-heading">
-                    Rate & Review Product <span className="text-xs text-slate-500 font-semibold">(Optional)</span>
+                    Rate & Review Product
                   </h3>
                   <p className="text-xs text-slate-500">
                     Order #{reviewModalOrder.bookingId || reviewModalOrder.id} • {reviewModalItem?.name || "MSV Solar Product"}
@@ -950,7 +933,7 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
 
                 <div>
                   <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Review Headline (Optional)
+                    Review Headline
                   </label>
                   <input
                     type="text"
@@ -963,7 +946,7 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
 
                 <div>
                   <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Detailed Review (Optional)
+                    Detailed Review
                   </label>
                   <textarea
                     rows={3}

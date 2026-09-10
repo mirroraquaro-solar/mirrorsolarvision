@@ -236,7 +236,7 @@ ${shipmentId ? `🚚 *Shiprocket Tracking ID:* ${shipmentId}\n🔗 *Live Courier
                   </div>
                   <div>
                     <h4 className="text-sm font-black text-slate-900 font-heading">
-                      Share Your Experience <span className="text-[11px] font-semibold text-slate-500 lowercase">(optional)</span>
+                      Share Your Experience
                     </h4>
                     <p className="text-[11px] text-slate-500">How satisfied are you with this product and ordering experience?</p>
                   </div>
@@ -310,7 +310,7 @@ ${shipmentId ? `🚚 *Shiprocket Tracking ID:* ${shipmentId}\n🔗 *Live Courier
                       type="text"
                       value={reviewTitle}
                       onChange={(e) => setReviewTitle(e.target.value)}
-                      placeholder="Title: e.g., Best solar drain clips in Andhra Pradesh (Optional)"
+                      placeholder="Title: e.g., Best solar drain clips in Andhra Pradesh"
                       className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 font-medium"
                     />
                   </div>
@@ -320,7 +320,7 @@ ${shipmentId ? `🚚 *Shiprocket Tracking ID:* ${shipmentId}\n🔗 *Live Courier
                       rows={2}
                       value={reviewComment}
                       onChange={(e) => setReviewComment(e.target.value)}
-                      placeholder="Write your review: e.g., Easy to install, eliminated mud build up completely on our 5kW plant... (Optional)"
+                      placeholder="Write your review: e.g., Easy to install, eliminated mud build up completely on our 5kW plant..."
                       className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 resize-none font-medium"
                     />
                   </div>
