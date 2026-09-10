@@ -641,9 +641,9 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                   className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden hover:shadow-md transition-all"
                 >
                   {/* 1. PRODUCT DETAILS HEADER */}
-                  <div className="p-4 sm:p-5 border-b border-slate-100 flex items-start justify-between gap-3 bg-white">
-                    <div className="flex items-start gap-3.5 min-w-0">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-50 border border-slate-200 p-1.5 shrink-0 flex items-center justify-center overflow-hidden">
+                  <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-slate-50 border border-slate-200 p-1.5 shrink-0 flex items-center justify-center overflow-hidden">
                         <img
                           src={firstItem?.image || '/assets/images/001.png'}
                           alt={firstItem?.name || 'Product'}
@@ -665,16 +665,16 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                           <ChevronRight size={15} className="text-slate-400 shrink-0" />
                         </div>
 
-                        <h4 className="font-extrabold text-slate-900 text-sm sm:text-base truncate mt-0.5">
+                        <h4 className="font-extrabold text-slate-900 text-xs sm:text-base truncate mt-0.5">
                           {firstItem?.name || 'MSV Solar Drain Clips'}
                         </h4>
 
-                        <p className="text-xs text-slate-500 mt-0.5 font-medium">
+                        <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 font-medium">
                           {firstItem?.selectedSize ? `Size: ${firstItem.selectedSize} • ` : 'Standard Size • '}Prepaid (₹{Number(order.amount || 0).toLocaleString('en-IN')})
                         </p>
 
                         <div className="flex items-center gap-1.5 mt-1.5">
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                          <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
                             <ShieldCheck size={12} className="text-emerald-600" />
                             All issue easy returns • 100% Genuine
                           </span>
@@ -683,7 +683,7 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                     </div>
                     <button
                       onClick={() => handleShareProduct(firstItem, order)}
-                      className="inline-flex items-center gap-1.5 bg-[#E7F8F0] hover:bg-[#D5F3E4] text-[#075E54] border border-[#25D366]/50 font-bold text-xs py-2 px-3 rounded-xl shadow-xs transition-all shrink-0 cursor-pointer"
+                      className="inline-flex items-center justify-center gap-1.5 bg-[#E7F8F0] hover:bg-[#D5F3E4] text-[#075E54] border border-[#25D366]/50 font-bold text-xs py-2 px-3 rounded-xl shadow-xs transition-all shrink-0 cursor-pointer self-start sm:self-auto w-full sm:w-auto"
                       title="Share Product Details on WhatsApp"
                     >
                       <MessageCircle size={14} className="text-[#25D366] fill-[#25D366]" />
@@ -695,15 +695,15 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                   {/* 2. STATUS & DELIVERY ESTIMATE BANNER */}
                   <div className="px-4 sm:px-6 pt-5 pb-2">
                     <div className="flex items-start gap-3.5">
-                      <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0 relative">
-                        <Package size={22} className="text-amber-500" />
+                      <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0 relative">
+                        <Package size={20} className="text-amber-500" />
                         <span className="absolute -top-1 -right-1 bg-emerald-600 text-white rounded-full p-0.5 shadow-xs">
                           <Check size={9} strokeWidth={3} />
                         </span>
                       </div>
 
                       <div>
-                        <h3 className="text-base sm:text-lg font-black text-slate-900 font-heading">
+                        <h3 className="text-sm sm:text-lg font-black text-slate-900 font-heading">
                           {rawStatus.replace('_', ' ')}
                         </h3>
                         <p className="text-xs sm:text-sm font-bold text-slate-500 mt-0.5">
@@ -714,7 +714,7 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                   </div>
 
                   {/* 3. HORIZONTAL VISUAL STEPPER WITH FLOATING TOOLTIP */}
-                  <div className="px-4 sm:px-6 pt-4 pb-5">
+                  <div className="px-3 sm:px-6 pt-4 pb-5">
                     <div className="relative mb-3 flex items-center" style={{ minHeight: '36px' }}>
                       <div
                         className="transition-all duration-500 ease-out"
@@ -723,8 +723,8 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                           transform: 'translateX(-50%)',
                         }}
                       >
-                        <div className="bg-[#1F2937] text-white text-[11px] font-extrabold px-3 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5 whitespace-nowrap relative border border-slate-700">
-                          <span className="text-sm">📦</span>
+                        <div className="bg-[#1F2937] text-white text-[10px] sm:text-[11px] font-extrabold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl shadow-lg flex items-center gap-1.5 whitespace-nowrap relative border border-slate-700">
+                          <span className="text-xs sm:text-sm">📦</span>
                           <span>{tooltipLabel}</span>
                           <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-[#1F2937]"></div>
                         </div>
@@ -743,16 +743,16 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                         return (
                           <div key={ms.key} className="relative z-10 flex flex-col items-center">
                             <div
-                              className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
+                              className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center transition-all ${
                                 isCompleted
                                   ? 'bg-emerald-600 text-white shadow-xs'
                                   : 'bg-slate-300 text-slate-500'
                               } ${isCurrent ? 'ring-4 ring-emerald-100 scale-110' : ''}`}
                             >
                               {isCompleted ? (
-                                <Check size={12} strokeWidth={3} />
+                                <Check size={11} strokeWidth={3} />
                               ) : (
-                                <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
                               )}
                             </div>
                           </div>
@@ -766,14 +766,14 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                         return (
                           <div key={ms.key} className="space-y-0.5">
                             <span
-                              className={`block text-[11px] sm:text-xs font-bold ${
+                              className={`block text-[9px] sm:text-[11px] md:text-xs font-bold leading-tight ${
                                 isPassedOrActive ? 'text-slate-900' : 'text-slate-400'
                               }`}
                             >
                               {ms.label}
                             </span>
                             <span
-                              className={`block text-[10px] sm:text-[11px] ${
+                              className={`block text-[8px] sm:text-[10px] md:text-[11px] leading-tight ${
                                 isPassedOrActive ? 'text-slate-600 font-semibold' : 'text-slate-400'
                               }`}
                             >
@@ -786,41 +786,41 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                   </div>
 
                   {/* 4. SOCIAL PROOF BANNER */}
-                  <div className="px-4 sm:px-6 pb-4">
-                    <div className="bg-[#EEF4FF] border border-[#D5E3FF] rounded-2xl p-3 flex items-center justify-between text-xs text-[#204484]">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-[#3B82F6] text-white flex items-center justify-center text-xs font-bold shrink-0">
-                          <Users size={13} />
+                  <div className="px-3 sm:px-6 pb-4">
+                    <div className="bg-[#EEF4FF] border border-[#D5E3FF] rounded-2xl p-2.5 sm:p-3 flex items-center justify-between text-xs text-[#204484] gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#3B82F6] text-white flex items-center justify-center text-[10px] sm:text-xs font-bold shrink-0">
+                          <Users size={12} />
                         </div>
-                        <span className="font-bold">
-                          <strong className="font-extrabold text-[#0E2F6C]">10,000+ Customers</strong> rated 5 star for this product
+                        <span className="font-bold text-[11px] sm:text-xs truncate">
+                          <strong className="font-extrabold text-[#0E2F6C]">10,000+ Customers</strong> rated 5★
                         </span>
                       </div>
                       <div className="flex items-center gap-1 text-amber-500 shrink-0">
-                        <Star size={13} className="fill-amber-400 text-amber-400" />
-                        <span className="font-black text-[11px] text-slate-800">5.0</span>
+                        <Star size={12} className="fill-amber-400 text-amber-400" />
+                        <span className="font-black text-[10px] sm:text-[11px] text-slate-800">5.0</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* 5. WHATSAPP BILL, AWB & ADDRESS SUMMARY */}
-                  <div className="px-4 sm:px-6 pb-5 pt-2 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                  {/* 5. ADDRESS & ACTION BAR */}
+                  <div className="px-4 sm:px-6 pb-5 pt-3 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                     {order.address && (
                       <div className="text-xs text-slate-600 space-y-0.5 max-w-sm">
                         <p className="font-bold text-slate-800 flex items-center gap-1">
-                          <MapPin size={12} className="text-primary-600" />
+                          <MapPin size={12} className="text-primary-600 shrink-0" />
                           <span>Delivery Address:</span>
                         </p>
-                        <p className="text-slate-500 pl-4 truncate">
+                        <p className="text-slate-500 pl-4 truncate text-[11px] sm:text-xs">
                           {[order.address.fullName, order.address.flat, order.address.city, order.address.pincode].filter(Boolean).join(', ')}
                         </p>
                       </div>
                     )}
 
-                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                    <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap w-full sm:w-auto">
                       <button
                         onClick={handleRefresh}
-                        className="inline-flex items-center justify-center gap-1 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold py-2 px-3 rounded-xl transition-colors cursor-pointer"
+                        className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold py-2.5 sm:py-2 px-3 rounded-xl transition-colors cursor-pointer"
                         title="Refresh Tracking Status"
                       >
                         <RefreshCw size={11} className={refreshing ? 'animate-spin' : ''} />
@@ -829,24 +829,24 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
 
                       <button
                         onClick={() => handleShareProduct(firstItem, order)}
-                        className="inline-flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black text-xs py-2 px-3.5 rounded-xl shadow-xs transition-all cursor-pointer"
+                        className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black text-xs py-2.5 sm:py-2 px-3.5 rounded-xl shadow-xs transition-all cursor-pointer"
                         title="Share Product Details on WhatsApp"
                       >
                         <MessageCircle size={14} className="text-slate-950 fill-slate-950" />
                         <Share2 size={12} className="text-slate-950" />
-                        <span>Share Product</span>
+                        <span>Share</span>
                       </button>
 
                       {/* Product Review Button for Bookers */}
                       {isReviewed ? (
-                        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold py-2 px-3 rounded-xl">
+                        <span className="w-full sm:w-auto inline-flex items-center justify-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold py-2.5 sm:py-2 px-3 rounded-xl">
                           <Star size={12} className="fill-emerald-500 text-emerald-500" />
                           <span>Reviewed ⭐⭐⭐⭐⭐</span>
                         </span>
                       ) : (
                         <button
                           onClick={() => handleOpenReviewModal(order, firstItem)}
-                          className="inline-flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs py-2 px-3.5 rounded-xl transition-all cursor-pointer shadow-xs"
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs py-2.5 sm:py-2 px-3.5 rounded-xl transition-all cursor-pointer shadow-xs"
                           title="Rate this product"
                         >
                           <Star size={13} className="fill-amber-400 text-amber-500" />

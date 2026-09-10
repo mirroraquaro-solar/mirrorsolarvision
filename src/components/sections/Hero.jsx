@@ -73,18 +73,61 @@ export default function Hero({ onNavigate }) {
             <a 
               href="#contact" 
               onClick={scrollToContact}
-              className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 px-8 py-4 rounded-full font-black text-base shadow-accent transition-all duration-300 transform hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 px-6 sm:px-8 py-3.5 sm:py-4 rounded-full font-black text-sm sm:text-base shadow-accent transition-all duration-300 transform hover:-translate-y-0.5"
             >
               Get Free Quote <ArrowRight size={18} />
             </a>
             <a 
               href="#store" 
               onClick={handleStoreClick}
-              className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 border border-white/25 backdrop-blur-md text-white px-8 py-4 rounded-full font-bold text-base transition-all duration-300 transform hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 border border-white/25 backdrop-blur-md text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-full font-bold text-sm sm:text-base transition-all duration-300 transform hover:-translate-y-0.5"
             >
               <Package size={18} className="text-accent-400" />
               <span>Solar Store</span>
             </a>
+          </div>
+
+          {/* Mobile Trust Badges Grid (Visible on mobile & tablets < lg) */}
+          <div className="grid grid-cols-2 gap-2.5 pt-4 lg:hidden w-full">
+            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-3 flex items-center gap-2.5">
+              <div className="bg-orange-500/20 w-8 h-8 rounded-xl flex items-center justify-center text-orange-400 shrink-0">
+                <Sun size={16} />
+              </div>
+              <div className="text-left leading-tight">
+                <span className="text-[9px] font-bold text-slate-300 block uppercase">Solar Yield</span>
+                <strong className="text-white text-xs font-black block">10 MW+</strong>
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-3 flex items-center gap-2.5">
+              <div className="bg-emerald-500/20 w-8 h-8 rounded-xl flex items-center justify-center text-emerald-400 shrink-0">
+                <Users size={16} />
+              </div>
+              <div className="text-left leading-tight">
+                <span className="text-[9px] font-bold text-slate-300 block uppercase">Active Installs</span>
+                <strong className="text-white text-xs font-black block">1500+ Families</strong>
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-3 flex items-center gap-2.5">
+              <div className="bg-blue-500/20 w-8 h-8 rounded-xl flex items-center justify-center text-blue-400 shrink-0">
+                <IndianRupee size={15} />
+              </div>
+              <div className="text-left leading-tight">
+                <span className="text-[9px] font-bold text-slate-300 block uppercase">Total Savings</span>
+                <strong className="text-white text-xs font-black block">₹2 Cr+ Saved</strong>
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-3 flex items-center gap-2.5">
+              <div className="bg-amber-500/20 w-8 h-8 rounded-xl flex items-center justify-center text-amber-400 shrink-0">
+                <ShieldCheck size={16} />
+              </div>
+              <div className="text-left leading-tight">
+                <span className="text-[9px] font-bold text-slate-300 block uppercase">Warranty</span>
+                <strong className="text-white text-xs font-black block">25-Year Cover</strong>
+              </div>
+            </div>
           </div>
         </div>
         
