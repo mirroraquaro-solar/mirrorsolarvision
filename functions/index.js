@@ -3,6 +3,13 @@ const admin = require("firebase-admin");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const cors = require('cors')({origin: true});
+const { 
+  dispatchBookingNotifications,
+  renderOrderWhatsAppText,
+  renderOrderEmailHtml,
+  sendEmailNotification,
+  sendWhatsAppAlert
+} = require("./notifications");
 
 admin.initializeApp();
 
@@ -245,6 +252,20 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
         await userOrderDocRef.update(shippingSuccessUpdate).catch(() => {});
         await rootOrderDocRef.update(shippingSuccessUpdate).catch(() => {});
 
+        // 5. Trigger automated WhatsApp & Email notifications
+        const fullOrderRecord = {
+          ...orderData,
+          bookingId: orderBookingId,
+          razorpayPaymentId: razorpay_payment_id,
+          shiprocketOrderId: srData.order_id || null,
+          shiprocketShipmentId: srData.shipment_id || null,
+          shiprocketAwb: srData.awb_code || null,
+          status: 'paid'
+        };
+        dispatchBookingNotifications('order', fullOrderRecord).catch((notifErr) => {
+          console.error("Order notification dispatch error:", notifErr);
+        });
+
         return res.status(200).send({ 
           data: { 
             success: true, 
@@ -267,6 +288,17 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
 
         await userOrderDocRef.update(shippingFailUpdate).catch(() => {});
         await rootOrderDocRef.update(shippingFailUpdate).catch(() => {});
+
+        // Trigger notifications even if courier label creation encountered an issue
+        const fallbackOrderRecord = {
+          ...orderData,
+          bookingId: orderBookingId,
+          razorpayPaymentId: razorpay_payment_id,
+          status: 'paid'
+        };
+        dispatchBookingNotifications('order', fallbackOrderRecord).catch((notifErr) => {
+          console.error("Order notification dispatch error:", notifErr);
+        });
 
         // We still return success: true because the PAYMENT was successful
         return res.status(200).send({ 
@@ -312,17 +344,20 @@ exports.razorpayWebhook = functions.https.onRequest(async (req, res) => {
 
         // If not already paid, mark as paid
         if (orderData.status !== 'paid') {
+          const updatedPaidOrder = {
+            ...orderData,
+            status: 'paid',
+            razorpayPaymentId: rzpPaymentId,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          };
           await orderRef.update({
             status: 'paid',
             razorpayPaymentId: rzpPaymentId,
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
           });
 
-          // Trigger Shiprocket if not already done
-          if (!orderData.shiprocketOrderId) {
-            // Here you would trigger Shiprocket just like verifyRazorpayPayment
-            // For brevity, the frontend verification will usually handle this first.
-          }
+          // Trigger automated WhatsApp & Email notification via webhook fallback
+          dispatchBookingNotifications('order', updatedPaidOrder).catch((e) => console.error("Webhook notification error:", e));
         }
       }
     }
@@ -450,3 +485,67 @@ exports.getShiprocketTracking = functions.https.onRequest((req, res) => {
     }
   });
 });
+
+/**
+ * Universal Endpoint for Lead, Survey, and Inquiry Bookings
+ * Saves to Firestore and dispatches Email + WhatsApp notifications immediately
+ */
+exports.createBookingNotification = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    if (req.method !== 'POST') {
+      return res.status(405).send('Method Not Allowed');
+    }
+
+    try {
+      const payload = req.body.data || req.body;
+      const type = payload.type || 'site_survey';
+      const data = payload.data || payload;
+
+      const prefixMap = {
+        'site_survey': 'SRV',
+        'quote_request': 'QTE',
+        'bulk_combo': 'BLK',
+        'drain_clips': 'DRN',
+        'order': 'ORD'
+      };
+      const prefix = prefixMap[type] || 'MSV';
+      const bookingId = `MSV-${prefix}-${Date.now().toString().slice(-6)}`;
+
+      const bookingRecord = {
+        bookingId,
+        type,
+        ...data,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        status: 'new'
+      };
+
+      let collectionName = 'bookings';
+      if (type === 'site_survey') collectionName = 'site_surveys';
+      else if (type === 'quote_request') collectionName = 'quotes';
+      else if (type === 'bulk_combo') collectionName = 'bulk_orders';
+      else if (type === 'drain_clips') collectionName = 'drain_clip_orders';
+
+      const docRef = await admin.firestore().collection(collectionName).add(bookingRecord);
+      bookingRecord.id = docRef.id;
+
+      // Also record in central root bookings collection for admin overview
+      await admin.firestore().collection('bookings').doc(bookingId).set(bookingRecord).catch(() => {});
+
+      // Dispatch automated WhatsApp & Email
+      const notifResults = await dispatchBookingNotifications(type, bookingRecord);
+
+      return res.status(200).send({
+        data: {
+          success: true,
+          bookingId,
+          id: docRef.id,
+          notifications: notifResults
+        }
+      });
+    } catch (err) {
+      console.error("createBookingNotification error:", err);
+      return res.status(500).send({ data: { error: err.message || 'Notification failed' } });
+    }
+  });
+});
+

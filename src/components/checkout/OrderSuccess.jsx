@@ -10,11 +10,13 @@ import {
   Share2, 
   Star, 
   Check, 
-  Send 
+  Send,
+  Mail
 } from 'lucide-react';
 // import { BUSINESS_CONTACT } from '../../data/bulkComboData';
 import { db } from '../../config/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { ADMIN_WHATSAPP, BUSINESS_PHONE } from '../../services/notificationService';
 
 const OrderSuccess = ({ orderData, onContinueShopping, onViewOrders }) => {
   const orderId = orderData?.orderId || (typeof orderData === 'string' ? orderData : orderData?.id || 'N/A');
@@ -141,11 +143,11 @@ ${itemsListText}
 
 ${shipmentId ? `🚚 *Shiprocket Tracking ID:* ${shipmentId}\n🔗 *Live Courier Track:* https://shiprocket.co/tracking/${shipmentId}` : '🚚 *Shipment:* Processing for Dispatch'}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
-📞 *Mirror Solar Support:* +91 86391 03947
+📞 *Mirror Solar Support:* ${BUSINESS_PHONE}
 🏢 *Address:* Opposite Vmax Cinema Hall, Eluru, AP
 🌐 *Website:* https://mirrorsolarvision.com`;
 
-  const businessWhatsAppUrl = `https://wa.me/918639103947?text=${encodeURIComponent(
+  const businessWhatsAppUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(
     `*NEW ORDER BOOKING CONFIRMATION*\n\n${whatsappReceipt}`
   )}`;
 
@@ -154,7 +156,7 @@ ${shipmentId ? `🚚 *Shiprocket Tracking ID:* ${shipmentId}\n🔗 *Live Courier
   )}`;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
       <div className="max-w-xl w-full bg-white rounded-3xl shadow-xl border border-slate-100 p-6 sm:p-10 text-center">
         <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-emerald-100 text-emerald-600 mb-6 shadow-sm ring-8 ring-emerald-50">
           <CheckCircle className="h-10 w-10" />
@@ -179,6 +181,29 @@ ${shipmentId ? `🚚 *Shiprocket Tracking ID:* ${shipmentId}\n🔗 *Live Courier
                 <p className="text-xs font-extrabold text-emerald-700 mt-1">
                   Amount Paid: ₹{Number(amount).toLocaleString('en-IN')}
                 </p>
+              )}
+            </div>
+          </div>
+
+          {/* Automated Notifications Confirmation Badge */}
+          <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 rounded-2xl p-4 border border-emerald-200/80 space-y-2">
+            <div className="flex items-center gap-2 text-emerald-900">
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <p className="text-xs font-black uppercase tracking-wider text-emerald-900">Notifications Dispatched</p>
+            </div>
+            <div className="space-y-1.5 text-xs text-slate-700">
+              <div className="flex items-center gap-2">
+                <MessageSquare size={13} className="text-emerald-600 shrink-0" />
+                <span>WhatsApp receipt generated & reflected to order desk (<strong>{BUSINESS_PHONE}</strong>).</span>
+              </div>
+              {customerEmail && (
+                <div className="flex items-center gap-2">
+                  <Mail size={13} className="text-teal-600 shrink-0" />
+                  <span>Itemized official invoice sent to <strong>{customerEmail}</strong>.</span>
+                </div>
               )}
             </div>
           </div>

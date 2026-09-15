@@ -247,8 +247,8 @@ export const CUSTOMER_REVIEWS = [
 ];
 
 export const BUSINESS_CONTACT = {
-  phone: '+91 86391 03947',
-  phoneRaw: '918639103947',
+  phone: '+91 91826 12420',
+  phoneRaw: '919182612420',
   email: 'mirrorsolarvision@gmail.com',
   name: 'DURGARAO PERURI',
   company: 'Mirror Solar Vision (Mirror Group / Mirror Aqua)',

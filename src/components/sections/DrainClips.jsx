@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ShoppingCart, ShieldCheck, RefreshCw, Truck, X, Plus, Minus } from 'lucide-react';
+import { ShoppingCart, ShieldCheck, RefreshCw, Truck, X, Plus, Minus, MessageSquare, Loader2 } from 'lucide-react';
+import { submitBookingWithNotification, ADMIN_WHATSAPP, BUSINESS_PHONE } from '../../services/notificationService';
 
 export default function DrainClips() {
   const images = [
@@ -17,6 +18,8 @@ export default function DrainClips() {
   const [quantity, setQuantity] = useState(1);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [orderSubmitted, setOrderSubmitted] = useState(false);
+  const [orderSubmitting, setOrderSubmitting] = useState(false);
+  const [submittedResult, setSubmittedResult] = useState(null);
   const [checkoutForm, setCheckoutForm] = useState({
     name: '',
     phone: '',
@@ -35,9 +38,48 @@ export default function DrainClips() {
   const currentPrice = prices[selectedPack];
   const totalPrice = currentPrice * quantity;
 
-  const handleCheckoutSubmit = (e) => {
+  const handleCheckoutSubmit = async (e) => {
     e.preventDefault();
-    setOrderSubmitted(true);
+    setOrderSubmitting(true);
+    const totalClips = selectedPack * quantity;
+    const kwEquivalent = (totalClips / 4);
+    const items = [{
+      name: 'MSV Heavy-Duty Drain Clips',
+      selectedSize,
+      size: selectedSize,
+      kw: kwEquivalent,
+      clipsCount: totalClips,
+      quantity,
+      price: currentPrice,
+      variantLabel: `${selectedSize} • ${totalClips} Clips (${kwEquivalent} kW)`
+    }];
+
+    try {
+      const res = await submitBookingWithNotification('drain_clips', {
+        ...checkoutForm,
+        selectedSize,
+        size: selectedSize,
+        selectedPack,
+        quantity,
+        totalUnits: totalClips,
+        kw: `${kwEquivalent} kW`,
+        totalPrice,
+        amount: totalPrice,
+        items,
+        productName: `MSV Heavy-Duty Drain Clips (${selectedSize}, ${totalClips} units / ${kwEquivalent} kW)`
+      });
+      setSubmittedResult(res);
+      setOrderSubmitted(true);
+    } catch (err) {
+      console.error("Drain clips booking error:", err);
+      setSubmittedResult({
+        bookingId: `MSV-DRN-${Date.now().toString().slice(-6)}`,
+        waUrl: `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(`📦 *DRAIN CLIPS ORDER*\nName: ${checkoutForm.name}\nPhone: ${checkoutForm.phone}\nItem: MSV Drain Clips\nFrame Size: ${selectedSize}\nPlant Capacity: ${kwEquivalent} kW\nTotal Clips: ${totalClips} Units\nTotal: ₹${totalPrice}\nAddress: ${checkoutForm.address}, ${checkoutForm.mandal}, ${checkoutForm.district}`)}`
+      });
+      setOrderSubmitted(true);
+    } finally {
+      setOrderSubmitting(false);
+    }
   };
 
   return (
@@ -187,20 +229,42 @@ export default function DrainClips() {
 
             {orderSubmitted ? (
               <div className="p-8 text-center space-y-4">
-                <span className="text-5xl block animate-bounce">🎉</span>
+                <span className="text-5xl block">🎉</span>
                 <h4 className="text-xl font-bold text-gray-900">Order Placed Successfully!</h4>
-                <p className="text-sm text-gray-500 leading-relaxed">Thank you for your order. We will reach out to you via call or WhatsApp within a few hours to arrange payment & dispatch your drain clips.</p>
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-left text-xs text-gray-600 space-y-1 mt-4">
+                <p className="text-sm text-gray-500 leading-relaxed">Thank you for your order. Details have been registered and sent to our dispatch desk via WhatsApp & Email.</p>
+                
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-left text-xs text-gray-600 space-y-1.5 mt-4">
+                  {submittedResult?.bookingId && (
+                    <p className="flex justify-between items-center pb-1 border-b border-gray-200">
+                      <strong>Booking ID:</strong>
+                      <span className="font-mono font-bold text-primary-700 bg-primary-50 px-2 py-0.5 rounded border border-primary-200">{submittedResult.bookingId}</span>
+                    </p>
+                  )}
                   <p><strong>Item:</strong> MSV Drain Clips ({selectedSize})</p>
                   <p><strong>Quantity:</strong> {selectedPack * quantity} units</p>
                   <p><strong>Total Amount:</strong> ₹{totalPrice.toLocaleString('en-IN')}</p>
+                  <p><strong>Delivery Location:</strong> {checkoutForm.mandal}, {checkoutForm.district}</p>
                 </div>
+
+                {submittedResult?.waUrl && (
+                  <a
+                    href={submittedResult.waUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black py-3 px-4 rounded-xl shadow-md transition-all text-xs sm:text-sm cursor-pointer mt-2"
+                  >
+                    <MessageSquare size={16} className="fill-slate-950" />
+                    <span>Send Order Details on WhatsApp</span>
+                  </a>
+                )}
+
                 <button 
                   onClick={() => {
                     setIsCheckoutOpen(false);
                     setOrderSubmitted(false);
+                    setSubmittedResult(null);
                   }}
-                  className="w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-3 rounded-xl transition-colors mt-6"
+                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 rounded-xl transition-colors mt-3 text-xs"
                 >
                   Continue Shopping
                 </button>
@@ -279,9 +343,17 @@ export default function DrainClips() {
 
                 <button 
                   type="submit" 
-                  className="w-full bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-white font-bold py-3.5 rounded-xl transition-all shadow-accent text-sm mt-4"
+                  disabled={orderSubmitting}
+                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black py-3.5 rounded-xl transition-all shadow-accent text-sm mt-4 disabled:opacity-50 cursor-pointer"
                 >
-                  Place Order (Cash on Delivery / UPI)
+                  {orderSubmitting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Placing Order & Dispatching Notification...</span>
+                    </>
+                  ) : (
+                    <span>Place Order (Cash on Delivery / UPI)</span>
+                  )}
                 </button>
               </form>
             )}

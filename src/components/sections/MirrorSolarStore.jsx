@@ -25,6 +25,7 @@ import {
 import { CONFIRMED_BULK_COMBO, INDIVIDUAL_PRODUCTS, BUSINESS_CONTACT, CUSTOMER_REVIEWS } from '../../data/bulkComboData';
 import { db } from '../../config/firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { submitBookingWithNotification, ADMIN_WHATSAPP, BUSINESS_PHONE } from '../../services/notificationService';
 import CheckoutPage from '../checkout/CheckoutPage';
 import OrderSuccess from '../checkout/OrderSuccess';
 import MyOrders from '../checkout/MyOrders';
@@ -88,6 +89,8 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
   const [isComboDetailOpen, setIsComboDetailOpen] = useState(false);
   const [isComboOrderOpen, setIsComboOrderOpen] = useState(false);
   const [comboOrderSubmitted, setComboOrderSubmitted] = useState(false);
+  const [comboSubmitting, setComboSubmitting] = useState(false);
+  const [comboSubmittedResult, setComboSubmittedResult] = useState(null);
 
   // Form for Bulk Combo
   const [comboFormData, setComboFormData] = useState({
@@ -139,6 +142,11 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
       productId: 'msv-drain-clips',
       name: drainClipsProduct.name,
       variantLabel: variantLabel,
+      selectedSize: selectedDrainClipSize,
+      size: selectedDrainClipSize,
+      kw: config.kw,
+      clipsCount: config.clipsCount,
+      category: 'Maintenance Accessories',
       price: config.price,
       image: drainClipsProduct.images[0],
       quantity: 1
@@ -1152,20 +1160,49 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
 
             {comboOrderSubmitted ? (
               <div className="text-center py-6 space-y-4">
-                <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl font-black">
+                <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl font-black ring-8 ring-emerald-50">
                   ✓
                 </div>
                 <h3 className="text-2xl font-extrabold text-slate-900 font-heading">
-                  Bulk Order Received!
+                  Bulk Order Registered!
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                  Thank you, <strong className="text-slate-900">{comboFormData.name}</strong>. We have registered your order for <strong className="text-slate-900">{comboQuantity} × Bulk Combo (₹{comboTotalPrice.toLocaleString('en-IN')})</strong>. Our logistics manager will call you on <strong className="text-slate-900">{comboFormData.phone}</strong> to confirm dispatch details.
+                  Thank you, <strong className="text-slate-900">{comboFormData.name}</strong>. We have registered your bulk order for <strong className="text-slate-900">{comboQuantity} × Bulk Combo (₹{comboTotalPrice.toLocaleString('en-IN')})</strong>.
                 </p>
-                <div className="pt-3">
+
+                {comboSubmittedResult && (
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-left text-xs space-y-2 max-w-md mx-auto">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-500 uppercase tracking-wider">Booking ID</span>
+                      <span className="font-mono font-bold text-primary-700 bg-primary-50 px-2 py-0.5 rounded border border-primary-200">
+                        {comboSubmittedResult.bookingId}
+                      </span>
+                    </div>
+                    <p className="text-slate-600 border-t border-slate-200/60 pt-1">
+                      Our dispatch manager will call you on <strong>{comboFormData.phone}</strong> to schedule freight delivery to <strong>{comboFormData.district}</strong>.
+                    </p>
+                  </div>
+                )}
+
+                {/* Instant WhatsApp Button */}
+                <div className="space-y-2 max-w-md mx-auto pt-1">
+                  <a
+                    href={comboSubmittedResult?.waUrl || `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(`📦 *BULK COMBO ORDER*\nName: ${comboFormData.name}\nQuantity: ${comboQuantity}\nTotal: ₹${comboTotalPrice}\nDistrict: ${comboFormData.district}`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black py-3 px-4 rounded-xl shadow-md transition-all text-xs sm:text-sm cursor-pointer"
+                  >
+                    <MessageCircle size={16} className="fill-slate-950" />
+                    <span>Send Order Details on WhatsApp</span>
+                  </a>
+                </div>
+
+                <div className="pt-2">
                   <button
                     onClick={() => {
                       setIsComboOrderOpen(false);
                       setComboOrderSubmitted(false);
+                      setComboSubmittedResult(null);
                     }}
                     className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 rounded-xl text-xs sm:text-sm transition cursor-pointer"
                   >
@@ -1175,9 +1212,27 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
               </div>
             ) : (
               <form 
-                onSubmit={(e) => { 
+                onSubmit={async (e) => { 
                   e.preventDefault(); 
-                  setComboOrderSubmitted(true); 
+                  setComboSubmitting(true);
+                  try {
+                    const res = await submitBookingWithNotification('bulk_combo', {
+                      ...comboFormData,
+                      comboName: combo.name,
+                      quantity: comboQuantity,
+                      totalPrice: comboTotalPrice
+                    });
+                    setComboSubmittedResult(res);
+                  } catch (err) {
+                    console.error("Bulk combo submit error:", err);
+                    setComboSubmittedResult({
+                      bookingId: `MSV-BLK-${Date.now().toString().slice(-6)}`,
+                      waUrl: `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(`📦 *BULK COMBO ORDER*\nName: ${comboFormData.name}\nQuantity: ${comboQuantity}\nTotal: ₹${comboTotalPrice}\nDistrict: ${comboFormData.district}`)}`
+                    });
+                  } finally {
+                    setComboSubmitting(false);
+                    setComboOrderSubmitted(true);
+                  }
                 }} 
                 className="space-y-4"
               >

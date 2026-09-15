@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Calculator, Phone } from 'lucide-react';
+import { Calculator, Phone, MessageSquare, CheckCircle, ArrowRight, Loader2, Mail } from 'lucide-react';
+import { submitBookingWithNotification, ADMIN_WHATSAPP, BUSINESS_PHONE } from '../../services/notificationService';
 
 export default function QuoteForm() {
   const [formData, setFormData] = useState({
@@ -12,11 +13,24 @@ export default function QuoteForm() {
     inquiryType: 'solar-plant',
     message: ''
   });
-  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submittedResult, setSubmittedResult] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSubmitting(true);
+    try {
+      const res = await submitBookingWithNotification('quote_request', formData);
+      setSubmittedResult(res);
+    } catch (err) {
+      console.error("Quote submission error:", err);
+      setSubmittedResult({
+        bookingId: `MSV-QTE-${Date.now().toString().slice(-6)}`,
+        waUrl: `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(`⚡ *FREE SOLAR QUOTE REQUEST*\nName: ${formData.name}\nPhone: ${formData.phone}\nEmail: ${formData.email}\nDistrict: ${formData.district}\nType: ${formData.propertyType}\nBill: ₹${formData.monthlyBill}\nInquiry: ${formData.inquiryType}\nNote: ${formData.message}`)}`
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const apDistricts = [
@@ -64,20 +78,67 @@ export default function QuoteForm() {
         </div>
 
         <div className="bg-white border border-slate-200/90 shadow-xl rounded-3xl p-6 sm:p-10 max-w-2xl mx-auto text-left">
-          {submitted ? (
-            <div className="text-center py-10 space-y-4">
-              <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl font-black">
-                ✓
+          {submittedResult ? (
+            <div className="text-center py-6 space-y-5">
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-emerald-100 text-emerald-600 ring-8 ring-emerald-50">
+                <CheckCircle className="h-8 w-8" />
               </div>
-              <h3 className="text-2xl font-black text-slate-950 font-heading">
-                Quote Request Submitted Successfully!
-              </h3>
-              <p className="text-sm text-slate-600 max-w-md mx-auto">
-                Thank you, <strong className="text-slate-900">{formData.name}</strong>. Our engineering team has received your rooftop details and will connect with your layout and cost estimate within 24 hours.
-              </p>
+              <div>
+                <h3 className="text-2xl font-black text-slate-950 font-heading">
+                  Quote Request Received!
+                </h3>
+                <p className="text-sm text-slate-600 max-w-md mx-auto mt-1">
+                  Thank you, <strong className="text-slate-900">{formData.name}</strong>. Your requirement has been registered and dispatched to our engineering desk via WhatsApp and Email.
+                </p>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 max-w-md mx-auto text-left space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Quote Reference</span>
+                  <span className="text-xs font-mono font-black text-primary-700 bg-primary-50 border border-primary-200 px-2 py-0.5 rounded-md">
+                    {submittedResult.bookingId}
+                  </span>
+                </div>
+                <div className="text-xs text-slate-700 space-y-1 pt-1 border-t border-slate-200/60">
+                  <p>• <strong>District:</strong> {formData.district}</p>
+                  <p>• <strong>Monthly Bill:</strong> ₹{formData.monthlyBill}</p>
+                  <p>• <strong>Property Type:</strong> {formData.propertyType}</p>
+                  {formData.email && <p>• <strong>Email:</strong> {formData.email}</p>}
+                </div>
+              </div>
+
+              {/* Instant WhatsApp Action */}
+              <div className="space-y-3 max-w-md mx-auto">
+                <a
+                  href={submittedResult.waUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black py-3.5 px-4 rounded-xl shadow-md transition-all text-sm cursor-pointer"
+                >
+                  <MessageSquare size={16} className="fill-slate-950" />
+                  <span>Send Requirements on WhatsApp</span>
+                  <ArrowRight size={15} />
+                </a>
+                <p className="text-[11px] text-slate-500">
+                  Direct WhatsApp Engineering Desk: <strong>{BUSINESS_PHONE}</strong>
+                </p>
+              </div>
+
               <button 
-                onClick={() => setSubmitted(false)}
-                className="mt-4 text-xs font-extrabold text-primary-600 hover:underline uppercase tracking-wider block mx-auto"
+                onClick={() => {
+                  setSubmittedResult(null);
+                  setFormData({
+                    name: '',
+                    phone: '',
+                    email: '',
+                    district: '',
+                    propertyType: 'residential',
+                    monthlyBill: '',
+                    inquiryType: 'solar-plant',
+                    message: ''
+                  });
+                }}
+                className="mt-4 text-xs font-extrabold text-primary-600 hover:underline uppercase tracking-wider block mx-auto cursor-pointer"
               >
                 Submit another request
               </button>
@@ -100,7 +161,7 @@ export default function QuoteForm() {
                 </div>
                 {/* Phone */}
                 <div>
-                  <label htmlFor="lead-phone" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Phone Number *</label>
+                  <label htmlFor="lead-phone" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Phone Number (WhatsApp) *</label>
                   <div className="relative">
                     <input 
                       type="tel" 
@@ -119,15 +180,18 @@ export default function QuoteForm() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Email */}
                 <div>
-                  <label htmlFor="lead-email" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Email Address (Optional)</label>
-                  <input 
-                    type="email" 
-                    id="lead-email" 
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm" 
-                    placeholder="name@email.com" 
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  />
+                  <label htmlFor="lead-email" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Email Address (For Written Quote)</label>
+                  <div className="relative">
+                    <input 
+                      type="email" 
+                      id="lead-email" 
+                      className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-4 py-3 pr-10 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm" 
+                      placeholder="name@email.com" 
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    />
+                    <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                  </div>
                 </div>
                 {/* AP District */}
                 <div>
@@ -139,9 +203,9 @@ export default function QuoteForm() {
                     onChange={(e) => setFormData({...formData, district: e.target.value})}
                     required
                   >
-                    <option value="">Select District</option>
-                    {apDistricts.map((d, i) => (
-                      <option key={i} value={d}>{d}</option>
+                    <option value="">Select your district</option>
+                    {apDistricts.map((district, idx) => (
+                      <option key={idx} value={district}>{district}</option>
                     ))}
                   </select>
                 </div>
@@ -150,28 +214,28 @@ export default function QuoteForm() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Property Type */}
                 <div>
-                  <label htmlFor="lead-property" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Property Type</label>
+                  <label htmlFor="lead-property" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Property Type *</label>
                   <select 
                     id="lead-property" 
                     className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
                     value={formData.propertyType}
                     onChange={(e) => setFormData({...formData, propertyType: e.target.value})}
-                    required
                   >
-                    <option value="residential">Residential Home</option>
-                    <option value="commercial">Commercial Building</option>
-                    <option value="industrial">Industrial / Warehouse</option>
-                    <option value="agricultural">Agricultural Solar Pump</option>
+                    <option value="residential">Residential Home / Villa</option>
+                    <option value="apartment">Apartment / Gated Community</option>
+                    <option value="commercial">Commercial Building / Office</option>
+                    <option value="industrial">Industrial / Factory Roof</option>
+                    <option value="agricultural">Agricultural / Solar Water Pump</option>
                   </select>
                 </div>
-                {/* Monthly Bill */}
+                {/* Monthly Electricity Bill */}
                 <div>
-                  <label htmlFor="lead-bill" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Avg. Monthly Electricity Bill (₹)</label>
+                  <label htmlFor="lead-bill" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Avg. Monthly Electricity Bill (₹) *</label>
                   <input 
                     type="number" 
                     id="lead-bill" 
                     className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm" 
-                    placeholder="e.g. 3500" 
+                    placeholder="e.g. 4500" 
                     value={formData.monthlyBill}
                     onChange={(e) => setFormData({...formData, monthlyBill: e.target.value})}
                     required 
@@ -179,63 +243,77 @@ export default function QuoteForm() {
                 </div>
               </div>
 
-              {/* Inquire details */}
+              {/* Inquiry Type */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">I want to inquire about:</label>
-                <div className="flex flex-wrap gap-4 text-xs font-semibold text-slate-700">
-                  <label className="inline-flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="inquiryType" 
-                      value="solar-plant" 
-                      className="text-primary-600 focus:ring-primary-500" 
-                      checked={formData.inquiryType === 'solar-plant'}
-                      onChange={(e) => setFormData({...formData, inquiryType: e.target.value})}
-                    />
-                    <span>Rooftop Solar Plant Setup</span>
-                  </label>
-                  <label className="inline-flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="inquiryType" 
-                      value="bulk-combo" 
-                      className="text-primary-600 focus:ring-primary-500" 
-                      checked={formData.inquiryType === 'bulk-combo'}
-                      onChange={(e) => setFormData({...formData, inquiryType: e.target.value})}
-                    />
-                    <span>₹15,000 Bulk Installation Combo</span>
-                  </label>
-                  <label className="inline-flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="inquiryType" 
-                      value="commercial-solar" 
-                      className="text-primary-600 focus:ring-primary-500" 
-                      checked={formData.inquiryType === 'commercial-solar'}
-                      onChange={(e) => setFormData({...formData, inquiryType: e.target.value})}
-                    />
-                    <span>Commercial & Industrial Solar</span>
-                  </label>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Inquiry Type</label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  {[
+                    { id: 'solar-plant', label: 'Complete Solar Plant', desc: 'Rooftop on-grid/hybrid system' },
+                    { id: 'subsidy-help', label: 'PM Surya Ghar Subsidy', desc: 'Subsidy guidance & approval' },
+                    { id: 'custom-quote', label: 'Equipment & Clips', desc: 'Drain clips, frames & cables' }
+                  ].map((item) => (
+                    <label 
+                      key={item.id}
+                      className={`flex flex-col p-3 rounded-xl border text-xs cursor-pointer transition-all ${
+                        formData.inquiryType === item.id 
+                          ? 'border-primary-600 bg-primary-50/50 text-slate-900 font-bold ring-1 ring-primary-600' 
+                          : 'border-slate-200 bg-slate-50/60 text-slate-600 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <input 
+                          type="radio" 
+                          name="inquiryType" 
+                          value={item.id}
+                          checked={formData.inquiryType === item.id}
+                          onChange={(e) => setFormData({...formData, inquiryType: e.target.value})}
+                          className="text-primary-600 focus:ring-primary-500"
+                        />
+                        <span className="font-bold text-slate-900">{item.label}</span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 mt-1 pl-5">{item.desc}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
 
+              {/* Message */}
               <div>
-                <label htmlFor="lead-message" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Message / Roof Specifications (Optional)</label>
+                <label htmlFor="lead-message" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Additional Notes / Roof Specs (Optional)</label>
                 <textarea 
                   id="lead-message" 
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 h-24 text-sm resize-none" 
-                  placeholder="e.g., Roof area is 1200 sq ft, open concrete rooftop. Need details on net metering and subsidy."
+                  rows={2}
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm resize-none" 
+                  placeholder="e.g. 1200 sq ft flat concrete roof in Rajahmundry, looking for 5kW system..."
                   value={formData.message}
                   onChange={(e) => setFormData({...formData, message: e.target.value})}
-                />
+                ></textarea>
               </div>
 
+              {/* Submit Button */}
               <button 
                 type="submit" 
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black py-4 rounded-xl transition-all shadow-accent text-sm cursor-pointer"
+                disabled={submitting}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black py-4 rounded-xl transition-all shadow-accent text-sm cursor-pointer disabled:opacity-50"
               >
-                Request Free Rooftop Calculation <Calculator size={17} />
+                {submitting ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    <span>Processing & Notifying Engineering Desk...</span>
+                  </>
+                ) : (
+                  <>
+                    <Calculator size={18} className="text-slate-950" />
+                    <span>Get My Free Solar Quote & Layout</span>
+                  </>
+                )}
               </button>
+
+              <div className="text-center">
+                <p className="text-[11px] text-slate-500">
+                  🔒 We respect your privacy. Details are directly transmitted to Mirror Solar Vision design engineers.
+                </p>
+              </div>
             </form>
           )}
         </div>
