@@ -89,6 +89,18 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartNotification, setCartNotification] = useState(null);
 
+  // Body scroll locking when drawer or modal is open to prevent background mobile scroll shifts
+  useEffect(() => {
+    const isAnyModalOpen = isCartOpen || isComboDetailOpen || isComboOrderOpen || !!activeComboMaterialModal || !!activeProductDetail;
+    if (isAnyModalOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isCartOpen, isComboDetailOpen, isComboOrderOpen, activeComboMaterialModal, activeProductDetail]);
+
   // Bulk Combo State (Secondary Section)
   const [comboQuantity, setComboQuantity] = useState(1);
   const [isComboDetailOpen, setIsComboDetailOpen] = useState(false);
@@ -183,7 +195,8 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
     });
 
     setCartNotification(`${drainClipsProduct.name} (${variantLabel}) added to cart!`);
-    setTimeout(() => setCartNotification(null), 3000);
+    setIsCartOpen(true);
+    setTimeout(() => setCartNotification(null), 3500);
   };
 
   const handleBuyBulkComboNow = (qty = comboQuantity) => {
@@ -246,7 +259,8 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
     });
 
     setCartNotification(`MSV Sample Test Clip (₹10) added to cart!`);
-    setTimeout(() => setCartNotification(null), 3000);
+    setIsCartOpen(true);
+    setTimeout(() => setCartNotification(null), 3500);
   };
 
   useEffect(() => {
@@ -496,8 +510,8 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
 
       {/* Cart Toast Notification */}
       {cartNotification && (
-        <div className="fixed top-24 right-4 sm:right-8 z-50 bg-slate-950 text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-xl border border-slate-800 flex items-center gap-2 animate-fade-in-up">
-          <Check size={16} className="text-accent-400" />
+        <div className="fixed top-24 right-4 sm:right-8 z-50 bg-slate-950 text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-xl border border-slate-800 flex items-center gap-2 animate-fade-in-up pointer-events-none">
+          <Check size={16} className="text-accent-400 shrink-0" />
           <span>{cartNotification}</span>
         </div>
       )}
@@ -1618,36 +1632,47 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
       )}
 
       {/* ========================================================================= */}
-      {/* SLIDE-OVER CART DRAWER */}
+      {/* SLIDE-OVER CART DRAWER (MOBILE-FIRST RESPONSIVE) */}
       {/* ========================================================================= */}
       {isCartOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden animate-fade-in">
+          {/* Backdrop */}
           <div 
-            className="absolute inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity" 
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity cursor-pointer" 
             onClick={() => setIsCartOpen(false)}
+            aria-label="Close cart backdrop"
           />
 
-          <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-            <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between text-left">
+          {/* Drawer Container */}
+          <div className="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10 w-full sm:w-auto pointer-events-none">
+            <div className="w-full sm:w-screen sm:max-w-md bg-white shadow-2xl flex flex-col justify-between text-left h-full max-h-[100dvh] pointer-events-auto">
               
               {/* Header */}
-              <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ShoppingCart size={20} className="text-primary-600" />
-                  <h3 className="text-lg font-black text-slate-900 font-heading">
-                    Shopping Cart ({cartItemsCount})
-                  </h3>
+              <div className="p-4 sm:p-6 border-b border-slate-200 flex items-center justify-between bg-white shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center">
+                    <ShoppingCart size={18} />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 font-heading leading-tight">
+                      Shopping Cart
+                    </h3>
+                    <span className="text-xs text-slate-500 font-semibold">
+                      {cartItemsCount} {cartItemsCount === 1 ? 'item' : 'items'} in your cart
+                    </span>
+                  </div>
                 </div>
                 <button 
                   onClick={() => setIsCartOpen(false)}
-                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold transition cursor-pointer"
+                  className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold transition cursor-pointer"
+                  aria-label="Close cart drawer"
                 >
-                  <X size={16} />
+                  <X size={18} />
                 </button>
               </div>
 
-              {/* Items */}
-              <div className="p-6 overflow-y-auto flex-1 space-y-4">
+              {/* Items List */}
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-3 sm:space-y-4 overscroll-contain">
                 {cart.length === 0 ? (
                   <div className="text-center py-16 space-y-3">
                     <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
@@ -1657,12 +1682,18 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                     <p className="text-xs text-slate-500 max-w-xs mx-auto">
                       Explore our products above and add items to your cart.
                     </p>
+                    <button
+                      onClick={() => setIsCartOpen(false)}
+                      className="mt-2 bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-800 transition cursor-pointer"
+                    >
+                      Start Shopping
+                    </button>
                   </div>
                 ) : (
                   cart.map((item) => (
                     <div 
                       key={item.cartItemId}
-                      className="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80"
+                      className="flex items-center justify-between gap-3 p-3 sm:p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80"
                     >
                       <div className="w-14 h-14 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center shrink-0">
                         <img src={item.image} alt={item.name} className="max-h-full max-w-full object-contain" />
@@ -1670,24 +1701,26 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
 
                       <div className="flex-1 min-w-0">
                         <h5 className="font-bold text-xs text-slate-900 truncate">{item.name}</h5>
-                        <span className="text-[10px] font-semibold text-slate-500 block">{item.variantLabel}</span>
+                        <span className="text-[10px] font-semibold text-slate-500 block truncate">{item.variantLabel}</span>
                         <strong className="text-xs font-black text-slate-900 block mt-0.5">
                           ₹{(item.price * item.quantity).toLocaleString('en-IN')}
                         </strong>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         <div className="flex items-center bg-white border border-slate-200 rounded-lg p-0.5">
                           <button
                             onClick={() => updateCartQuantity(item.cartItemId, -1)}
-                            className="w-5 h-5 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded text-xs font-bold"
+                            className="w-6 h-6 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded text-xs font-bold cursor-pointer"
+                            aria-label="Decrease quantity"
                           >
                             -
                           </button>
-                          <span className="px-2 text-xs font-black text-slate-900">{item.quantity}</span>
+                          <span className="px-2 text-xs font-black text-slate-900 min-w-[20px] text-center">{item.quantity}</span>
                           <button
                             onClick={() => updateCartQuantity(item.cartItemId, 1)}
-                            className="w-5 h-5 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded text-xs font-bold"
+                            className="w-6 h-6 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded text-xs font-bold cursor-pointer"
+                            aria-label="Increase quantity"
                           >
                             +
                           </button>
@@ -1695,10 +1728,11 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
 
                         <button 
                           onClick={() => removeFromCart(item.cartItemId)}
-                          className="text-slate-400 hover:text-red-600 p-1 transition"
+                          className="text-slate-400 hover:text-red-600 p-1.5 transition cursor-pointer"
                           title="Remove item"
+                          aria-label="Remove item"
                         >
-                          <Trash2 size={15} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </div>
@@ -1708,27 +1742,82 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
 
               {/* Footer with Direct Razorpay Checkout */}
               {cart.length > 0 && (
-                <div className="p-6 border-t border-slate-200 bg-slate-50 space-y-4">
+                <div className="p-4 sm:p-6 border-t border-slate-200 bg-slate-50 space-y-3 shrink-0">
                   <div className="flex items-baseline justify-between">
                     <span className="text-xs font-bold text-slate-600">Subtotal:</span>
-                    <span className="text-2xl font-black text-slate-950 font-heading">
+                    <span className="text-xl sm:text-2xl font-black text-slate-950 font-heading">
                       ₹{cartTotalAmount.toLocaleString('en-IN')}
                     </span>
                   </div>
 
-                  <div>
+                  <div className="space-y-2">
                     <button
                       onClick={handleProceedToCheckout}
-                      className="w-full bg-[#FFD814] hover:bg-[#F7CA00] text-slate-950 font-black py-3.5 rounded-xl text-sm transition shadow-md cursor-pointer flex items-center justify-center gap-2 border border-[#FCD200]"
+                      className="w-full bg-[#FFD814] hover:bg-[#F7CA00] active:scale-[0.99] text-slate-950 font-black py-3.5 rounded-xl text-sm transition shadow-md cursor-pointer flex items-center justify-center gap-2 border border-[#FCD200]"
                     >
                       <ShoppingCart size={16} />
                       <span>PROCEED TO CHECKOUT (₹{cartTotalAmount.toLocaleString('en-IN')})</span>
                       <ChevronRight size={16} />
                     </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsCartOpen(false)}
+                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition text-center cursor-pointer"
+                    >
+                      Continue Shopping
+                    </button>
                   </div>
                 </div>
               )}
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MOBILE FLOATING STICKY CART BAR (When cart has items and drawer is closed) */}
+      {/* ========================================================================= */}
+      {cart.length > 0 && !isCartOpen && (
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-md text-white border-t border-slate-800 p-3 shadow-2xl animate-fade-in-up">
+          <div className="flex items-center justify-between gap-3 max-w-md mx-auto">
+            <div 
+              onClick={() => setIsCartOpen(true)}
+              className="flex items-center gap-2.5 cursor-pointer min-w-0"
+            >
+              <div className="relative">
+                <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center border border-slate-700 text-[#F58220]">
+                  <ShoppingCart size={18} />
+                </div>
+                <span className="absolute -top-1.5 -right-1.5 bg-[#F58220] text-slate-950 font-black text-[10px] w-5 h-5 rounded-full flex items-center justify-center shadow">
+                  {cartItemsCount}
+                </span>
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Cart Total</span>
+                <span className="text-sm font-black text-white font-heading truncate block">
+                  ₹{cartTotalAmount.toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsCartOpen(true)}
+                className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-2 rounded-xl text-xs border border-slate-700 transition cursor-pointer"
+              >
+                View Cart
+              </button>
+              <button
+                type="button"
+                onClick={handleProceedToCheckout}
+                className="bg-[#FFD814] hover:bg-[#F7CA00] text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs transition shadow-md flex items-center gap-1 cursor-pointer border border-[#FCD200]"
+              >
+                <span>Checkout</span>
+                <ChevronRight size={14} />
+              </button>
             </div>
           </div>
         </div>
