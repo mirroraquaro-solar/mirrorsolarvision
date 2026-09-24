@@ -1,0 +1,7 @@
+# robots.txt for Mirror Solar Vision
+User-agent: *
+Allow: /
+
+# Sitemap references
+Sitemap: https://mirror-solar-vision.web.app/sitemap.xml
+Sitemap: https://mirrorsolarvision.com/sitemap.xml

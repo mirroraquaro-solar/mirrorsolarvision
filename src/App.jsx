@@ -7,6 +7,7 @@ import WhyChooseUs from './components/sections/WhyChooseUs';
 import StoreTeaser from './components/sections/StoreTeaser';
 import MirrorSolarStore from './components/sections/MirrorSolarStore';
 import SubsidyGuide from './components/sections/SubsidyGuide';
+import SiteSurvey from './components/sections/SiteSurvey';
 import Gallery from './components/sections/Gallery';
 import Reviews from './components/sections/Reviews';
 import QuoteForm from './components/sections/QuoteForm';
@@ -118,6 +119,7 @@ function App() {
           <Gallery />
           <Reviews />
           <SubsidyGuide />
+          <SiteSurvey />
           <QuoteForm />
         </>
       ) : currentView === 'store' ? (

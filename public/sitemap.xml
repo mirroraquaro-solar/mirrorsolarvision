@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+  
+  <!-- Homepage -->
+  <url>
+    <loc>https://mirror-solar-vision.web.app/</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Store Catalog -->
+  <url>
+    <loc>https://mirror-solar-vision.web.app/#store</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Drain Clips -->
+  <url>
+    <loc>https://mirror-solar-vision.web.app/#drain-clips</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Bulk Installation Combo -->
+  <url>
+    <loc>https://mirror-solar-vision.web.app/#bulk-combos</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Subsidy Guide -->
+  <url>
+    <loc>https://mirror-solar-vision.web.app/#subsidy</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Site Survey / Free Quotation -->
+  <url>
+    <loc>https://mirror-solar-vision.web.app/#survey</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Partner Registration -->
+  <url>
+    <loc>https://mirror-solar-vision.web.app/#partner-registration</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- My Orders & Tracking -->
+  <url>
+    <loc>https://mirror-solar-vision.web.app/#orders</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>always</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+</urlset>
