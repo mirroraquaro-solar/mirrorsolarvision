@@ -90,6 +90,42 @@ export const CONFIRMED_BULK_COMBO = {
   ]
 };
 
+export const isProductActive = (product) => {
+  if (!product) return false;
+  if (!product.expiresAt) return true;
+  return new Date().getTime() < new Date(product.expiresAt).getTime();
+};
+
+export const SAMPLE_TEST_PRODUCT = {
+  id: 'msv-sample-test-product',
+  name: 'MSV Sample Test Clip',
+  category: 'Testing & Samples',
+  tag: '15-Hour Live Test • ₹10',
+  shortDesc: 'Single sample unit for live payment gateway test & order tracking verification (₹10).',
+  fullDesc: 'MSV Heavy-Duty Sample Unit priced at ₹10. Engineered for live testing of instant UPI / QR / Card payment gateway checkout, automated WhatsApp notification receipt, and Shiprocket dispatch pipeline. Automatically disappears after 15 hours.',
+  rating: 5.0,
+  reviewsCount: 1,
+  purchasesCount: '100+',
+  stockStatus: 'In Stock • Ready to Ship',
+  price: 10,
+  priceFormatted: '₹10',
+  expiresAt: '2026-09-25T13:10:00+05:30', // Auto-expires in 15 hours
+  images: [
+    '/assets/images/001.png',
+    '/assets/images/products/drain-clip-35mm-1.webp'
+  ],
+  variants: [
+    { id: '1-sample-clip', label: '1 Sample Piece (₹10)', price: 10, clipsCount: 1, unit: '1 Sample Piece (₹10)' }
+  ],
+  defaultVariantIdx: 0,
+  specs: [
+    { label: 'Sample Price', val: '₹10 Only' },
+    { label: 'Active Window', val: '15 Hours (Auto-Expires)' },
+    { label: 'Material', val: 'UV-Stabilized High-Density Polymer' },
+    { label: 'Compatibility', val: 'Universal Solar Panels (30mm–40mm)' }
+  ]
+};
+
 export const INDIVIDUAL_PRODUCTS = [
   {
     id: 'msv-drain-clips',
@@ -123,7 +159,8 @@ export const INDIVIDUAL_PRODUCTS = [
       { label: 'Material', val: 'UV-Stabilized High-Density Polymer' },
       { label: 'Durability', val: '10+ Years Outdoor Weather Resistance' }
     ]
-  }
+  },
+  ...(isProductActive(SAMPLE_TEST_PRODUCT) ? [SAMPLE_TEST_PRODUCT] : [])
 ];
 
 export const CUSTOMER_REVIEWS = [
