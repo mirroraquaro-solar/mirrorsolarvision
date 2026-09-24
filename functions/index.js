@@ -42,14 +42,42 @@ exports.createRazorpayOrder = functions.https.onRequest((req, res) => {
     }
 
     try {
-      // We now expect 'address' to be passed from the frontend CheckoutPage
       const { amount, items, userId, address } = req.body.data || req.body; 
       
+      // Server-side price calculation & product verification (Tamper protection)
+      let calculatedTotal = 0;
+      if (Array.isArray(items) && items.length > 0) {
+        for (const item of items) {
+          const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
+          let itemPrice = Number(item.price);
+
+          // Verify Sample Test Product expiry
+          if (item.productId === 'msv-sample-test-product' || item.id === 'msv-sample-test-product') {
+            const sampleExpiry = new Date('2026-09-25T13:10:00+05:30').getTime();
+            if (Date.now() > sampleExpiry) {
+              return res.status(400).send({ data: { error: 'The ₹10 Sample Product offer has expired.' } });
+            }
+            itemPrice = 10;
+          } else if (item.productId === 'msv-bulk-combo' || item.productId === 'bulk-combo-15000' || item.id === 'bulk-combo-15000') {
+            itemPrice = 15000;
+          } else if (item.productId === 'msv-drain-clips') {
+            if (item.clipsCount && Number(item.clipsCount) > 0) {
+              itemPrice = Number(item.clipsCount) * 25;
+            } else if (itemPrice < 300) {
+              itemPrice = 300;
+            }
+          }
+          calculatedTotal += (itemPrice * qty);
+        }
+      }
+
+      const finalAmount = calculatedTotal > 0 ? calculatedTotal : Math.max(10, Number(amount) || 300);
+
       // Clean, official Website Booking ID format (e.g. MSV-729401)
       const bookingId = `MSV-${Date.now().toString().slice(-6)}`;
 
       const options = {
-        amount: amount * 100, // paise
+        amount: Math.round(finalAmount * 100), // paise
         currency: "INR",
         receipt: bookingId,
       };
@@ -70,7 +98,7 @@ exports.createRazorpayOrder = functions.https.onRequest((req, res) => {
         customerPhone: cleanPhone,
         customerEmail: customerEmail,
         items: items || [],
-        amount: amount,
+        amount: finalAmount,
         address: address || {}, // Store delivery address
         razorpayOrderId: order.id,
         status: 'created',
@@ -91,7 +119,7 @@ exports.createRazorpayOrder = functions.https.onRequest((req, res) => {
         }
       });
     } catch (error) {
-      console.error(error);
+      console.error("createRazorpayOrder error:", error);
       res.status(500).send({ data: { error: 'Failed to create order' } });
     }
   });
@@ -130,6 +158,28 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
         return res.status(400).send({ data: { error: 'Invalid Signature' } });
       }
 
+      // Check existing order status for idempotency (avoid duplicate Shiprocket creation on multiple callbacks)
+      let orderSnap = await userOrderDocRef.get();
+      if (!orderSnap.exists) {
+        orderSnap = await rootOrderDocRef.get();
+      }
+
+      if (orderSnap.exists) {
+        const existingData = orderSnap.data();
+        if (existingData.status === 'paid' && (existingData.shiprocketOrderId || existingData.shiprocketShipmentId)) {
+          console.log("verifyRazorpayPayment: Order already processed & shipped for bookingId:", existingData.bookingId || firestoreOrderId);
+          return res.status(200).send({
+            data: {
+              success: true,
+              bookingId: existingData.bookingId || firestoreOrderId,
+              shiprocketShipmentId: existingData.shiprocketShipmentId,
+              shiprocketOrderId: existingData.shiprocketOrderId,
+              alreadyProcessed: true
+            }
+          });
+        }
+      }
+
       // 1. Mark as Paid
       const paidUpdate = {
         status: 'paid',
@@ -139,12 +189,6 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
       if (firestoreOrderId) {
         await userOrderDocRef.update(paidUpdate).catch(() => {});
         await rootOrderDocRef.update(paidUpdate).catch(() => {});
-      }
-
-      // 2. Fetch Order Details for Shiprocket
-      let orderSnap = await userOrderDocRef.get();
-      if (!orderSnap.exists) {
-        orderSnap = await rootOrderDocRef.get();
       }
 
       if (!orderSnap.exists) {
