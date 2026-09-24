@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ShoppingCart, ShieldCheck, RefreshCw, Truck, X, Plus, Minus, MessageSquare, Loader2 } from 'lucide-react';
-import { submitBookingWithNotification, ADMIN_WHATSAPP, BUSINESS_PHONE } from '../../services/notificationService';
+import { ShoppingCart, ShieldCheck, RefreshCw, Truck, X, Plus, Minus, MessageSquare, Loader2, Printer, Copy, FileText, Check } from 'lucide-react';
+import { submitBookingWithNotification, ADMIN_WHATSAPP, printConfirmationDocument, getCustomerWhatsAppUrl } from '../../services/notificationService';
 
 export default function DrainClips() {
   const images = [
@@ -20,9 +20,11 @@ export default function DrainClips() {
   const [orderSubmitted, setOrderSubmitted] = useState(false);
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [submittedResult, setSubmittedResult] = useState(null);
+  const [copiedNote, setCopiedNote] = useState(false);
   const [checkoutForm, setCheckoutForm] = useState({
     name: '',
     phone: '',
+    email: '',
     address: '',
     district: '',
     mandal: ''
@@ -74,7 +76,7 @@ export default function DrainClips() {
       console.error("Drain clips booking error:", err);
       setSubmittedResult({
         bookingId: `MSV-DRN-${Date.now().toString().slice(-6)}`,
-        waUrl: `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(`📦 *DRAIN CLIPS ORDER*\nName: ${checkoutForm.name}\nPhone: ${checkoutForm.phone}\nItem: MSV Drain Clips\nFrame Size: ${selectedSize}\nPlant Capacity: ${kwEquivalent} kW\nTotal Clips: ${totalClips} Units\nTotal: ₹${totalPrice}\nAddress: ${checkoutForm.address}, ${checkoutForm.mandal}, ${checkoutForm.district}`)}`
+        waUrl: `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(`📦 *DRAIN CLIPS ORDER*\nName: ${checkoutForm.name}\nPhone: ${checkoutForm.phone}\n${checkoutForm.email ? `Email: ${checkoutForm.email}\n` : ''}Item: MSV Drain Clips\nFrame Size: ${selectedSize}\nPlant Capacity: ${kwEquivalent} kW\nTotal Clips: ${totalClips} Units\nTotal: ₹${totalPrice}\nAddress: ${checkoutForm.address}, ${checkoutForm.mandal}, ${checkoutForm.district}`)}`
       });
       setOrderSubmitted(true);
     } finally {
@@ -228,35 +230,118 @@ export default function DrainClips() {
             </div>
 
             {orderSubmitted ? (
-              <div className="p-8 text-center space-y-4">
-                <span className="text-5xl block">🎉</span>
-                <h4 className="text-xl font-bold text-gray-900">Order Placed Successfully!</h4>
-                <p className="text-sm text-gray-500 leading-relaxed">Thank you for your order. Details have been registered and sent to our dispatch desk via WhatsApp & Email.</p>
+              <div className="p-6 sm:p-8 text-center space-y-4 max-h-[85vh] overflow-y-auto">
+                <span className="text-4xl sm:text-5xl block">🎉</span>
+                <h4 className="text-xl font-bold text-gray-900 font-heading">Order Placed Successfully!</h4>
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                  Thank you, <strong>{checkoutForm.name}</strong>. Your order for <strong>MSV Heavy-Duty Drain Clips</strong> has been recorded and registered with our dispatch team.
+                </p>
                 
-                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-left text-xs text-gray-600 space-y-1.5 mt-4">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-left text-xs text-gray-700 space-y-2">
                   {submittedResult?.bookingId && (
-                    <p className="flex justify-between items-center pb-1 border-b border-gray-200">
-                      <strong>Booking ID:</strong>
+                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                      <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Booking Reference</span>
                       <span className="font-mono font-bold text-primary-700 bg-primary-50 px-2 py-0.5 rounded border border-primary-200">{submittedResult.bookingId}</span>
-                    </p>
+                    </div>
                   )}
-                  <p><strong>Item:</strong> MSV Drain Clips ({selectedSize})</p>
-                  <p><strong>Quantity:</strong> {selectedPack * quantity} units</p>
-                  <p><strong>Total Amount:</strong> ₹{totalPrice.toLocaleString('en-IN')}</p>
-                  <p><strong>Delivery Location:</strong> {checkoutForm.mandal}, {checkoutForm.district}</p>
+                  <p><strong>Item:</strong> MSV Heavy-Duty Drain Clips ({selectedSize})</p>
+                  <p><strong>Capacity / Clips:</strong> {selectedPack * quantity / 4} kW ({selectedPack * quantity} Clips)</p>
+                  <p><strong>Total Amount:</strong> <span className="font-black text-emerald-700">₹{totalPrice.toLocaleString('en-IN')}</span></p>
+                  <p><strong>Delivery Location:</strong> {checkoutForm.address}, {checkoutForm.mandal}, {checkoutForm.district}</p>
+                  {checkoutForm.email && <p><strong>Confirmation Email:</strong> {checkoutForm.email}</p>}
                 </div>
 
-                {submittedResult?.waUrl && (
-                  <a
-                    href={submittedResult.waUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black py-3 px-4 rounded-xl shadow-md transition-all text-xs sm:text-sm cursor-pointer mt-2"
-                  >
-                    <MessageSquare size={16} className="fill-slate-950" />
-                    <span>Send Order Details on WhatsApp</span>
-                  </a>
-                )}
+                {/* Official Confirmation Note Actions */}
+                <div className="bg-slate-900 text-white rounded-2xl p-4 sm:p-5 text-left space-y-3 shadow-sm border border-slate-800">
+                  <div className="flex items-center gap-2 border-b border-slate-800 pb-2.5">
+                    <FileText size={15} className="text-[#F58220]" />
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">Official Confirmation Note</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        printConfirmationDocument({
+                          title: 'OFFICIAL DRAIN CLIPS ORDER SLIP',
+                          bookingId: submittedResult?.bookingId || 'MSV-DRN',
+                          customerName: checkoutForm.name,
+                          customerPhone: checkoutForm.phone,
+                          customerEmail: checkoutForm.email,
+                          address: `${checkoutForm.address}, ${checkoutForm.mandal}, ${checkoutForm.district}`,
+                          items: [{
+                            name: 'MSV Heavy-Duty Drain Clips',
+                            selectedSize,
+                            size: selectedSize,
+                            kw: `${selectedPack * quantity / 4} kW`,
+                            clipsCount: `${selectedPack * quantity} Clips`,
+                            quantity,
+                            price: currentPrice
+                          }],
+                          totalAmount: totalPrice,
+                          paymentStatus: 'Order Confirmed (Cash on Delivery / UPI on Dispatch)',
+                          type: 'drain_clips'
+                        });
+                      }}
+                      className="w-full inline-flex items-center justify-center gap-1.5 bg-[#0A2540] hover:bg-slate-800 text-white border border-slate-700 font-bold text-xs py-2.5 px-3 rounded-xl transition cursor-pointer text-center"
+                    >
+                      <Printer size={13} className="text-[#F58220]" />
+                      <span>Print / Save Slip (PDF)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const receipt = `🧾 *MIRROR SOLAR VISION — DRAIN CLIPS ORDER INVOICE*\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n✅ *Status:* Order Placed & Confirmed\n📦 *Booking ID:* ${submittedResult?.bookingId || 'MSV-DRN'}\n👤 *Customer:* ${checkoutForm.name} (+91 ${checkoutForm.phone})\n📍 *Address:* ${checkoutForm.address}, ${checkoutForm.mandal}, ${checkoutForm.district}\n🛒 *Item:* MSV Drain Clips (${selectedSize}) - ${selectedPack * quantity} Clips\n💰 *Total Amount:* ₹${totalPrice.toLocaleString('en-IN')}\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📞 Support: +91 91826 12420`;
+                        try {
+                          await navigator.clipboard.writeText(receipt);
+                          setCopiedNote(true);
+                          setTimeout(() => setCopiedNote(false), 3000);
+                        } catch {}
+                      }}
+                      className="w-full inline-flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-bold text-xs py-2.5 px-3 rounded-xl transition cursor-pointer text-center"
+                    >
+                      {copiedNote ? (
+                        <>
+                          <Check size={13} className="text-emerald-400" />
+                          <span className="text-emerald-400">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={13} className="text-slate-300" />
+                          <span>Copy Confirmation Note</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* WhatsApp Customer Link */}
+                  <div className="pt-1">
+                    <p className="text-[11px] text-slate-400 mb-2">
+                      Opens WhatsApp with your pre-filled confirmation note — tap Send to save to your chat:
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <a
+                        href={getCustomerWhatsAppUrl(checkoutForm.phone, `🧾 *MIRROR SOLAR VISION — DRAIN CLIPS ORDER INVOICE*\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n✅ *Status:* Order Placed & Confirmed\n📦 *Booking ID:* ${submittedResult?.bookingId || 'MSV-DRN'}\n👤 *Customer:* ${checkoutForm.name}\n📍 *Address:* ${checkoutForm.address}, ${checkoutForm.mandal}, ${checkoutForm.district}\n🛒 *Item:* MSV Drain Clips (${selectedSize}) - ${selectedPack * quantity} Clips (${selectedPack * quantity / 4} kW)\n💰 *Total:* ₹${totalPrice.toLocaleString('en-IN')}\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📞 Support: +91 91826 12420`)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black text-xs py-2 px-3 rounded-xl shadow-xs transition text-center cursor-pointer"
+                      >
+                        <MessageSquare size={13} className="fill-slate-950" />
+                        <span>Send to My WhatsApp</span>
+                      </a>
+
+                      <a
+                        href={submittedResult?.waUrl || `https://wa.me/${ADMIN_WHATSAPP}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-2 px-3 rounded-xl transition text-center cursor-pointer"
+                      >
+                        <span>Notify Dispatch Desk</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
 
                 <button 
                   onClick={() => {
@@ -264,24 +349,24 @@ export default function DrainClips() {
                     setOrderSubmitted(false);
                     setSubmittedResult(null);
                   }}
-                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 rounded-xl transition-colors mt-3 text-xs"
+                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 rounded-xl transition-colors mt-2 text-xs cursor-pointer"
                 >
                   Continue Shopping
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleCheckoutSubmit} className="p-6 space-y-4 text-left">
+              <form onSubmit={handleCheckoutSubmit} className="p-6 space-y-3.5 text-left">
                 {/* Product Summary Mini Card */}
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex justify-between items-center text-xs">
                   <div>
                     <p className="font-bold text-gray-800">MSV Heavy-Duty Drain Clips ({selectedSize})</p>
-                    <p className="text-gray-400 mt-0.5">{selectedPack * quantity} units</p>
+                    <p className="text-gray-400 mt-0.5">{selectedPack * quantity} units ({selectedPack * quantity / 4} kW)</p>
                   </div>
                   <strong className="text-primary-500 font-extrabold text-sm">₹{totalPrice.toLocaleString('en-IN')}</strong>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Full Name</label>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Full Name *</label>
                   <input 
                     type="text" 
                     required 
@@ -292,21 +377,35 @@ export default function DrainClips() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Mobile Number (WhatsApp Preferred)</label>
-                  <input 
-                    type="tel" 
-                    required 
-                    className="w-full bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20"
-                    placeholder="e.g. 9876543210"
-                    value={checkoutForm.phone}
-                    onChange={(e) => setCheckoutForm({...checkoutForm, phone: e.target.value})}
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Mobile Number *</label>
+                    <input 
+                      type="tel" 
+                      required 
+                      className="w-full bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20"
+                      placeholder="e.g. 9876543210"
+                      value={checkoutForm.phone}
+                      onChange={(e) => setCheckoutForm({...checkoutForm, phone: e.target.value})}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Email Address (Optional)</label>
+                    <input 
+                      type="email" 
+                      className="w-full bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20"
+                      placeholder="e.g. name@example.com"
+                      value={checkoutForm.email}
+                      onChange={(e) => setCheckoutForm({...checkoutForm, email: e.target.value})}
+                    />
+                    <p className="text-[10px] text-gray-400 mt-0.5">For confirmation note & invoice delivery</p>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">District (AP)</label>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">District (AP) *</label>
                     <input 
                       type="text" 
                       required 
@@ -317,7 +416,7 @@ export default function DrainClips() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Mandal / Town</label>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Mandal / Town *</label>
                     <input 
                       type="text" 
                       required 
@@ -330,7 +429,7 @@ export default function DrainClips() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">Delivery Address</label>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Delivery Address *</label>
                   <textarea 
                     required 
                     rows="2"

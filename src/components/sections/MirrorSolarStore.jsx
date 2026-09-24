@@ -20,17 +20,21 @@ import {
   ShieldCheck, 
   Award, 
   Users, 
-  ThumbsUp 
+  ThumbsUp,
+  Printer,
+  Copy,
+  FileText,
+  MessageSquare
 } from 'lucide-react';
 import { CONFIRMED_BULK_COMBO, INDIVIDUAL_PRODUCTS, BUSINESS_CONTACT, CUSTOMER_REVIEWS } from '../../data/bulkComboData';
 import { db } from '../../config/firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
-import { submitBookingWithNotification, ADMIN_WHATSAPP, BUSINESS_PHONE } from '../../services/notificationService';
+import { submitBookingWithNotification, ADMIN_WHATSAPP, printConfirmationDocument, getCustomerWhatsAppUrl } from '../../services/notificationService';
 import CheckoutPage from '../checkout/CheckoutPage';
 import OrderSuccess from '../checkout/OrderSuccess';
 import MyOrders from '../checkout/MyOrders';
 
-export default function MirrorSolarStore({ onBackToHome, initialView = 'store', onNavigate }) {
+export default function MirrorSolarStore({ onBackToHome, initialView = 'store', onNavigate, initialAction }) {
   // Navigation / View state: 'store' | 'checkout' | 'success' | 'orders'
   const [viewMode, setViewMode] = useState(initialView);
   const [checkoutData, setCheckoutData] = useState(null);
@@ -88,18 +92,21 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
   const [comboQuantity, setComboQuantity] = useState(1);
   const [isComboDetailOpen, setIsComboDetailOpen] = useState(false);
   const [isComboOrderOpen, setIsComboOrderOpen] = useState(false);
-  const [comboOrderSubmitted, setComboOrderSubmitted] = useState(false);
   const [comboSubmitting, setComboSubmitting] = useState(false);
+  const [comboOrderSubmitted, setComboOrderSubmitted] = useState(false);
   const [comboSubmittedResult, setComboSubmittedResult] = useState(null);
-
-  // Form for Bulk Combo
+  const [copiedComboNote, setCopiedComboNote] = useState(false);
   const [comboFormData, setComboFormData] = useState({
     name: '',
     companyName: '',
     phone: '',
     whatsapp: '',
+    email: '',
     district: '',
-    message: ''
+    state: 'Andhra Pradesh',
+    pincode: '',
+    address: '',
+    notes: ''
   });
 
   const drainClipsProduct = INDIVIDUAL_PRODUCTS.find(p => p.id === 'msv-drain-clips') || INDIVIDUAL_PRODUCTS[0];
@@ -177,6 +184,51 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
     setCartNotification(`${drainClipsProduct.name} (${variantLabel}) added to cart!`);
     setTimeout(() => setCartNotification(null), 3000);
   };
+
+  const handleBuyBulkComboNow = (qty = comboQuantity) => {
+    const validQty = Math.max(1, qty || 1);
+    const itemTotal = comboUnitPrice * validQty;
+    const newItem = {
+      cartItemId: `msv-bulk-combo-${Date.now()}`,
+      productId: combo.id || 'msv-bulk-combo',
+      name: combo.title || combo.name || 'Bulk Solar Installation Combo',
+      variantLabel: `${validQty} Complete Combo Kit(s) (₹15,000/kit)`,
+      price: comboUnitPrice,
+      quantity: validQty,
+      image: combo.image,
+      category: 'Bulk Installation Combos'
+    };
+
+    setCheckoutData({
+      items: [newItem],
+      totalPrice: itemTotal
+    });
+    setIsComboDetailOpen(false);
+    setIsComboOrderOpen(false);
+    setViewMode('checkout');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    const act = initialAction || window.location.hash.replace('#', '');
+    if (act === 'bulk-combo') {
+      setIsComboDetailOpen(true);
+      setTimeout(() => {
+        const el = document.getElementById('bulk-combos-section');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } else if (act === 'bulk-combo-buy') {
+      handleBuyBulkComboNow(1);
+    } else if (act === 'drain-clips-buy') {
+      addToCartDrainClips(true);
+    } else if (act === 'drain-clips') {
+      setTimeout(() => {
+        const el = document.getElementById('drain-clips-section');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialAction]);
 
   const handleShareProduct = async (product, variantLabel = '', price = null) => {
     const pPrice = price || product.price || (product.variants && product.variants[0]?.price) || '';
@@ -430,7 +482,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
         {/* ========================================================================= */}
         {/* SECTION 1: INDIVIDUAL PRODUCTS (MSV Heavy-Duty Drain Clips) */}
         {/* ========================================================================= */}
-        <section aria-label="Individual Solar Products Catalogue" className="space-y-6">
+        <section id="drain-clips-section" aria-label="Individual Solar Products Catalogue" className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 max-w-5xl mx-auto">
             <div>
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 font-heading">
@@ -712,7 +764,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
         {/* ========================================================================= */}
         {/* SECTION 2: FEATURED BULK COMBO — SECONDARY */}
         {/* ========================================================================= */}
-        <section aria-label="Featured Bulk Solar Installation Combo" className="space-y-6 pt-8 border-t-2 border-slate-200/80">
+        <section id="bulk-combos-section" aria-label="Featured Bulk Solar Installation Combo" className="space-y-6 pt-8 border-t-2 border-slate-200/80">
           
           <div className="text-left max-w-2xl space-y-1">
             <div className="inline-flex items-center gap-1.5 text-xs font-black text-accent-600 bg-accent-500/10 px-3 py-1 rounded-full uppercase tracking-wider mb-1">
@@ -840,10 +892,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                   </button>
 
                   <button
-                    onClick={() => {
-                      setIsComboOrderOpen(true);
-                      setComboOrderSubmitted(false);
-                    }}
+                    onClick={() => handleBuyBulkComboNow(comboQuantity)}
                     className="w-full bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black py-3.5 px-5 rounded-xl shadow-accent text-xs sm:text-sm transition-all transform hover:-translate-y-0.5 cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <Send size={15} className="fill-slate-950" />
@@ -1127,11 +1176,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
 
               <div className="pt-2 flex gap-3">
                 <button
-                  onClick={() => {
-                    setIsComboDetailOpen(false);
-                    setIsComboOrderOpen(true);
-                    setComboOrderSubmitted(false);
-                  }}
+                  onClick={() => handleBuyBulkComboNow(comboQuantity)}
                   className="flex-1 bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black py-3.5 rounded-xl shadow-accent text-xs sm:text-sm transition cursor-pointer text-center"
                 >
                   PROCEED TO ORDER (₹{comboTotalPrice.toLocaleString('en-IN')})
@@ -1159,7 +1204,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
             </button>
 
             {comboOrderSubmitted ? (
-              <div className="text-center py-6 space-y-4">
+              <div className="text-center py-6 space-y-4 max-h-[85vh] overflow-y-auto">
                 <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl font-black ring-8 ring-emerald-50">
                   ✓
                 </div>
@@ -1173,7 +1218,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                 {comboSubmittedResult && (
                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-left text-xs space-y-2 max-w-md mx-auto">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-500 uppercase tracking-wider">Booking ID</span>
+                      <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">Booking Reference</span>
                       <span className="font-mono font-bold text-primary-700 bg-primary-50 px-2 py-0.5 rounded border border-primary-200">
                         {comboSubmittedResult.bookingId}
                       </span>
@@ -1181,20 +1226,102 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                     <p className="text-slate-600 border-t border-slate-200/60 pt-1">
                       Our dispatch manager will call you on <strong>{comboFormData.phone}</strong> to schedule freight delivery to <strong>{comboFormData.district}</strong>.
                     </p>
+                    {comboFormData.email && (
+                      <p className="text-slate-600">
+                        Confirmation Email: <strong>{comboFormData.email}</strong>
+                      </p>
+                    )}
                   </div>
                 )}
 
-                {/* Instant WhatsApp Button */}
-                <div className="space-y-2 max-w-md mx-auto pt-1">
-                  <a
-                    href={comboSubmittedResult?.waUrl || `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(`📦 *BULK COMBO ORDER*\nName: ${comboFormData.name}\nQuantity: ${comboQuantity}\nTotal: ₹${comboTotalPrice}\nDistrict: ${comboFormData.district}`)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black py-3 px-4 rounded-xl shadow-md transition-all text-xs sm:text-sm cursor-pointer"
-                  >
-                    <MessageCircle size={16} className="fill-slate-950" />
-                    <span>Send Order Details on WhatsApp</span>
-                  </a>
+                {/* Official Confirmation Note Actions */}
+                <div className="bg-slate-900 text-white rounded-2xl p-4 sm:p-5 text-left space-y-3 shadow-sm border border-slate-800 max-w-md mx-auto">
+                  <div className="flex items-center gap-2 border-b border-slate-800 pb-2.5">
+                    <FileText size={15} className="text-[#F58220]" />
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">Official Confirmation Note</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        printConfirmationDocument({
+                          title: 'OFFICIAL BULK COMBO ORDER SLIP',
+                          bookingId: comboSubmittedResult?.bookingId || 'MSV-BLK',
+                          customerName: comboFormData.name,
+                          customerPhone: comboFormData.phone,
+                          customerEmail: comboFormData.email,
+                          address: `${comboFormData.address || ''}, ${comboFormData.district}, ${comboFormData.state || 'AP'}${comboFormData.pincode ? ` - ${comboFormData.pincode}` : ''}`,
+                          items: [{
+                            name: combo.name || 'Bulk Solar Installation Combo',
+                            variantLabel: `${comboQuantity} Complete Combo Kit(s)`,
+                            quantity: comboQuantity,
+                            price: comboUnitPrice
+                          }],
+                          totalAmount: comboTotalPrice,
+                          paymentStatus: 'Bulk Order Registered (Freight Dispatch Confirmation Pending)',
+                          notes: comboFormData.notes,
+                          type: 'bulk_combo'
+                        });
+                      }}
+                      className="w-full inline-flex items-center justify-center gap-1.5 bg-[#0A2540] hover:bg-slate-800 text-white border border-slate-700 font-bold text-xs py-2.5 px-3 rounded-xl transition cursor-pointer text-center"
+                    >
+                      <Printer size={13} className="text-[#F58220]" />
+                      <span>Print / Save Slip (PDF)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const receipt = `📦 *MIRROR SOLAR VISION — BULK COMBO ORDER REQUEST*\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📋 *Booking ID:* ${comboSubmittedResult?.bookingId || 'MSV-BLK'}\n👤 *Customer:* ${comboFormData.name} (+91 ${comboFormData.phone})\n📍 *Delivery Location:* ${comboFormData.district}, ${comboFormData.state || 'AP'}\n🛒 *Package:* ${combo.name} (${comboQuantity} Sets)\n💰 *Total Estimate:* ₹${comboTotalPrice.toLocaleString('en-IN')}\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📞 Support: +91 91826 12420`;
+                        try {
+                          await navigator.clipboard.writeText(receipt);
+                          setCopiedComboNote(true);
+                          setTimeout(() => setCopiedComboNote(false), 3000);
+                        } catch {}
+                      }}
+                      className="w-full inline-flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-bold text-xs py-2.5 px-3 rounded-xl transition cursor-pointer text-center"
+                    >
+                      {copiedComboNote ? (
+                        <>
+                          <Check size={13} className="text-emerald-400" />
+                          <span className="text-emerald-400">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={13} className="text-slate-300" />
+                          <span>Copy Confirmation Note</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* WhatsApp Customer Link */}
+                  <div className="pt-1">
+                    <p className="text-[11px] text-slate-400 mb-2">
+                      Opens WhatsApp with your pre-filled confirmation note — tap Send to save to your chat:
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <a
+                        href={getCustomerWhatsAppUrl(comboFormData.phone, `📦 *MIRROR SOLAR VISION — BULK COMBO ORDER REQUEST*\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📋 *Booking ID:* ${comboSubmittedResult?.bookingId || 'MSV-BLK'}\n👤 *Customer:* ${comboFormData.name}\n📍 *Delivery Location:* ${comboFormData.district}, ${comboFormData.state || 'AP'}\n🛒 *Package:* ${combo.name} (${comboQuantity} Sets)\n💰 *Total Estimate:* ₹${comboTotalPrice.toLocaleString('en-IN')}\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📞 Support: +91 91826 12420`)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black text-xs py-2 px-3 rounded-xl shadow-xs transition text-center cursor-pointer"
+                      >
+                        <MessageSquare size={13} className="fill-slate-950" />
+                        <span>Send to My WhatsApp</span>
+                      </a>
+
+                      <a
+                        href={comboSubmittedResult?.waUrl || `https://wa.me/${ADMIN_WHATSAPP}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-2 px-3 rounded-xl transition text-center cursor-pointer"
+                      >
+                        <span>Notify Dispatch Desk</span>
+                      </a>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="pt-2">
@@ -1310,7 +1437,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
                       Mobile Number *
@@ -1331,11 +1458,25 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                     </label>
                     <input
                       type="tel"
-                      placeholder="WhatsApp (if different)"
+                      placeholder="WhatsApp"
                       value={comboFormData.whatsapp}
                       onChange={(e) => setComboFormData({ ...comboFormData, whatsapp: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl text-sm focus:outline-none focus:border-primary-500"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Email Address (Optional)
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="e.g. name@example.com"
+                      value={comboFormData.email}
+                      onChange={(e) => setComboFormData({ ...comboFormData, email: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl text-sm focus:outline-none focus:border-primary-500"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-0.5">For confirmation note & invoice</p>
                   </div>
                 </div>
 
@@ -1371,10 +1512,11 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
 
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black py-3.5 rounded-xl text-sm transition-all shadow-accent mt-2 flex items-center justify-center gap-1.5 cursor-pointer"
+                  disabled={comboSubmitting}
+                  className="w-full bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 disabled:opacity-50 text-slate-950 font-black py-3.5 rounded-xl text-sm transition-all shadow-accent mt-2 flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Send size={15} className="fill-slate-950" />
-                  <span>SUBMIT BULK ORDER (₹{comboTotalPrice.toLocaleString('en-IN')})</span>
+                  <span>{comboSubmitting ? 'Submitting...' : `SUBMIT BULK ORDER (₹${comboTotalPrice.toLocaleString('en-IN')})`}</span>
                 </button>
               </form>
             )}

@@ -105,7 +105,7 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
 
       // 2. Initialize Razorpay Checkout
       const options = {
-        key: 'rzp_live_TKPn1OrUr9ScII',
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_Tfvc73Xs6tShFL',
         amount: data.amount, 
         currency: data.currency,
         name: 'Mirror Solar Vision',

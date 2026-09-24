@@ -257,6 +257,228 @@ export const getWhatsAppBulkComboText = (bulkData) => {
 };
 
 /**
+ * Generates formatted WhatsApp message for Drain Clips Quick Orders
+ */
+export const getWhatsAppDrainClipsText = (orderData) => {
+  return getWhatsAppOrderReceipt(orderData);
+};
+
+/**
+ * Generates direct customer WhatsApp click-to-chat URL with pre-filled confirmation text
+ */
+export const getCustomerWhatsAppUrl = (phone, text) => {
+  const cleanPhone = (phone || '').toString().replace(/[^0-9]/g, '');
+  if (cleanPhone.length === 10) {
+    return `https://api.whatsapp.com/send?phone=91${cleanPhone}&text=${encodeURIComponent(text)}`;
+  } else if (cleanPhone.length > 10) {
+    return `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(text)}`;
+  }
+  return `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+};
+
+/**
+ * Clean browser print utility for official confirmation document / slip
+ */
+export const printConfirmationDocument = ({
+  title = 'OFFICIAL ORDER CONFIRMATION SLIP',
+  bookingId = '',
+  date = '',
+  customerName = '',
+  customerPhone = '',
+  customerEmail = '',
+  address = '',
+  items = [],
+  totalAmount = 0,
+  paymentStatus = 'Confirmed',
+  paymentId = '',
+  shipmentId = '',
+  notes = '',
+  _type = 'order'
+}) => {
+  const dateStr = date || new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' });
+  const itemsRows = (items && items.length > 0)
+    ? items.map((item, idx) => {
+        const qty = Number(item.quantity) || 1;
+        const price = Number(item.price) || 0;
+        const rowTotal = qty * price || (totalAmount && items.length === 1 ? totalAmount : price);
+        const specs = [];
+        if (item.selectedSize || item.size) specs.push(`Size: ${item.selectedSize || item.size}`);
+        if (item.kw) specs.push(`Capacity: ${item.kw}${typeof item.kw === 'number' ? ' kW' : ''}`);
+        if (item.clipsCount) specs.push(`Units: ${item.clipsCount}`);
+        if (item.variantLabel && !specs.length) specs.push(item.variantLabel);
+
+        return `<tr>
+          <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#0f172a;">
+            <strong>${idx + 1}. ${item.name || item.productName || 'Solar Equipment'}</strong>
+            ${specs.length ? `<div style="font-size:11px; color:#64748b; margin-top:2px;">${specs.join(' • ')}</div>` : ''}
+          </td>
+          <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; font-size:13px; text-align:center; color:#334155;">${qty}</td>
+          <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; font-size:13px; text-align:right; color:#334155;">${price > 0 ? formatINR(price) : 'Included'}</td>
+          <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; font-size:13px; text-align:right; font-weight:bold; color:#0f172a;">${rowTotal > 0 ? formatINR(rowTotal) : formatINR(totalAmount)}</td>
+        </tr>`;
+      }).join('')
+    : `<tr>
+        <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; font-size:13px; color:#0f172a;"><strong>${title} Details</strong></td>
+        <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; font-size:13px; text-align:center; color:#334155;">1</td>
+        <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; font-size:13px; text-align:right; color:#334155;">${totalAmount > 0 ? formatINR(totalAmount) : 'Standard'}</td>
+        <td style="padding:10px 12px; border-bottom:1px solid #e2e8f0; font-size:13px; text-align:right; font-weight:bold; color:#0f172a;">${totalAmount > 0 ? formatINR(totalAmount) : 'Registered'}</td>
+      </tr>`;
+
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(bookingId || 'MSV')}`;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>${title} - ${bookingId || 'Mirror Solar Vision'}</title>
+  <style>
+    * { box-sizing: border-box; margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: #ffffff; color: #0f172a; padding: 24px; font-size: 13px; line-height: 1.5; }
+    .doc-container { max-width: 780px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 12px; padding: 28px; background: #fff; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 18px; border-bottom: 2px solid #0A2540; }
+    .brand-title { font-size: 22px; font-weight: 900; color: #0A2540; letter-spacing: -0.5px; }
+    .brand-title span { color: #F58220; }
+    .brand-subtitle { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; margin-top: 2px; }
+    .company-info { font-size: 11px; color: #475569; text-align: right; line-height: 1.4; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 12px; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .ref-block { display: flex; justify-content: space-between; margin: 18px 0; padding: 14px 16px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .ref-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .ref-value { font-size: 15px; font-weight: 800; color: #0A2540; font-family: monospace; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .card { padding: 14px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; }
+    .card-title { font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    th { background: #0A2540; color: #ffffff; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: left; padding: 8px 12px; }
+    th.text-center { text-align: center; }
+    th.text-right { text-align: right; }
+    .total-box { margin-top: 12px; text-align: right; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .footer { margin-top: 24px; padding-top: 14px; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #64748b; }
+    .print-actions { margin-bottom: 16px; text-align: right; }
+    .btn-print { background: #0A2540; color: #fff; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer; }
+    @media print {
+      body { padding: 0; }
+      .doc-container { border: none; padding: 0; }
+      .print-actions { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="print-actions">
+    <button class="btn-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  </div>
+  <div class="doc-container">
+    <div class="header">
+      <div>
+        <div class="brand-title">MIRROR SOLAR <span>VISION</span></div>
+        <div class="brand-subtitle">${title}</div>
+        <div class="badge">✓ ${paymentStatus}</div>
+      </div>
+      <div class="company-info">
+        <strong>Mirror Solar Vision</strong><br/>
+        Opposite Vmax Cinema Hall, GNT Road<br/>
+        Eluru, Andhra Pradesh - 534001<br/>
+        Support: +91 91826 12420 | info@mirrorsolarvision.com<br/>
+        Website: mirrorsolarvision.com
+      </div>
+    </div>
+
+    <div class="ref-block">
+      <div>
+        <div class="ref-label">Booking / Order Reference</div>
+        <div class="ref-value">${bookingId || 'MSV-ORD'}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="ref-label">Date & Time</div>
+        <div style="font-weight:700; color:#0f172a;">${dateStr}</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">Customer Details</div>
+        <div><strong>Name:</strong> ${customerName || 'Valued Customer'}</div>
+        <div><strong>Phone:</strong> +91 ${customerPhone || 'On file'}</div>
+        ${customerEmail ? `<div><strong>Email:</strong> ${customerEmail}</div>` : ''}
+        ${paymentId ? `<div><strong>Razorpay Payment ID:</strong> <span style="font-family:monospace; font-weight:bold;">${paymentId}</span></div>` : ''}
+        ${shipmentId ? `<div><strong>Shiprocket Shipment ID:</strong> <span style="font-family:monospace; font-weight:bold;">${shipmentId}</span></div>` : ''}
+      </div>
+
+      <div class="card">
+        <div class="card-title">${address ? 'Delivery / Installation Location' : 'Requirement Details'}</div>
+        <div>${address || 'Address provided during booking.'}</div>
+        ${notes ? `<div style="margin-top:6px; color:#475569; font-style:italic;">Note: ${notes}</div>` : ''}
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Description & Specifications</th>
+          <th class="text-center" style="width:70px;">Qty</th>
+          <th class="text-right" style="width:110px;">Unit Rate</th>
+          <th class="text-right" style="width:130px;">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemsRows}
+      </tbody>
+    </table>
+
+    ${totalAmount > 0 ? `
+    <div class="total-box">
+      <div style="font-size:14px; font-weight:800; color:#0A2540;">
+        Total Amount: <span style="color:#047857; font-size:17px;">${formatINR(totalAmount)}</span>
+      </div>
+      <div style="font-size:11px; color:#64748b; margin-top:2px;">
+        ${paymentId ? 'Prepaid Online via Razorpay' : 'Payable on Dispatch / Confirmation'}
+      </div>
+    </div>
+    ` : ''}
+
+    <div class="footer">
+      <div>
+        <p>• Official computer-generated confirmation slip issued by Mirror Solar Vision.</p>
+        <p>• For dispatch tracking or technical support, contact <strong>+91 91826 12420</strong>.</p>
+      </div>
+      <img src="${qrUrl}" alt="QR Code" style="width:64px; height:64px; border:1px solid #cbd5e1; border-radius:6px; padding:2px;" />
+    </div>
+  </div>
+  <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => { window.print(); }, 400);
+    });
+  </script>
+</body>
+</html>`;
+
+  const printWin = window.open('', '_blank');
+  if (printWin) {
+    printWin.document.open();
+    printWin.document.write(html);
+    printWin.document.close();
+  } else {
+    // Fallback if popup blocker is active: use an iframe
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(html);
+    doc.close();
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(() => document.body.removeChild(iframe), 3000);
+    }, 500);
+  }
+};
+
+/**
  * Submits a Booking / Inquiry:
  * 1. Saves to Firestore
  * 2. Calls Cloud Function to send automated Email + WhatsApp notifications
@@ -325,7 +547,7 @@ export const submitBookingWithNotification = async (type, data) => {
     waInfo = getWhatsAppQuoteText({ ...data, bookingId });
   } else if (type === 'bulk_combo') {
     waInfo = getWhatsAppBulkComboText({ ...data, bookingId });
-  } else if (type === 'order') {
+  } else if (type === 'order' || type === 'drain_clips') {
     const orderInfo = getWhatsAppOrderReceipt({ ...data, bookingId });
     waInfo = { text: orderInfo.text, waUrl: orderInfo.businessWaUrl };
   }
@@ -336,5 +558,133 @@ export const submitBookingWithNotification = async (type, data) => {
     backendResponse,
     waText: waInfo.text,
     waUrl: waInfo.waUrl
+  };
+};
+
+/**
+ * Live On-Demand Shiprocket Tracking Service
+ */
+const SHIPROCKET_TRACKING_URL = 'https://us-central1-mirror-solar-vision.cloudfunctions.net/getShiprocketTracking';
+
+export const fetchLiveShiprocketTracking = async (trackingId, options = {}) => {
+  const lookupKey = (trackingId || options.bookingId || options.orderId || '').toString().trim();
+  if (!lookupKey) return null;
+
+  try {
+    const res = await fetch(SHIPROCKET_TRACKING_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        data: {
+          trackingId: lookupKey,
+          bookingId: options.bookingId || null,
+          orderId: options.orderId || null
+        }
+      })
+    });
+
+    if (!res.ok) {
+      // Try GET fallback with query params
+      const getRes = await fetch(`${SHIPROCKET_TRACKING_URL}?trackingId=${encodeURIComponent(lookupKey)}&bookingId=${encodeURIComponent(options.bookingId || '')}`);
+      if (getRes.ok) {
+        const getData = await getRes.json();
+        return getData?.data || getData;
+      }
+      return null;
+    }
+
+    const json = await res.json();
+    return json?.data || json;
+  } catch (err) {
+    console.warn('Shiprocket live tracking lookup error:', err);
+    return null;
+  }
+};
+
+/**
+ * Universal Stage & Milestone Normalizer for Orders
+ * Stages:
+ *  0 -> Ordered & Packed (Order Placed)
+ *  1 -> Shipped & In Transit (Handed to courier / on route)
+ *  2 -> Out for Delivery (Courier boy out for final drop)
+ *  3 -> Delivered (Successfully handed over to customer)
+ */
+export const parseShiprocketTrackingMilestone = (order = {}) => {
+  const raw = (order.shiprocketStatus || order.status || '').toString().toUpperCase().trim();
+  const rawCode = Number(order.shiprocketStatusCode || 0);
+
+  // 1. Check Delivered (Stage 3 - 100%)
+  if (
+    rawCode === 7 || rawCode === 42 || rawCode === 43 ||
+    raw.includes('DELIVERED') || raw.includes('DLVD') || raw.includes('CLOSED')
+  ) {
+    return {
+      stageIndex: 3,
+      headline: 'Delivered to Customer',
+      badge: 'Delivered',
+      badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+      progressPercent: 100,
+      tooltipLabel: 'Delivered',
+      tooltipPosition: '90%',
+      isDelivered: true,
+      isOutForDelivery: true,
+      isShipped: true,
+      isOrdered: true
+    };
+  }
+
+  // 2. Check Out For Delivery (Stage 2 - ~66%)
+  if (
+    rawCode === 17 || rawCode === 41 ||
+    raw.includes('OUT FOR DELIVERY') || raw.includes('OUT_FOR_DELIVERY') || raw.includes('OFD') || raw.includes('REACHED AT DESTINATION') || raw.includes('DESTINATION HUB')
+  ) {
+    return {
+      stageIndex: 2,
+      headline: 'Out for Delivery Today',
+      badge: 'Out for Delivery',
+      badgeColor: 'bg-indigo-100 text-indigo-800 border-indigo-300',
+      progressPercent: 66,
+      tooltipLabel: 'Out for Delivery',
+      tooltipPosition: '63%',
+      isDelivered: false,
+      isOutForDelivery: true,
+      isShipped: true,
+      isOrdered: true
+    };
+  }
+
+  // 3. Check Shipped & In Transit (Stage 1 - ~33%)
+  if (
+    rawCode === 6 || rawCode === 18 || rawCode === 19 || rawCode === 38 || rawCode === 21 || rawCode === 22 ||
+    raw.includes('SHIPPED') || raw.includes('IN TRANSIT') || raw.includes('IN_TRANSIT') || raw.includes('PICKED UP') || raw.includes('PICKUP') || raw.includes('MANIFEST')
+  ) {
+    return {
+      stageIndex: 1,
+      headline: 'Shipped & In Transit',
+      badge: 'In Transit',
+      badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
+      progressPercent: 33,
+      tooltipLabel: 'Shipped & In Transit',
+      tooltipPosition: '38%',
+      isDelivered: false,
+      isOutForDelivery: false,
+      isShipped: true,
+      isOrdered: true
+    };
+  }
+
+  // 4. Default: Order Placed & Packed (Stage 0 - 10%)
+  return {
+    stageIndex: 0,
+    headline: 'Order Placed & Packed',
+    badge: 'Order Packed',
+    badgeColor: 'bg-blue-100 text-blue-800 border-blue-300',
+    progressPercent: 10,
+    tooltipLabel: 'Order Packed',
+    tooltipPosition: '12%',
+    isDelivered: false,
+    isOutForDelivery: false,
+    isShipped: false,
+    isOrdered: true
   };
 };

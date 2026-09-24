@@ -12,12 +12,31 @@ import Reviews from './components/sections/Reviews';
 import QuoteForm from './components/sections/QuoteForm';
 import NotificationPopup from './components/ui/NotificationPopup';
 import PartnerRegistration from './pages/PartnerRegistration';
+import MyOrders from './components/checkout/MyOrders';
+
+const isOrderHash = (hash) => {
+  const h = (hash || '').toLowerCase();
+  return h === '#orders' || h === '#my-orders' || h === '#myorders' || h === '#track' || h === '#track-order' || h === '#tracking';
+};
+
+const isStoreHash = (hash) => {
+  const h = (hash || '').toLowerCase();
+  return h === '#store' || h === '#bulk-combos' || h === '#bulk-combo' || h === '#bulk-combo-buy' || h === '#drain-clips' || h === '#drain-clips-buy' || h === '#shop';
+};
 
 function App() {
+  const [storeAction, setStoreAction] = useState(() => {
+    const hash = window.location.hash;
+    if (hash === '#bulk-combo' || hash === '#bulk-combos') return 'bulk-combo';
+    if (hash === '#bulk-combo-buy') return 'bulk-combo-buy';
+    if (hash === '#drain-clips-buy') return 'drain-clips-buy';
+    if (hash === '#drain-clips') return 'drain-clips';
+    return null;
+  });
   const [currentView, setCurrentView] = useState(() => {
     const hash = window.location.hash;
-    if (hash === '#orders' || hash === '#my-orders' || hash === '#track') return 'orders';
-    if (hash === '#store' || hash === '#bulk-combos' || hash === '#bulk-combo' || hash === '#drain-clips' || hash === '#shop') return 'store';
+    if (isOrderHash(hash)) return 'orders';
+    if (isStoreHash(hash)) return 'store';
     if (hash === '#partner-registration') return 'partner-registration';
     return 'home';
   });
@@ -25,11 +44,22 @@ function App() {
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
-      if (hash === '#orders' || hash === '#my-orders' || hash === '#track') {
+      if (isOrderHash(hash)) {
         setCurrentView('orders');
         window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (hash === '#store' || hash === '#bulk-combos' || hash === '#bulk-combo' || hash === '#drain-clips' || hash === '#shop') {
+      } else if (isStoreHash(hash)) {
         setCurrentView('store');
+        setStoreAction(
+          hash === '#bulk-combo' || hash === '#bulk-combos' 
+            ? 'bulk-combo' 
+            : hash === '#bulk-combo-buy'
+            ? 'bulk-combo-buy'
+            : hash === '#drain-clips-buy'
+            ? 'drain-clips-buy'
+            : hash === '#drain-clips' 
+            ? 'drain-clips' 
+            : null
+        );
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (hash === '#partner-registration') {
         setCurrentView('partner-registration');
@@ -44,17 +74,20 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const handleNavigate = (view) => {
-    if (view === 'orders' || view === 'my-orders' || view === 'track') {
+  const handleNavigate = (view, action = null) => {
+    if (view === 'orders' || view === 'my-orders' || view === 'track' || view === 'track-order') {
       setCurrentView('orders');
       if (window.location.hash !== '#orders') {
         window.location.hash = '#orders';
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (view === 'store' || view === 'bulk-combos' || view === 'bulk-combo' || view === 'drain-clips') {
+    } else if (view === 'store' || view === 'bulk-combos' || view === 'bulk-combo' || view === 'bulk-combo-buy' || view === 'drain-clips' || view === 'drain-clips-buy') {
       setCurrentView('store');
-      if (window.location.hash !== '#store') {
-        window.location.hash = '#store';
+      const finalAction = action || (view !== 'store' ? view : null);
+      setStoreAction(finalAction);
+      const targetHash = finalAction ? `#${finalAction}` : '#store';
+      if (window.location.hash !== targetHash) {
+        window.location.hash = targetHash;
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (view === 'partner-registration') {
@@ -79,7 +112,7 @@ function App() {
           <NotificationPopup />
           <Hero onNavigate={handleNavigate} />
           <AuthorizedDealers />
-          <StoreTeaser onNavigateToStore={() => handleNavigate('store')} />
+          <StoreTeaser onNavigateToStore={(action) => handleNavigate('store', action)} />
           <AboutGroup />
           <WhyChooseUs />
           <Gallery />
@@ -91,15 +124,15 @@ function App() {
         <MirrorSolarStore 
           key="view-store"
           initialView="store"
+          initialAction={storeAction}
           onBackToHome={() => handleNavigate('home')}
           onNavigate={handleNavigate}
         />
       ) : currentView === 'orders' ? (
-        <MirrorSolarStore 
+        <MyOrders 
           key="view-orders"
-          initialView="orders"
+          onBackToStore={() => handleNavigate('store')}
           onBackToHome={() => handleNavigate('home')}
-          onNavigate={handleNavigate}
         />
       ) : currentView === 'partner-registration' ? (
         <PartnerRegistration 

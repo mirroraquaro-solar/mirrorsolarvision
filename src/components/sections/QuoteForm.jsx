@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Calculator, Phone, MessageSquare, CheckCircle, ArrowRight, Loader2, Mail } from 'lucide-react';
-import { submitBookingWithNotification, ADMIN_WHATSAPP, BUSINESS_PHONE } from '../../services/notificationService';
+import { Calculator, Phone, MessageSquare, CheckCircle, Loader2, Mail, Printer, Copy, FileText, Check } from 'lucide-react';
+import { submitBookingWithNotification, ADMIN_WHATSAPP, printConfirmationDocument, getCustomerWhatsAppUrl } from '../../services/notificationService';
 
 export default function QuoteForm() {
   const [formData, setFormData] = useState({
@@ -15,6 +15,7 @@ export default function QuoteForm() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [submittedResult, setSubmittedResult] = useState(null);
+  const [copiedNote, setCopiedNote] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -94,7 +95,7 @@ export default function QuoteForm() {
 
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 max-w-md mx-auto text-left space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Quote Reference</span>
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider text-[10px]">Quote Reference</span>
                   <span className="text-xs font-mono font-black text-primary-700 bg-primary-50 border border-primary-200 px-2 py-0.5 rounded-md">
                     {submittedResult.bookingId}
                   </span>
@@ -107,21 +108,94 @@ export default function QuoteForm() {
                 </div>
               </div>
 
-              {/* Instant WhatsApp Action */}
-              <div className="space-y-3 max-w-md mx-auto">
-                <a
-                  href={submittedResult.waUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black py-3.5 px-4 rounded-xl shadow-md transition-all text-sm cursor-pointer"
-                >
-                  <MessageSquare size={16} className="fill-slate-950" />
-                  <span>Send Requirements on WhatsApp</span>
-                  <ArrowRight size={15} />
-                </a>
-                <p className="text-[11px] text-slate-500">
-                  Direct WhatsApp Engineering Desk: <strong>{BUSINESS_PHONE}</strong>
-                </p>
+              {/* Official Confirmation Note Actions */}
+              <div className="bg-slate-900 text-white rounded-2xl p-4 sm:p-5 text-left space-y-3 shadow-sm border border-slate-800 max-w-md mx-auto">
+                <div className="flex items-center gap-2 border-b border-slate-800 pb-2.5">
+                  <FileText size={15} className="text-[#F58220]" />
+                  <span className="text-xs font-bold text-white uppercase tracking-wider">Official Quote Request Note</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      printConfirmationDocument({
+                        title: 'FREE SOLAR QUOTE & DESIGN REQUEST CONFIRMATION',
+                        bookingId: submittedResult.bookingId,
+                        customerName: formData.name,
+                        customerPhone: formData.phone,
+                        customerEmail: formData.email,
+                        address: `${formData.district} (Andhra Pradesh)`,
+                        items: [{
+                          name: `Solar Quotation & System Sizing (${formData.inquiryType || 'PM Surya Ghar'})`,
+                          variantLabel: `Property: ${formData.propertyType} • Monthly Bill: ₹${formData.monthlyBill || 'N/A'}`,
+                          quantity: 1,
+                          price: 0
+                        }],
+                        totalAmount: 0,
+                        paymentStatus: 'Quote Request Registered (Design in Progress)',
+                        notes: formData.message,
+                        type: 'quote_request'
+                      });
+                    }}
+                    className="w-full inline-flex items-center justify-center gap-1.5 bg-[#0A2540] hover:bg-slate-800 text-white border border-slate-700 font-bold text-xs py-2.5 px-3 rounded-xl transition cursor-pointer text-center"
+                  >
+                    <Printer size={13} className="text-[#F58220]" />
+                    <span>Print / Save Slip (PDF)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const receipt = `⚡ *MIRROR SOLAR VISION — FREE SOLAR QUOTE REQUEST*\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📋 *Quote Reference:* ${submittedResult.bookingId}\n👤 *Customer:* ${formData.name} (+91 ${formData.phone})\n📍 *District:* ${formData.district}\n📊 *Property:* ${formData.propertyType} | Bill: ₹${formData.monthlyBill}\n⚡ *Inquiry:* ${formData.inquiryType}\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📞 Support: +91 91826 12420`;
+                      try {
+                        await navigator.clipboard.writeText(receipt);
+                        setCopiedNote(true);
+                        setTimeout(() => setCopiedNote(false), 3000);
+                      } catch {}
+                    }}
+                    className="w-full inline-flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-bold text-xs py-2.5 px-3 rounded-xl transition cursor-pointer text-center"
+                  >
+                    {copiedNote ? (
+                      <>
+                        <Check size={13} className="text-emerald-400" />
+                        <span className="text-emerald-400">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={13} className="text-slate-300" />
+                        <span>Copy Quote Note</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Customer WhatsApp Action */}
+                <div className="pt-1">
+                  <p className="text-[11px] text-slate-400 mb-2">
+                    Opens WhatsApp with your pre-filled quote note — tap Send to save to your chat:
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <a
+                      href={getCustomerWhatsAppUrl(formData.phone, `⚡ *MIRROR SOLAR VISION — FREE SOLAR QUOTE REQUEST*\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📋 *Quote Reference:* ${submittedResult.bookingId}\n👤 *Customer:* ${formData.name}\n📍 *District:* ${formData.district}\n📊 *Property:* ${formData.propertyType} | Bill: ₹${formData.monthlyBill}\n⚡ *Inquiry:* ${formData.inquiryType}\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📞 Support: +91 91826 12420`)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black text-xs py-2 px-3 rounded-xl shadow-xs transition text-center cursor-pointer"
+                    >
+                      <MessageSquare size={13} className="fill-slate-950" />
+                      <span>Send to My WhatsApp</span>
+                    </a>
+
+                    <a
+                      href={submittedResult.waUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-2 px-3 rounded-xl transition text-center cursor-pointer"
+                    >
+                      <span>Notify Engineering Desk</span>
+                    </a>
+                  </div>
+                </div>
               </div>
 
               <button 

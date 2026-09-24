@@ -4,11 +4,7 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const cors = require('cors')({origin: true});
 const { 
-  dispatchBookingNotifications,
-  renderOrderWhatsAppText,
-  renderOrderEmailHtml,
-  sendEmailNotification,
-  sendWhatsAppAlert
+  dispatchBookingNotifications 
 } = require("./notifications");
 
 admin.initializeApp();
@@ -369,6 +365,40 @@ exports.razorpayWebhook = functions.https.onRequest(async (req, res) => {
   }
 });
 
+// Helper to normalize Shiprocket status codes and text into consistent stages
+function normalizeShiprocketStatus(statusInput, statusCode) {
+  const code = Number(statusCode || 0);
+  const s = String(statusInput || '').toUpperCase().trim();
+
+  // 1. Delivered
+  if (code === 7 || code === 42 || code === 43 || s.includes('DELIVERED') || s === 'DLVD' || s.includes('CLOSED')) {
+    return 'DELIVERED';
+  }
+  // 2. Out For Delivery
+  if (
+    code === 17 || code === 41 ||
+    s.includes('OUT FOR DELIVERY') || s.includes('OUT_FOR_DELIVERY') || s.includes('OFD') || s.includes('REACHED AT DESTINATION')
+  ) {
+    return 'OUT_FOR_DELIVERY';
+  }
+  // 3. In Transit / Shipped / Picked Up
+  if (
+    code === 6 || code === 18 || code === 19 || code === 38 || code === 21 || code === 22 ||
+    s.includes('IN TRANSIT') || s.includes('IN_TRANSIT') || s.includes('SHIPPED') || s.includes('PICKED UP') || s.includes('PICKUP') || s.includes('MANIFEST')
+  ) {
+    return 'SHIPPED';
+  }
+  // 4. Cancelled / RTO
+  if (code === 8 || s.includes('CANC')) {
+    return 'CANCELLED';
+  }
+  if (code === 9 || s.includes('RTO')) {
+    return 'RTO_INITIATED';
+  }
+  // 5. Default Order Placed / Processing
+  return 'PROCESSING';
+}
+
 exports.shiprocketWebhook = functions.https.onRequest(async (req, res) => {
   // Always accept any test ping or preflight
   if (req.method === 'GET' || req.method === 'OPTIONS') {
@@ -380,54 +410,73 @@ exports.shiprocketWebhook = functions.https.onRequest(async (req, res) => {
     console.log("Shiprocket Webhook Payload received:", JSON.stringify(data));
 
     const awb = data.awb || data.awb_code || null;
-    const currentStatus = (data.current_status || data.shipment_status || data.status || data.current_status_id || '').toString().trim();
+    const rawStatus = (data.current_status || data.shipment_status || data.status || data.current_status_id || '').toString().trim();
+    const statusCode = data.current_status_id || data.status_code || null;
     const shipmentId = data.shipment_id ? String(data.shipment_id) : null;
     const orderId = data.order_id ? String(data.order_id) : null;
+    const courierName = data.courier_name || data.courier_partner_name || null;
+    const etd = data.etd || data.edd || null;
+    const deliveredDate = (data.delivered_date || data.delivery_date || (rawStatus.toUpperCase().includes('DELIVERED') ? new Date().toISOString() : null));
 
-    if (currentStatus || awb) {
+    const normalizedStatus = normalizeShiprocketStatus(rawStatus, statusCode);
+
+    if (rawStatus || awb || shipmentId || orderId) {
       const updatePayload = {
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       };
-      if (currentStatus) updatePayload.shiprocketStatus = currentStatus;
+      if (rawStatus) {
+        updatePayload.shiprocketStatus = normalizedStatus;
+        updatePayload.shiprocketRawStatus = rawStatus;
+        if (statusCode) updatePayload.shiprocketStatusCode = statusCode;
+      }
       if (awb) updatePayload.shiprocketAwb = awb;
       if (shipmentId) updatePayload.shiprocketShipmentId = shipmentId;
-      if (data.courier_name) updatePayload.courierName = data.courier_name;
-      if (data.etd) updatePayload.estimatedDelivery = data.etd;
+      if (courierName) updatePayload.courierName = courierName;
+      if (etd) updatePayload.estimatedDelivery = etd;
+      if (deliveredDate) updatePayload.deliveredDate = deliveredDate;
+      if (data.scans && Array.isArray(data.scans)) {
+        updatePayload.shiprocketActivities = data.scans;
+      }
 
-      // 1. Try finding by Firestore Order ID directly in root 'orders'
+      // 1. Match by exact doc ID in root 'orders'
       if (orderId) {
         try {
           const rootDoc = await admin.firestore().collection('orders').doc(orderId).get();
           if (rootDoc.exists) {
-            await rootDoc.ref.update(updatePayload);
+            await rootDoc.ref.update(updatePayload).catch(() => {});
             const userId = rootDoc.data()?.userId;
             if (userId && userId !== 'anonymous') {
               await admin.firestore().collection('users').doc(userId).collection('orders').doc(orderId).update(updatePayload).catch(() => {});
             }
           }
         } catch (e) {
-          console.warn("Could not update root doc by order_id:", e);
+          console.warn("Root doc direct lookup error:", e);
         }
       }
 
-      // 2. Also search via collectionGroup query by shipment_id, awb, or order_id
+      // 2. Also search via queries by bookingId, shiprocketOrderId, shipmentId, or awb
       const queryList = [];
+      if (orderId) {
+        queryList.push(admin.firestore().collection('orders').where('bookingId', '==', orderId).get());
+        queryList.push(admin.firestore().collection('orders').where('shiprocketOrderId', '==', orderId).get());
+        queryList.push(admin.firestore().collectionGroup('orders').where('bookingId', '==', orderId).get());
+        queryList.push(admin.firestore().collectionGroup('orders').where('shiprocketOrderId', '==', orderId).get());
+      }
       if (shipmentId) {
+        queryList.push(admin.firestore().collection('orders').where('shiprocketShipmentId', '==', shipmentId).get());
+        queryList.push(admin.firestore().collection('orders').where('shiprocketShipmentId', '==', Number(shipmentId)).get());
         queryList.push(admin.firestore().collectionGroup('orders').where('shiprocketShipmentId', '==', shipmentId).get());
         queryList.push(admin.firestore().collectionGroup('orders').where('shiprocketShipmentId', '==', Number(shipmentId)).get());
       }
       if (awb) {
+        queryList.push(admin.firestore().collection('orders').where('shiprocketAwb', '==', awb).get());
         queryList.push(admin.firestore().collectionGroup('orders').where('shiprocketAwb', '==', awb).get());
-      }
-      if (orderId) {
-        queryList.push(admin.firestore().collectionGroup('orders').where('shiprocketOrderId', '==', orderId).get());
       }
 
       const results = await Promise.all(queryList);
       for (const snap of results) {
         for (const docSnap of snap.docs) {
           await docSnap.ref.update(updatePayload).catch(() => {});
-          // Also sync to root orders if it's a subcollection doc
           const docId = docSnap.id;
           await admin.firestore().collection('orders').doc(docId).update(updatePayload).catch(() => {});
         }
@@ -450,35 +499,137 @@ exports.getShiprocketTracking = functions.https.onRequest((req, res) => {
 
     try {
       const trackingId = req.query.trackingId || req.body?.data?.trackingId || req.body?.trackingId;
-      if (!trackingId) {
-        return res.status(400).send({ data: { error: 'Tracking ID (AWB or Shipment ID) required' } });
+      const bookingId = req.query.bookingId || req.body?.data?.bookingId || req.body?.bookingId;
+      const orderDocId = req.query.orderId || req.body?.data?.orderId || req.body?.orderId;
+
+      const lookupKey = (trackingId || bookingId || orderDocId || '').toString().trim();
+      if (!lookupKey) {
+        return res.status(400).send({ data: { error: 'Tracking ID (AWB, Shipment ID, or Booking ID) required' } });
       }
 
       const token = await getShiprocketToken();
-      // Try tracking via AWB or Shipment ID
-      const trackRes = await fetch(`https://apiv2.shiprocket.in/v1/external/courier/track/awb/${trackingId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      let trackingResult = null;
+      let rawData = null;
 
-      if (!trackRes.ok) {
-        // Fallback to shipment track
-        const shipTrackRes = await fetch(`https://apiv2.shiprocket.in/v1/external/courier/track/shipment/${trackingId}`, {
+      // 1. Try tracking via AWB
+      try {
+        const trackRes = await fetch(`https://apiv2.shiprocket.in/v1/external/courier/track/awb/${lookupKey}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           }
         });
-        const shipData = await shipTrackRes.json();
-        return res.status(200).send({ data: shipData });
+        if (trackRes.ok) {
+          rawData = await trackRes.json();
+          if (rawData?.tracking_data?.track_status === 1 || rawData?.tracking_data?.shipment_track?.length > 0) {
+            trackingResult = rawData;
+          }
+        }
+      } catch (err) {
+        console.warn("AWB lookup error:", err);
       }
 
-      const data = await trackRes.json();
-      return res.status(200).send({ data });
+      // 2. Fallback: Try tracking via Shipment ID
+      if (!trackingResult) {
+        try {
+          const shipTrackRes = await fetch(`https://apiv2.shiprocket.in/v1/external/courier/track/shipment/${lookupKey}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (shipTrackRes.ok) {
+            rawData = await shipTrackRes.json();
+            if (rawData?.tracking_data?.track_status === 1 || rawData?.tracking_data?.shipment_track?.length > 0) {
+              trackingResult = rawData;
+            }
+          }
+        } catch (err) {
+          console.warn("Shipment ID lookup error:", err);
+        }
+      }
+
+      // 3. Fallback: Try tracking via Order ID (Booking ID)
+      if (!trackingResult) {
+        try {
+          const orderTrackRes = await fetch(`https://apiv2.shiprocket.in/v1/external/courier/track?order_id=${encodeURIComponent(lookupKey)}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (orderTrackRes.ok) {
+            rawData = await orderTrackRes.json();
+            if (rawData?.tracking_data?.track_status === 1 || rawData?.tracking_data?.shipment_track?.length > 0) {
+              trackingResult = rawData;
+            }
+          }
+        } catch (err) {
+          console.warn("Order ID lookup error:", err);
+        }
+      }
+
+      // If nothing found or tracking_data unavailable, return whatever rawData exists or fallback
+      const trackData = trackingResult?.tracking_data || rawData?.tracking_data || {};
+      const shipmentTrackArr = trackData.shipment_track || [];
+      const primaryTrack = shipmentTrackArr[0] || {};
+      const activities = trackData.shipment_track_activities || [];
+
+      const rawStatus = primaryTrack.current_status || trackData.current_status || primaryTrack.status || 'PROCESSING';
+      const statusCode = trackData.shipment_status || primaryTrack.status_code || null;
+      const normalizedStatus = normalizeShiprocketStatus(rawStatus, statusCode);
+
+      const courierName = primaryTrack.courier_name || trackData.courier_name || 'Shiprocket Partner';
+      const awbCode = primaryTrack.awb_code || primaryTrack.awb || trackData.awb || lookupKey;
+      const deliveredDate = primaryTrack.delivered_date || (normalizedStatus === 'DELIVERED' ? new Date().toISOString() : null);
+      const edd = primaryTrack.edd || primaryTrack.expected_delivery_date || trackData.etd || null;
+      const trackUrl = trackData.track_url || `https://shiprocket.co/tracking/${awbCode}`;
+
+      const responsePayload = {
+        success: true,
+        normalizedStatus,
+        rawStatus,
+        statusCode,
+        courierName,
+        awb: awbCode,
+        deliveredDate,
+        estimatedDelivery: edd,
+        activities,
+        trackUrl,
+        raw: rawData
+      };
+
+      // 4. Auto-sync to Firestore if bookingId or orderDocId was passed
+      const targetSyncKey = bookingId || orderDocId || lookupKey;
+      if (targetSyncKey && normalizedStatus) {
+        const syncUpdate = {
+          shiprocketStatus: normalizedStatus,
+          shiprocketRawStatus: rawStatus,
+          shiprocketAwb: awbCode,
+          courierName: courierName,
+          deliveredDate: deliveredDate,
+          estimatedDelivery: edd,
+          shiprocketActivities: activities,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+
+        try {
+          if (orderDocId) {
+            await admin.firestore().collection('orders').doc(orderDocId).update(syncUpdate).catch(() => {});
+          }
+          const bQuery = await admin.firestore().collection('orders').where('bookingId', '==', targetSyncKey).get();
+          for (const docSnap of bQuery.docs) {
+            await docSnap.ref.update(syncUpdate).catch(() => {});
+          }
+        } catch (syncErr) {
+          console.warn("Firestore auto-sync error:", syncErr);
+        }
+      }
+
+      return res.status(200).send({ data: responsePayload });
     } catch (error) {
       console.error("Shiprocket Tracking fetch error:", error);
       res.status(500).send({ data: { error: 'Failed to fetch tracking info' } });

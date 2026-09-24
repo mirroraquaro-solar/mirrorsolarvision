@@ -9,20 +9,29 @@ import {
   ArrowLeft, 
   Search, 
   RefreshCw, 
-  Check,
-  Copy,
-  MapPin,
-  Users,
-  MessageCircle,
-  Share2,
-  ChevronRight,
-  ShieldCheck,
-  Headphones,
-  Star,
-  Send,
-  X,
-  AlertCircle
+  Check, 
+  Copy, 
+  MapPin, 
+  Users, 
+  MessageCircle, 
+  Share2, 
+  ChevronRight, 
+  ShieldCheck, 
+  Headphones, 
+  Star, 
+  Send, 
+  X, 
+  AlertCircle,
+  Truck,
+  ExternalLink,
+  Activity
 } from 'lucide-react';
+import { 
+  fetchLiveShiprocketTracking, 
+  parseShiprocketTrackingMilestone,
+  ADMIN_WHATSAPP,
+  BUSINESS_PHONE
+} from '../../services/notificationService';
 
 export default function MyOrders({ onBackToStore, onBackToHome }) {
   const { currentUser: user, userProfile } = useAuth();
@@ -34,6 +43,12 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
   const [searchError, setSearchError] = useState('');
   const [copiedId, setCopiedId] = useState(null);
   const [shareNotification, setShareNotification] = useState(null);
+
+  // Live Shiprocket Tracking Modal State
+  const [trackingModalOrder, setTrackingModalOrder] = useState(null);
+  const [trackingModalLoading, setTrackingModalLoading] = useState(false);
+  const [trackingModalData, setTrackingModalData] = useState(null);
+  const [trackingModalError, setTrackingModalError] = useState('');
 
   // Optional Review Modal State for Bookers
   const [reviewModalOrder, setReviewModalOrder] = useState(null);
@@ -196,6 +211,44 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
       });
 
       setOrders(fetchedOrders);
+
+      // 3. Asynchronously sync live real-time Shiprocket courier updates for active/undelivered orders
+      (async () => {
+        for (const ord of fetchedOrders) {
+          const raw = (ord.shiprocketStatus || ord.status || '').toString().toUpperCase();
+          const lookupKey = ord.shiprocketAwb || ord.shiprocketShipmentId || ord.bookingId;
+          if (lookupKey && !raw.includes('DELIVERED')) {
+            try {
+              const live = await fetchLiveShiprocketTracking(lookupKey, {
+                bookingId: ord.bookingId || ord.id,
+                orderId: ord.id
+              });
+              if (live && live.normalizedStatus && live.normalizedStatus !== ord.shiprocketStatus) {
+                setOrders((prev) =>
+                  prev.map((o) =>
+                    o.id === ord.id
+                      ? {
+                          ...o,
+                          shiprocketStatus: live.normalizedStatus,
+                          shiprocketRawStatus: live.rawStatus || o.shiprocketRawStatus,
+                          shiprocketStatusCode: live.statusCode || o.shiprocketStatusCode,
+                          shiprocketAwb: live.awb || o.shiprocketAwb,
+                          courierName: live.courierName || o.courierName,
+                          deliveredDate: live.deliveredDate || o.deliveredDate,
+                          estimatedDelivery: live.estimatedDelivery || o.estimatedDelivery,
+                          shiprocketActivities: live.activities?.length ? live.activities : o.shiprocketActivities,
+                          shiprocketTrackUrl: live.trackUrl || o.shiprocketTrackUrl
+                        }
+                      : o
+                  )
+                );
+              }
+            } catch (err) {
+              console.warn('Background tracking sync error:', err);
+            }
+          }
+        }
+      })();
     } catch (error) {
       console.error('Error fetching orders:', error);
     } finally {
@@ -208,9 +261,75 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
     fetchOrders();
   }, [fetchOrders]);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
-    fetchOrders();
+    await fetchOrders();
+  };
+
+  const handleOpenTrackingModal = async (order) => {
+    setTrackingModalOrder(order);
+    setTrackingModalLoading(true);
+    setTrackingModalError('');
+    setTrackingModalData(null);
+
+    const lookupKey = order.shiprocketAwb || order.shiprocketShipmentId || order.bookingId || order.id;
+    try {
+      const live = await fetchLiveShiprocketTracking(lookupKey, {
+        bookingId: order.bookingId || order.id,
+        orderId: order.firestoreOrderId || order.id
+      });
+
+      if (live && live.success) {
+        setTrackingModalData(live);
+        const updatedOrder = {
+          ...order,
+          shiprocketStatus: live.normalizedStatus || order.shiprocketStatus,
+          shiprocketRawStatus: live.rawStatus || order.shiprocketRawStatus,
+          shiprocketStatusCode: live.statusCode || order.shiprocketStatusCode,
+          shiprocketAwb: live.awb || order.shiprocketAwb,
+          courierName: live.courierName || order.courierName,
+          deliveredDate: live.deliveredDate || order.deliveredDate,
+          estimatedDelivery: live.estimatedDelivery || order.estimatedDelivery,
+          shiprocketActivities: live.activities?.length ? live.activities : order.shiprocketActivities,
+          shiprocketTrackUrl: live.trackUrl || order.shiprocketTrackUrl
+        };
+        setOrders((prev) => prev.map((o) => (o.id === order.id ? updatedOrder : o)));
+        setTrackingModalOrder(updatedOrder);
+
+        try {
+          const local = JSON.parse(localStorage.getItem('msv_recent_orders') || '[]');
+          const updatedLocal = local.map((loc) =>
+            loc.id === order.id || loc.bookingId === order.bookingId ? { ...loc, ...updatedOrder } : loc
+          );
+          localStorage.setItem('msv_recent_orders', JSON.stringify(updatedLocal));
+        } catch (e) {
+          console.warn('localStorage sync warning:', e);
+        }
+      } else {
+        setTrackingModalData({
+          normalizedStatus: order.shiprocketStatus || 'PROCESSING',
+          rawStatus: order.shiprocketRawStatus || 'Order Placed & Verified',
+          courierName: order.courierName || 'Shiprocket Partner Courier',
+          awb: order.shiprocketAwb || order.shiprocketShipmentId || lookupKey,
+          deliveredDate: order.deliveredDate,
+          estimatedDelivery: order.estimatedDelivery,
+          activities: order.shiprocketActivities || [],
+          trackUrl: `https://shiprocket.co/tracking/${order.shiprocketAwb || order.shiprocketShipmentId || lookupKey}`
+        });
+      }
+    } catch (err) {
+      console.warn('Tracking fetch error:', err);
+      setTrackingModalError('Could not fetch live tracking from courier API.');
+    } finally {
+      setTrackingModalLoading(false);
+    }
+  };
+
+  const handleCloseTrackingModal = () => {
+    setTrackingModalOrder(null);
+    setTrackingModalData(null);
+    setTrackingModalError('');
+    setTrackingModalLoading(false);
   };
 
   const handleSearchOrder = async (e) => {
@@ -371,7 +490,7 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
   const handleShareProduct = (product, order) => {
     const prodName = product?.name || 'MSV Solar Drain Clips';
     const prodPrice = product?.price || order?.amount || 300;
-    const shareText = `☀️ Check out *${prodName}* from Mirror Solar Vision!\n⭐ 5.0 Rating (2,840+ Customer Reviews) • 10,000+ Units Sold Across AP & India!\n💰 Price: ₹${Number(prodPrice).toLocaleString('en-IN')}\nPrevents sludge build-up & restores 10-15% solar generation!\n🔗 Order Online: https://mirrorsolarvision.com/#store\n📞 Support: +91 86391 03947`;
+    const shareText = `☀️ Check out *${prodName}* from Mirror Solar Vision!\n⭐ 5.0 Rating (2,840+ Customer Reviews) • 10,000+ Units Sold Across AP & India!\n💰 Price: ₹${Number(prodPrice).toLocaleString('en-IN')}\nPrevents sludge build-up & restores 10-15% solar generation!\n🔗 Order Online: https://mirrorsolarvision.com/#store\n📞 Support: ${BUSINESS_PHONE}`;
 
     if (navigator.share) {
       navigator.share({
@@ -419,7 +538,7 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
 
           <div className="flex items-center gap-3">
             <a
-              href={`https://wa.me/918639103947?text=${encodeURIComponent('Hello Mirror Solar Vision, I need help with my order tracking.')}`}
+              href={`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent('Hello Mirror Solar Vision, I need help with my order tracking.')}`}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-[#7828C8] hover:text-[#5B1F99] transition cursor-pointer uppercase tracking-wider"
@@ -557,25 +676,48 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
               };
 
               const orderedDateStr = formatShortDate(orderDateObj);
-              
+              const milestoneInfo = parseShiprocketTrackingMilestone(order);
+              const currentMilestoneIdx = milestoneInfo.stageIndex;
+              const progressPercent = milestoneInfo.progressPercent;
+              const tooltipLabel = milestoneInfo.tooltipLabel;
+              const tooltipPosition = milestoneInfo.tooltipPosition;
+              const statusHeadline = milestoneInfo.headline;
+
               const shippedDateObj = new Date(orderDateObj.getTime() + 2 * 24 * 60 * 60 * 1000);
               const shippedDateStr = formatShortDate(shippedDateObj);
 
               const outForDeliveryDateObj = new Date(orderDateObj.getTime() + 5 * 24 * 60 * 60 * 1000);
               const outForDeliveryDateStr = formatShortDate(outForDeliveryDateObj);
 
-              const deliveryDateObj = new Date(orderDateObj.getTime() + 6 * 24 * 60 * 60 * 1000);
-              const deliveryDateStr = formatShortDate(deliveryDateObj);
-              const estimatedDeliveryHeadline = formatDeliveryDay(deliveryDateObj);
+              const defaultDeliveryDateObj = new Date(orderDateObj.getTime() + 6 * 24 * 60 * 60 * 1000);
+              let deliveryDateStr = formatShortDate(defaultDeliveryDateObj);
+              let estimatedDeliveryHeadline = formatDeliveryDay(defaultDeliveryDateObj);
+
+              if (order.deliveredDate) {
+                try {
+                  const d = new Date(order.deliveredDate);
+                  if (!isNaN(d.getTime())) {
+                    deliveryDateStr = formatShortDate(d);
+                    estimatedDeliveryHeadline = formatDeliveryDay(d);
+                  }
+                } catch {}
+              } else if (order.estimatedDelivery) {
+                try {
+                  const d = new Date(order.estimatedDelivery);
+                  if (!isNaN(d.getTime())) {
+                    deliveryDateStr = formatShortDate(d);
+                    estimatedDeliveryHeadline = formatDeliveryDay(d);
+                  }
+                } catch {}
+              }
 
               const shipmentId = order.shiprocketShipmentId || order.shipment_id || null;
               const awb = order.shiprocketAwb || order.awb || null;
-              const trackingCode = shipmentId || awb;
+              const trackingCode = awb || shipmentId;
               const bookingId = order.bookingId || order.firestoreOrderId || order.id || 'MSV-ORD';
               const orderKey = order.bookingId || order.firestoreOrderId || order.id || `ORD-${order.id}`;
               const isReviewed = !!submittedReviews[orderKey];
-
-              const rawStatus = (order.shiprocketStatus || order.status || 'PAID').toString().toUpperCase();
+              const courierName = order.courierName || 'Shiprocket Partner';
 
               const milestones = [
                 {
@@ -595,42 +737,10 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                 },
                 {
                   key: 'delivered',
-                  label: 'Delivery',
+                  label: milestoneInfo.isDelivered ? 'Delivered' : 'Delivery',
                   date: deliveryDateStr,
                 }
               ];
-
-              let currentMilestoneIdx = 0;
-              let tooltipLabel = 'Order Packed';
-              let tooltipPosition = '12%';
-              let progressPercent = 10;
-              let _statusHeadline = 'Order Placed';
-
-              if (rawStatus.includes('DELIVERED')) {
-                currentMilestoneIdx = 3;
-                tooltipLabel = 'Delivered';
-                tooltipPosition = '88%';
-                progressPercent = 100;
-                _statusHeadline = 'Delivered to Customer';
-              } else if (rawStatus.includes('OUT_FOR_DELIVERY') || rawStatus.includes('OUT FOR DELIVERY')) {
-                currentMilestoneIdx = 2;
-                tooltipLabel = 'Out for Delivery';
-                tooltipPosition = '63%';
-                progressPercent = 66;
-                _statusHeadline = 'Out for Delivery Today';
-              } else if (rawStatus.includes('PICKED UP') || rawStatus.includes('SHIPPED') || rawStatus.includes('IN_TRANSIT') || rawStatus.includes('IN TRANSIT') || !!trackingCode) {
-                currentMilestoneIdx = 1;
-                tooltipLabel = 'Shipped & In Transit';
-                tooltipPosition = '38%';
-                progressPercent = 33;
-                _statusHeadline = 'Shipped & In Transit';
-              } else {
-                currentMilestoneIdx = 0;
-                tooltipLabel = 'Order Packed';
-                tooltipPosition = '12%';
-                progressPercent = 10;
-                _statusHeadline = 'Order Placed';
-              }
 
               const items = Array.isArray(order.items) ? order.items : [];
               const firstItem = items.length > 0 ? items[0] : null;
@@ -694,22 +804,61 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
 
                   {/* 2. STATUS & DELIVERY ESTIMATE BANNER */}
                   <div className="px-4 sm:px-6 pt-5 pb-2">
-                    <div className="flex items-start gap-3.5">
-                      <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0 relative">
-                        <Package size={20} className="text-amber-500" />
-                        <span className="absolute -top-1 -right-1 bg-emerald-600 text-white rounded-full p-0.5 shadow-xs">
-                          <Check size={9} strokeWidth={3} />
-                        </span>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3.5">
+                        <div
+                          className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center shrink-0 relative ${
+                            milestoneInfo.isDelivered
+                              ? 'bg-emerald-100 border border-emerald-300 text-emerald-700'
+                              : milestoneInfo.isOutForDelivery
+                              ? 'bg-indigo-100 border border-indigo-300 text-indigo-700'
+                              : 'bg-emerald-50 border border-emerald-200 text-emerald-600'
+                          }`}
+                        >
+                          {milestoneInfo.isDelivered ? (
+                            <Check size={22} className="text-emerald-600 stroke-[3]" />
+                          ) : (
+                            <Package size={20} className="text-amber-500" />
+                          )}
+                          <span className="absolute -top-1 -right-1 bg-emerald-600 text-white rounded-full p-0.5 shadow-xs">
+                            <Check size={9} strokeWidth={3} />
+                          </span>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-sm sm:text-lg font-black text-slate-900 font-heading">
+                              {statusHeadline}
+                            </h3>
+                            <span className={`text-[10px] sm:text-xs font-extrabold px-2 py-0.5 rounded-full border ${milestoneInfo.badgeColor}`}>
+                              {milestoneInfo.badge}
+                            </span>
+                          </div>
+
+                          <p className="text-xs sm:text-sm font-bold text-slate-500 mt-0.5">
+                            {milestoneInfo.isDelivered ? (
+                              <span className="text-emerald-700 font-extrabold">Package delivered successfully on {deliveryDateStr}</span>
+                            ) : (
+                              <>
+                                Delivery by <span className="text-slate-800">{estimatedDeliveryHeadline}</span>
+                                {trackingCode && <span className="text-slate-400 font-normal"> • via {courierName}</span>}
+                              </>
+                            )}
+                          </p>
+                        </div>
                       </div>
 
-                      <div>
-                        <h3 className="text-sm sm:text-lg font-black text-slate-900 font-heading">
-                          {rawStatus.replace('_', ' ')}
-                        </h3>
-                        <p className="text-xs sm:text-sm font-bold text-slate-500 mt-0.5">
-                          Delivery by <span className="text-slate-800">{estimatedDeliveryHeadline}</span>
-                        </p>
-                      </div>
+                      {trackingCode && (
+                        <button
+                          onClick={() => handleOpenTrackingModal(order)}
+                          className="hidden sm:inline-flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-xs font-extrabold py-1.5 px-3 rounded-xl transition shadow-xs cursor-pointer shrink-0"
+                          title="View live courier tracking checkpoints"
+                        >
+                          <Truck size={13} className="text-blue-600" />
+                          <span>Live Tracking</span>
+                          <ExternalLink size={11} className="text-blue-500" />
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -723,10 +872,14 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                           transform: 'translateX(-50%)',
                         }}
                       >
-                        <div className="bg-[#1F2937] text-white text-[10px] sm:text-[11px] font-extrabold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl shadow-lg flex items-center gap-1.5 whitespace-nowrap relative border border-slate-700">
-                          <span className="text-xs sm:text-sm">📦</span>
+                        <div className={`text-white text-[10px] sm:text-[11px] font-extrabold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl shadow-lg flex items-center gap-1.5 whitespace-nowrap relative border ${
+                          milestoneInfo.isDelivered ? 'bg-emerald-800 border-emerald-700' : 'bg-[#1F2937] border-slate-700'
+                        }`}>
+                          <span className="text-xs sm:text-sm">{milestoneInfo.isDelivered ? '✅' : '📦'}</span>
                           <span>{tooltipLabel}</span>
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-[#1F2937]"></div>
+                          <div className={`absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-4 ${
+                            milestoneInfo.isDelivered ? 'border-t-emerald-800' : 'border-t-[#1F2937]'
+                          }`}></div>
                         </div>
                       </div>
                     </div>
@@ -767,7 +920,7 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                           <div key={ms.key} className="space-y-0.5">
                             <span
                               className={`block text-[9px] sm:text-[11px] md:text-xs font-bold leading-tight ${
-                                isPassedOrActive ? 'text-slate-900' : 'text-slate-400'
+                                isPassedOrActive ? (msIdx === 3 && milestoneInfo.isDelivered ? 'text-emerald-700 font-extrabold' : 'text-slate-900') : 'text-slate-400'
                               }`}
                             >
                               {ms.label}
@@ -818,6 +971,17 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                     )}
 
                     <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap w-full sm:w-auto">
+                      {trackingCode && (
+                        <button
+                          onClick={() => handleOpenTrackingModal(order)}
+                          className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2.5 sm:py-2 px-3 rounded-xl transition-colors cursor-pointer shadow-xs"
+                          title="View live Shiprocket courier timeline"
+                        >
+                          <Truck size={13} />
+                          <span>Live Track</span>
+                        </button>
+                      )}
+
                       <button
                         onClick={handleRefresh}
                         className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold py-2.5 sm:py-2 px-3 rounded-xl transition-colors cursor-pointer"
@@ -858,6 +1022,176 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* SHIPROCKET LIVE COURIER TRACKING MODAL */}
+        {trackingModalOrder && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+            <div className="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-7 shadow-2xl border border-slate-100 relative space-y-5 text-left max-h-[90vh] overflow-y-auto">
+              <button
+                onClick={handleCloseTrackingModal}
+                className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-2xl bg-blue-600 text-white shrink-0 shadow-md">
+                  <Truck size={24} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-xl font-black text-slate-900 font-heading">
+                      Live Courier Tracking
+                    </h3>
+                    <span className="text-[10px] font-extrabold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full border border-blue-200 uppercase">
+                      Shiprocket
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 font-mono mt-0.5">
+                    Order #{trackingModalOrder.bookingId || trackingModalOrder.id}
+                  </p>
+                </div>
+              </div>
+
+              {trackingModalLoading ? (
+                <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-500">
+                  <Loader size={30} className="animate-spin text-blue-600" />
+                  <p className="text-xs font-bold">Contacting Shiprocket Courier Network...</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {trackingModalError && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center gap-2">
+                      <AlertCircle size={14} className="text-amber-600 shrink-0" />
+                      <span>{trackingModalError}</span>
+                    </div>
+                  )}
+
+                  {/* Status Banner */}
+                  {(() => {
+                    const mInfo = parseShiprocketTrackingMilestone(trackingModalOrder);
+                    return (
+                      <div className={`p-4 rounded-2xl border flex items-center justify-between gap-3 ${
+                        mInfo.isDelivered 
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-900' 
+                          : mInfo.isOutForDelivery 
+                          ? 'bg-indigo-50 border-indigo-200 text-indigo-900'
+                          : 'bg-blue-50 border-blue-200 text-blue-900'
+                      }`}>
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-wider opacity-70">Current Status</p>
+                          <h4 className="text-base sm:text-lg font-black mt-0.5">{mInfo.headline}</h4>
+                          <p className="text-xs font-semibold opacity-90 mt-0.5">
+                            {trackingModalData?.rawStatus || trackingModalOrder.shiprocketRawStatus || 'In Transit'}
+                          </p>
+                        </div>
+                        <span className={`text-xs font-extrabold px-3 py-1 rounded-xl border ${mInfo.badgeColor}`}>
+                          {mInfo.badge}
+                        </span>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Courier & AWB Info */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">Courier Partner</span>
+                      <p className="text-sm font-extrabold text-slate-900 mt-0.5">
+                        {trackingModalData?.courierName || trackingModalOrder.courierName || 'Shiprocket Partner'}
+                      </p>
+                    </div>
+
+                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase">Tracking AWB Code</span>
+                        <p className="text-xs font-mono font-black text-slate-900 mt-0.5 truncate">
+                          {trackingModalData?.awb || trackingModalOrder.shiprocketAwb || trackingModalOrder.shiprocketShipmentId || 'MSV-TRACK'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(trackingModalData?.awb || trackingModalOrder.shiprocketAwb || trackingModalOrder.shiprocketShipmentId, 'awb-code')}
+                        className="p-1.5 hover:bg-slate-200 rounded-lg text-slate-600 transition cursor-pointer"
+                        title="Copy AWB Code"
+                      >
+                        {copiedId === 'awb-code' ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Live Scan Timeline Activities */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <Activity size={14} className="text-blue-600" />
+                        <span>Live Courier Scans</span>
+                      </h4>
+                      <span className="text-[10px] font-bold text-slate-400">Real-Time Sync</span>
+                    </div>
+
+                    {trackingModalData?.activities && trackingModalData.activities.length > 0 ? (
+                      <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3 max-h-56 overflow-y-auto">
+                        {trackingModalData.activities.map((act, idx) => (
+                          <div key={idx} className="flex items-start gap-3 relative">
+                            {idx < trackingModalData.activities.length - 1 && (
+                              <div className="absolute left-2.5 top-5 bottom-0 w-0.5 bg-slate-200 -mb-3"></div>
+                            )}
+                            <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                              idx === 0 ? 'bg-blue-600 text-white ring-4 ring-blue-100' : 'bg-slate-300 text-slate-600'
+                            }`}>
+                              <Check size={10} strokeWidth={3} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-extrabold text-slate-900 leading-snug">
+                                {act.activity || act.status || 'Status Update'}
+                              </p>
+                              <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5 flex-wrap">
+                                {act.location && <span>📍 {act.location}</span>}
+                                {act.date && <span>🕒 {act.date}</span>}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-center space-y-1">
+                        <p className="text-xs font-bold text-slate-700">Package Dispatched & Moving in Network</p>
+                        <p className="text-[11px] text-slate-500">
+                          Detailed hub-by-hub scans are registered automatically as courier agents scan the barcode.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* External Shiprocket Link and Refresh Button */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenTrackingModal(trackingModalOrder)}
+                      className="inline-flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold py-2.5 px-4 rounded-xl transition cursor-pointer"
+                    >
+                      <RefreshCw size={12} />
+                      <span>Refresh Live Scans</span>
+                    </button>
+
+                    <a
+                      href={
+                        trackingModalData?.trackUrl ||
+                        `https://shiprocket.co/tracking/${trackingModalOrder.shiprocketAwb || trackingModalOrder.shiprocketShipmentId || trackingModalOrder.bookingId}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-700 hover:opacity-95 text-white font-extrabold text-xs py-2.5 px-5 rounded-xl shadow-sm transition cursor-pointer"
+                    >
+                      <span>Open Official Shiprocket Portal</span>
+                      <ExternalLink size={13} />
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
         {/* REVIEW MODAL */}

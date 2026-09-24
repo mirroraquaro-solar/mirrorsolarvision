@@ -11,20 +11,24 @@ import {
   Star, 
   Check, 
   Send,
-  Mail
+  Mail,
+  Printer,
+  Copy,
+  FileText
 } from 'lucide-react';
 // import { BUSINESS_CONTACT } from '../../data/bulkComboData';
 import { db } from '../../config/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ADMIN_WHATSAPP, BUSINESS_PHONE } from '../../services/notificationService';
+import { ADMIN_WHATSAPP, BUSINESS_PHONE, printConfirmationDocument, getCustomerWhatsAppUrl } from '../../services/notificationService';
 
 const OrderSuccess = ({ orderData, onContinueShopping, onViewOrders }) => {
-  const orderId = orderData?.orderId || (typeof orderData === 'string' ? orderData : orderData?.id || 'N/A');
+  const orderId = orderData?.orderId || orderData?.bookingId || (typeof orderData === 'string' ? orderData : orderData?.id || 'N/A');
   const shipmentId = orderData?.shiprocketShipmentId;
   const amount = orderData?.amount || 0;
   const items = orderData?.items || [];
   const address = orderData?.address || {};
   const paymentId = orderData?.razorpayPaymentId || orderData?.paymentId || '';
+  const [copiedNote, setCopiedNote] = useState(false);
 
   const customerName = address.fullName || 'Valued Customer';
   const customerPhone = address.phone || '';
@@ -149,10 +153,6 @@ ${shipmentId ? `🚚 *Shiprocket Tracking ID:* ${shipmentId}\n🔗 *Live Courier
 
   const businessWhatsAppUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(
     `*NEW ORDER BOOKING CONFIRMATION*\n\n${whatsappReceipt}`
-  )}`;
-
-  const customerShareWhatsAppUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(
-    `*My Mirror Solar Vision Order Invoice:*\n\n${whatsappReceipt}`
   )}`;
 
   return (
@@ -377,33 +377,105 @@ ${shipmentId ? `🚚 *Shiprocket Tracking ID:* ${shipmentId}\n🔗 *Live Courier
             </div>
           )}
 
-          <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-4 space-y-2.5">
-            <div className="flex items-center gap-2 text-emerald-900">
-              <MessageSquare size={16} className="text-emerald-600 shrink-0" />
-              <span className="text-xs font-black uppercase tracking-wider">WhatsApp Bill & Confirmation</span>
+          {/* Official Confirmation Note & Document Actions */}
+          <div className="bg-slate-900 text-white rounded-2xl p-5 shadow-md border border-slate-800 space-y-3.5">
+            <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-[#F58220]/20 text-[#F58220]">
+                  <FileText size={16} />
+                </div>
+                <div className="text-left">
+                  <h4 className="text-sm font-extrabold text-white">Official Confirmation Note</h4>
+                  <p className="text-[11px] text-slate-400">Save, print, or receive your official order invoice slip</p>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-emerald-800 leading-relaxed">
-              Get an instant official digital invoice with full product breakdown sent directly via WhatsApp.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-              <a
-                href={businessWhatsAppUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 px-3 rounded-xl shadow-xs transition-all text-center"
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  printConfirmationDocument({
+                    title: 'OFFICIAL ORDER CONFIRMATION SLIP',
+                    bookingId: orderId,
+                    customerName,
+                    customerPhone,
+                    customerEmail: address.email || '',
+                    address: fullAddressText,
+                    items,
+                    totalAmount: amount,
+                    paymentStatus: 'Paid & Confirmed (Razorpay Verified)',
+                    paymentId,
+                    shipmentId,
+                    type: 'order'
+                  });
+                }}
+                className="w-full inline-flex items-center justify-center gap-2 bg-[#0A2540] hover:bg-slate-800 text-white border border-slate-700 font-bold text-xs py-2.5 px-3.5 rounded-xl transition-all shadow-xs cursor-pointer text-center"
               >
-                <MessageSquare size={13} />
-                <span>Notify Our Office</span>
-              </a>
-              <a
-                href={customerShareWhatsAppUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 bg-white hover:bg-emerald-100 border border-emerald-300 text-emerald-900 font-bold text-xs py-2.5 px-3 rounded-xl transition-all text-center"
+                <Printer size={14} className="text-[#F58220]" />
+                <span>Print / Save Slip (PDF)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(whatsappReceipt);
+                    setCopiedNote(true);
+                    setTimeout(() => setCopiedNote(false), 3000);
+                  } catch {
+                    // Fallback
+                  }
+                }}
+                className="w-full inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-bold text-xs py-2.5 px-3.5 rounded-xl transition-all shadow-xs cursor-pointer text-center"
               >
-                <Share2 size={13} className="text-emerald-600" />
-                <span>Save / Share Bill</span>
-              </a>
+                {copiedNote ? (
+                  <>
+                    <Check size={14} className="text-emerald-400" />
+                    <span className="text-emerald-400">Confirmation Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy size={14} className="text-slate-300" />
+                    <span>Copy Confirmation Note</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Customer WhatsApp Direct Link */}
+            <div className="bg-slate-800/80 rounded-xl p-3 border border-slate-700/80 space-y-2 text-left">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <MessageSquare size={13} className="text-[#25D366]" />
+                  <span>Send Confirmation to My WhatsApp</span>
+                </span>
+                <span className="text-[10px] text-slate-400">Pre-filled Chat</span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Opens WhatsApp with your complete itemized confirmation note — tap Send to save to your chat.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                <a
+                  href={getCustomerWhatsAppUrl(customerPhone, whatsappReceipt)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black text-xs py-2.5 px-3 rounded-xl transition-all shadow-xs text-center cursor-pointer"
+                >
+                  <MessageSquare size={13} className="fill-slate-950" />
+                  <span>Send to My WhatsApp</span>
+                </a>
+
+                <a
+                  href={businessWhatsAppUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold text-xs py-2.5 px-3 rounded-xl transition-all text-center cursor-pointer"
+                >
+                  <Share2 size={13} />
+                  <span>Notify Dispatch Desk</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>

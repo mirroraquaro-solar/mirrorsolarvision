@@ -17,11 +17,11 @@ export default function StoreTeaser({ onNavigateToStore }) {
   const combo = CONFIRMED_BULK_COMBO;
   const drainClips = INDIVIDUAL_PRODUCTS.find(p => p.id === 'msv-drain-clips') || INDIVIDUAL_PRODUCTS[0];
 
-  const handleGoToStore = () => {
+  const handleGoToStore = (action = 'store') => {
     if (onNavigateToStore) {
-      onNavigateToStore();
+      onNavigateToStore(action);
     } else {
-      window.location.hash = '#store';
+      window.location.hash = action === 'bulk-combo' ? '#bulk-combo' : action === 'bulk-combo-buy' ? '#bulk-combo-buy' : action === 'drain-clips' ? '#drain-clips' : '#store';
     }
   };
 
@@ -208,14 +208,14 @@ export default function StoreTeaser({ onNavigateToStore }) {
 
                         <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-3">
                           <button
-                            onClick={handleGoToStore}
+                            onClick={() => handleGoToStore('drain-clips')}
                             className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2.5 sm:px-5 sm:py-3.5 rounded-xl text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
                           >
                             <span>VIEW IN STORE</span>
                             <ArrowRight size={14} />
                           </button>
                           <button
-                            onClick={handleGoToStore}
+                            onClick={() => handleGoToStore('drain-clips-buy')}
                             className="bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black px-4 py-2.5 sm:px-5 sm:py-3.5 rounded-xl text-xs sm:text-sm transition shadow-accent cursor-pointer text-center"
                           >
                             ORDER NOW
@@ -239,7 +239,7 @@ export default function StoreTeaser({ onNavigateToStore }) {
                     {/* Left: 6 Product Images Collage with Count Badges (5 cols) */}
                     <div className="md:col-span-5 space-y-2">
                       <div 
-                        onClick={handleGoToStore}
+                        onClick={() => handleGoToStore('bulk-combo')}
                         className="bg-slate-50 border border-slate-200/80 rounded-2xl p-2 sm:p-3 cursor-pointer group hover:border-primary-500 hover:shadow-md transition"
                       >
                         <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full">
@@ -269,7 +269,7 @@ export default function StoreTeaser({ onNavigateToStore }) {
 
                       <div>
                         <h3 
-                          onClick={handleGoToStore}
+                          onClick={() => handleGoToStore('bulk-combo')}
                           className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 font-heading cursor-pointer hover:text-primary-600 transition"
                         >
                           Bulk Solar Installation Combo
@@ -300,14 +300,14 @@ export default function StoreTeaser({ onNavigateToStore }) {
 
                         <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-3">
                           <button
-                            onClick={handleGoToStore}
+                            onClick={() => handleGoToStore('bulk-combo')}
                             className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2.5 sm:px-5 sm:py-3.5 rounded-xl text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
                           >
                             <span>VIEW COMBO</span>
                             <ArrowRight size={14} />
                           </button>
                           <button
-                            onClick={handleGoToStore}
+                            onClick={() => handleGoToStore('bulk-combo-buy')}
                             className="bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black px-4 py-2.5 sm:px-5 sm:py-3.5 rounded-xl text-xs sm:text-sm transition shadow-accent cursor-pointer text-center"
                           >
                             ORDER NOW
