@@ -89,18 +89,6 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartNotification, setCartNotification] = useState(null);
 
-  // Body scroll locking when drawer or modal is open to prevent background mobile scroll shifts
-  useEffect(() => {
-    const isAnyModalOpen = isCartOpen || isComboDetailOpen || isComboOrderOpen || !!activeComboMaterialModal || !!activeProductDetail;
-    if (isAnyModalOpen) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = originalOverflow;
-      };
-    }
-  }, [isCartOpen, isComboDetailOpen, isComboOrderOpen, activeComboMaterialModal, activeProductDetail]);
-
   // Bulk Combo State (Secondary Section)
   const [comboQuantity, setComboQuantity] = useState(1);
   const [isComboDetailOpen, setIsComboDetailOpen] = useState(false);
@@ -121,6 +109,18 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
     address: '',
     notes: ''
   });
+
+  // Body scroll locking when drawer or modal is open to prevent background mobile scroll shifts
+  useEffect(() => {
+    const isAnyModalOpen = isCartOpen || isComboDetailOpen || isComboOrderOpen || !!activeComboMaterialModal || !!activeProductDetail;
+    if (isAnyModalOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isCartOpen, isComboDetailOpen, isComboOrderOpen, activeComboMaterialModal, activeProductDetail]);
 
   const drainClipsProduct = INDIVIDUAL_PRODUCTS.find(p => p.id === 'msv-drain-clips') || INDIVIDUAL_PRODUCTS[0];
   const combo = CONFIRMED_BULK_COMBO;
