@@ -1,19 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import Layout from './components/layout/Layout';
 import Hero from './components/sections/Hero';
 import AuthorizedDealers from './components/sections/AuthorizedDealers';
 import AboutGroup from './components/sections/AboutGroup';
 import WhyChooseUs from './components/sections/WhyChooseUs';
 import StoreTeaser from './components/sections/StoreTeaser';
-import MirrorSolarStore from './components/sections/MirrorSolarStore';
 import SubsidyGuide from './components/sections/SubsidyGuide';
 import SiteSurvey from './components/sections/SiteSurvey';
 import Gallery from './components/sections/Gallery';
 import Reviews from './components/sections/Reviews';
 import QuoteForm from './components/sections/QuoteForm';
 import NotificationPopup from './components/ui/NotificationPopup';
-import PartnerRegistration from './pages/PartnerRegistration';
-import MyOrders from './components/checkout/MyOrders';
+
+// Code-split dynamic views for instant mobile speed
+const MirrorSolarStore = lazy(() => import('./components/sections/MirrorSolarStore'));
+const MyOrders = lazy(() => import('./components/checkout/MyOrders'));
+const PartnerRegistration = lazy(() => import('./pages/PartnerRegistration'));
 
 const isOrderHash = (hash) => {
   const h = (hash || '').toLowerCase();
@@ -122,26 +124,35 @@ function App() {
           <SiteSurvey />
           <QuoteForm />
         </>
-      ) : currentView === 'store' ? (
-        <MirrorSolarStore 
-          key="view-store"
-          initialView="store"
-          initialAction={storeAction}
-          onBackToHome={() => handleNavigate('home')}
-          onNavigate={handleNavigate}
-        />
-      ) : currentView === 'orders' ? (
-        <MyOrders 
-          key="view-orders"
-          onBackToStore={() => handleNavigate('store')}
-          onBackToHome={() => handleNavigate('home')}
-        />
-      ) : currentView === 'partner-registration' ? (
-        <PartnerRegistration 
-          key="view-partner"
-          onBack={() => handleNavigate('home')} 
-        />
-      ) : null}
+      ) : (
+        <Suspense fallback={
+          <div className="min-h-[70vh] flex flex-col items-center justify-center gap-3">
+            <div className="w-10 h-10 border-3 border-accent-500 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Loading...</span>
+          </div>
+        }>
+          {currentView === 'store' ? (
+            <MirrorSolarStore 
+              key="view-store"
+              initialView="store"
+              initialAction={storeAction}
+              onBackToHome={() => handleNavigate('home')}
+              onNavigate={handleNavigate}
+            />
+          ) : currentView === 'orders' ? (
+            <MyOrders 
+              key="view-orders"
+              onBackToStore={() => handleNavigate('store')}
+              onBackToHome={() => handleNavigate('home')}
+            />
+          ) : currentView === 'partner-registration' ? (
+            <PartnerRegistration 
+              key="view-partner"
+              onBack={() => handleNavigate('home')} 
+            />
+          ) : null}
+        </Suspense>
+      )}
     </Layout>
   );
 }
