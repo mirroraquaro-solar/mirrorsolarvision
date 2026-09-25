@@ -95,7 +95,11 @@ export default function Header({ onNavigate }) {
             <div className="relative" ref={dropdownRef}>
               <button 
                 onClick={() => setIsStoreDropdownOpen(!isStoreDropdownOpen)}
-                onMouseEnter={() => setIsStoreDropdownOpen(true)}
+                onMouseEnter={() => {
+                  setIsStoreDropdownOpen(true);
+                  import('../sections/MirrorSolarStore');
+                  import('../sections/MirrorAquaStore');
+                }}
                 className="inline-flex items-center gap-2 text-[14px] font-bold text-white bg-gradient-to-r from-[#0A2540] via-[#0F3460] to-[#0A2540] hover:shadow-lg px-4.5 py-2 rounded-full shadow-sm transition-all duration-200 transform hover:scale-105 cursor-pointer border border-slate-700/40"
               >
                 <span className="w-5 h-5 rounded-full bg-accent-500 flex items-center justify-center text-slate-950 text-[11px] font-black">🛒</span>
@@ -118,6 +122,7 @@ export default function Header({ onNavigate }) {
                   <a
                     href="#store"
                     onClick={(e) => { e.preventDefault(); handleNavClick('store'); }}
+                    onMouseEnter={() => import('../sections/MirrorSolarStore')}
                     className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-amber-50/80 transition-colors group cursor-pointer"
                   >
                     <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 shrink-0 group-hover:bg-amber-500 group-hover:text-white transition-all">
@@ -136,6 +141,7 @@ export default function Header({ onNavigate }) {
                   <a
                     href="#aqua-store"
                     onClick={(e) => { e.preventDefault(); handleNavClick('aqua-store'); }}
+                    onMouseEnter={() => import('../sections/MirrorAquaStore')}
                     className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-cyan-50/80 transition-colors group cursor-pointer mt-1"
                   >
                     <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-600 shrink-0 group-hover:bg-cyan-600 group-hover:text-white transition-all">
@@ -157,6 +163,7 @@ export default function Header({ onNavigate }) {
             <a 
               href="#orders" 
               onClick={(e) => { e.preventDefault(); handleNavClick('orders'); }} 
+              onMouseEnter={() => import('../checkout/MyOrders')}
               className="inline-flex items-center gap-1.5 text-[14px] font-bold text-slate-800 hover:text-primary-600 transition-colors"
             >
               <Truck size={15} className="text-primary-600" />
