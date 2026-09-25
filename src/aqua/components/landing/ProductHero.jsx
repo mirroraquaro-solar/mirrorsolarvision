@@ -98,7 +98,15 @@ export function ProductHero({ product, onNavigate }) {
   return (
     <section className="product-hero-section" aria-label="Mirror Aqua Spun Filter Product Overview">
       <div className="container product-hero-container">
-        {/* Left Column: Product Information & Purchase Configurator */}
+        {/* Left / Top Column: High-Res Interactive Gallery */}
+        <div className="hero-gallery-col">
+          <ProductGallery
+            images={product?.images || []}
+            productName={product?.name || 'Mirror Aqua 10-Inch 5-Micron PP Spun Filter'}
+          />
+        </div>
+
+        {/* Right / Next Column: Product Information, Live Pricing & Purchase Configurator */}
         <div className="hero-details-col">
           {/* Brand & Breadcrumb Pill */}
           <div className="hero-eyebrow-row">
@@ -339,14 +347,6 @@ export function ProductHero({ product, onNavigate }) {
               <span>Fits Standard 10-Inch Bowls</span>
             </div>
           </div>
-        </div>
-
-        {/* Right Column: High-Res Interactive Gallery */}
-        <div className="hero-gallery-col">
-          <ProductGallery
-            images={product?.images || []}
-            productName={product?.name || 'Mirror Aqua 10-Inch 5-Micron PP Spun Filter'}
-          />
         </div>
       </div>
     </section>
