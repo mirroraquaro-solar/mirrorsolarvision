@@ -44,7 +44,7 @@ export default function StoreTeaser({ onNavigateToStore }) {
 
   return (
     <section 
-      className="section py-12 lg:py-16 bg-slate-50 border-b border-slate-200/80 scroll-mt-20 relative overflow-hidden" 
+      className="section py-12 lg:py-16 bg-slate-50 border-b border-slate-200/80 scroll-mt-24 sm:scroll-mt-28 relative overflow-hidden" 
       id="bulk-combos" 
       aria-label="Mirror Solar Store Products Showcase"
       onMouseEnter={() => setIsPaused(true)}

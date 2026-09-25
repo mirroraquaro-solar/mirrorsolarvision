@@ -85,7 +85,7 @@ export default function DrainClips() {
   };
 
   return (
-    <section className="section py-16 bg-white border-y border-gray-100 scroll-mt-20" id="drain-clips" aria-label="Solar panel dust and water drain clips product feature">
+    <section className="section py-16 bg-white border-y border-gray-100 scroll-mt-24 sm:scroll-mt-28" id="drain-clips" aria-label="Solar panel dust and water drain clips product feature">
       <div className="container-custom">
         <div className="text-center max-w-[800px] mx-auto mb-12">
           <span className="text-xs font-bold uppercase tracking-wider text-accent-500 bg-accent-500/10 px-3 py-1.5 rounded-full">India's First Solar Panel Maintenance Accessory</span>

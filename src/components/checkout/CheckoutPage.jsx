@@ -210,7 +210,7 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
     <div className="min-h-screen bg-slate-100 font-sans pb-16 text-slate-900">
       
       {/* Checkout Header (Fully Mobile Responsive) */}
-      <header className="bg-[#0A192F] text-white border-b border-slate-800 py-3.5 px-4 sm:px-6 sticky top-0 z-30 shadow-md">
+      <header className="bg-[#0A192F] text-white border-b border-slate-800 py-3.5 px-4 sm:px-6 sticky top-[72px] sm:top-[78px] z-30 shadow-md">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button

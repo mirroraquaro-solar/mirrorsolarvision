@@ -14,7 +14,9 @@ import {
   Mail,
   Printer,
   Copy,
-  FileText
+  FileText,
+  X,
+  Sparkles
 } from 'lucide-react';
 // import { BUSINESS_CONTACT } from '../../data/bulkComboData';
 import { db } from '../../config/firebase';
@@ -29,6 +31,7 @@ const OrderSuccess = ({ orderData, onContinueShopping, onViewOrders }) => {
   const address = orderData?.address || {};
   const paymentId = orderData?.razorpayPaymentId || orderData?.paymentId || '';
   const [copiedNote, setCopiedNote] = useState(false);
+  const [showConfirmPopup, setShowConfirmPopup] = useState(true);
 
   const customerName = address.fullName || 'Valued Customer';
   const customerPhone = address.phone || '';
@@ -156,18 +159,137 @@ ${shipmentId ? `🚚 *Shiprocket Tracking ID:* ${shipmentId}\n🔗 *Live Courier
   )}`;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
-      <div className="max-w-xl w-full bg-white rounded-3xl shadow-xl border border-slate-100 p-6 sm:p-10 text-center">
-        <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-emerald-100 text-emerald-600 mb-6 shadow-sm ring-8 ring-emerald-50">
-          <CheckCircle className="h-10 w-10" />
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center py-8 sm:py-12 px-3 sm:px-6 lg:px-8 relative">
+      
+      {/* ========================================================================= */}
+      {/* CONFIRM ORDER POPUP MODAL (Pops up immediately after payment) */}
+      {/* ========================================================================= */}
+      {showConfirmPopup && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-8 shadow-2xl border border-slate-100 text-center relative animate-fade-in-up">
+            
+            {/* Top Close Button */}
+            <button
+              onClick={() => setShowConfirmPopup(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer"
+              aria-label="Close confirmation popup"
+            >
+              <X size={18} />
+            </button>
+
+            {/* Celebration Icon */}
+            <div className="mx-auto flex items-center justify-center h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-emerald-100 text-emerald-600 mb-4 shadow-sm ring-8 ring-emerald-50">
+              <CheckCircle className="h-9 w-9 sm:h-11 sm:w-11" />
+            </div>
+
+            <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider mb-2">
+              <Sparkles size={13} className="text-emerald-600" />
+              <span>Order Confirmed & Payment Verified</span>
+            </div>
+
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 font-heading mb-1.5">
+              Thank You, {customerName}!
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 mb-5 leading-relaxed">
+              Your order has been placed successfully and has been routed to our Andhra Pradesh dispatch desk.
+            </p>
+
+            {/* Order Brief Box */}
+            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/90 text-left space-y-2.5 mb-5">
+              <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                <span className="text-xs font-bold text-slate-500">Order ID:</span>
+                <span className="font-mono font-black text-xs sm:text-sm text-slate-900">{orderId}</span>
+              </div>
+
+              {amount > 0 && (
+                <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                  <span className="text-xs font-bold text-slate-500">Amount Paid:</span>
+                  <span className="font-heading font-black text-sm text-emerald-600">
+                    ₹{Number(amount).toLocaleString('en-IN')}
+                  </span>
+                </div>
+              )}
+
+              {items.length > 0 && (
+                <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                  <span className="text-xs font-bold text-slate-500">Items Ordered:</span>
+                  <span className="text-xs font-bold text-slate-800 truncate max-w-[200px]">
+                    {items.map(i => `${i.quantity}x ${i.name}`).join(', ')}
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-bold text-slate-500">Deliver To:</span>
+                <span className="text-xs font-semibold text-slate-700 truncate max-w-[200px]">
+                  {address.city ? `${address.city}, ${address.state || 'AP'}` : 'Andhra Pradesh'}
+                </span>
+              </div>
+            </div>
+
+            {/* Popup Action Buttons */}
+            <div className="space-y-2.5">
+              {/* Primary: TRACK ORDER BUTTON */}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowConfirmPopup(false);
+                  if (onViewOrders) onViewOrders();
+                }}
+                className="w-full inline-flex items-center justify-center gap-2 bg-[#0A2540] hover:bg-[#071A2E] active:scale-[0.99] text-white font-black py-3.5 px-5 rounded-2xl shadow-lg hover:shadow-xl transition-all text-sm cursor-pointer border border-[#0A2540]"
+              >
+                <Truck size={18} className="text-[#F58220]" />
+                <span>Track Order & Live Shipment</span>
+                <ArrowRight size={16} className="text-accent-400" />
+              </button>
+
+              {/* Secondary: View Detailed Receipt */}
+              <button
+                type="button"
+                onClick={() => setShowConfirmPopup(false)}
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-4 rounded-xl text-xs transition cursor-pointer"
+              >
+                View Detailed Invoice & Receipt
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Order Success Content Card */}
+      <div className="max-w-xl w-full bg-white rounded-3xl shadow-xl border border-slate-100 p-5 sm:p-10 text-center">
+        <div className="mx-auto flex items-center justify-center h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-emerald-100 text-emerald-600 mb-5 shadow-sm ring-8 ring-emerald-50">
+          <CheckCircle className="h-8 w-8 sm:h-10 sm:w-10" />
         </div>
         
         <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2 font-heading">
           Payment Successful!
         </h2>
-        <p className="text-slate-600 text-sm sm:text-base mb-6">
+        <p className="text-slate-600 text-xs sm:text-base mb-5">
           Thank you for ordering with Mirror Solar Vision. Your order is confirmed and shipping is being prepared.
         </p>
+
+        {/* TOP QUICK ACTION: TRACK ORDER BANNER */}
+        <div className="bg-[#0A2540] text-white rounded-2xl p-4 mb-6 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md text-left">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-accent-500/20 text-[#F58220] flex items-center justify-center shrink-0">
+              <Truck size={20} />
+            </div>
+            <div>
+              <p className="text-xs font-black uppercase tracking-wider text-accent-400">Order Placed & Live Tracking Ready</p>
+              <p className="text-[11px] text-slate-200">Track package dispatch, courier transit, and delivery status anytime</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onViewOrders}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-[#FFD814] hover:bg-[#F7CA00] active:scale-[0.98] text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs shadow-md transition cursor-pointer shrink-0 border border-[#FCD200]"
+          >
+            <Truck size={14} />
+            <span>Track Order</span>
+            <ArrowRight size={13} />
+          </button>
+        </div>
 
         <div className="space-y-4 mb-6 text-left">
           <div className="bg-slate-50 rounded-2xl p-4.5 border border-slate-200 flex items-start gap-4">

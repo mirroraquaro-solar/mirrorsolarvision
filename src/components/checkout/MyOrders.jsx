@@ -522,7 +522,7 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
   return (
     <div className="bg-slate-100/70 min-h-screen pb-24 text-slate-900 animate-fade-in-up">
       {/* Top Header Bar — Refined Mobile & Desktop */}
-      <div className="bg-white text-slate-900 border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+      <div className="bg-white text-slate-900 border-b border-slate-200 sticky top-[72px] sm:top-[78px] z-30 shadow-xs">
         <div className="container-custom py-3 flex items-center justify-between gap-4 max-w-4xl">
           <button
             onClick={() => {

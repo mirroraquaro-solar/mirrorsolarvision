@@ -6,7 +6,7 @@ export default function Layout({ children, onNavigate }) {
   return (
     <div className="flex flex-col min-h-screen">
       <Header onNavigate={onNavigate} />
-      <main id="main-content" className="flex-1 mt-[72px]" role="main">
+      <main id="main-content" className="flex-1 pt-[80px] sm:pt-[90px]" role="main">
         {children}
       </main>
       <Footer onNavigate={onNavigate} />

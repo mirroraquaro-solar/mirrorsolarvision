@@ -43,12 +43,12 @@ export default function Header({ onNavigate }) {
     <>
       <header 
         className={`fixed top-0 left-0 right-0 z-[300] bg-white/95 backdrop-blur-[12px] border-b border-slate-200/80 transition-all duration-300 ${
-          isScrolled ? 'shadow-md h-[78px]' : 'h-[96px]'
+          isScrolled ? 'shadow-md h-[72px] sm:h-[78px]' : 'h-[80px] sm:h-[90px]'
         }`}
       >
-        <div className="flex items-center justify-between h-full max-w-[1400px] mx-auto px-4 sm:px-8">
+        <div className="flex items-center justify-between h-full max-w-[1400px] mx-auto px-3.5 sm:px-8">
           
-          {/* Logo with 2x size and zero padding constraint */}
+          {/* Logo with clean mobile sizing and zero padding constraint */}
           <a 
             href="#home" 
             onClick={(e) => {
@@ -61,8 +61,8 @@ export default function Header({ onNavigate }) {
             <img 
               src="/assets/images/logo/mirror_solar-removebg-preview.png" 
               alt="Mirror Solar Vision Logo" 
-              className={`w-auto object-contain transition-all duration-300 origin-left scale-110 sm:scale-125 ${
-                isScrolled ? 'h-[64px] sm:h-[72px]' : 'h-[80px] sm:h-[94px]'
+              className={`w-auto object-contain transition-all duration-300 origin-left scale-100 sm:scale-110 ${
+                isScrolled ? 'h-[50px] sm:h-[64px]' : 'h-[58px] sm:h-[76px]'
               }`}
             />
           </a>
@@ -173,31 +173,31 @@ export default function Header({ onNavigate }) {
           </div>
 
           {/* Mobile Actions Container */}
-          <div className="xl:hidden flex items-center gap-2.5">
+          <div className="xl:hidden flex items-center gap-2">
             <a 
               href="#store" 
               onClick={(e) => { e.preventDefault(); handleNavClick('store'); }} 
-              className="flex items-center gap-1.5 bg-accent-500 text-slate-950 text-xs font-black px-3.5 py-1.5 rounded-full shadow-sm"
+              className="flex items-center gap-1.5 bg-accent-500 hover:bg-accent-400 active:scale-95 text-slate-950 text-xs font-black px-3 py-1.5 rounded-full shadow-sm transition-all"
             >
               <Package size={13} />
-              <span>Bulk Combos</span>
+              <span>Store</span>
             </a>
 
             <a 
               href={`tel:${BUSINESS_CONTACT.phoneRaw}`} 
-              className="flex items-center justify-center w-9 h-9 rounded-full bg-slate-100 text-slate-700"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-700 active:scale-95 transition-all"
               aria-label="Call Us"
             >
-              <Phone size={16} className="text-emerald-600" />
+              <Phone size={15} className="text-emerald-600" />
             </a>
             
             {/* Mobile Menu Button */}
             <button 
-              className="flex items-center justify-center w-9 h-9 text-slate-900 focus:outline-none"
+              className="flex items-center justify-center w-8 h-8 text-slate-900 focus:outline-none cursor-pointer"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="Toggle menu"
             >
-              {isMobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
@@ -212,7 +212,7 @@ export default function Header({ onNavigate }) {
       />
 
       <nav 
-        className={`fixed top-[78px] bottom-0 left-0 w-[290px] bg-white z-[320] shadow-2xl transition-transform duration-300 ease-in-out xl:hidden flex flex-col p-6 overflow-y-auto ${
+        className={`fixed ${isScrolled ? 'top-[72px] sm:top-[78px]' : 'top-[80px] sm:top-[90px]'} bottom-0 left-0 w-[290px] bg-white z-[320] shadow-2xl transition-all duration-300 ease-in-out xl:hidden flex flex-col p-6 overflow-y-auto ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >

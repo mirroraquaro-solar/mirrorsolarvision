@@ -36,7 +36,7 @@ export default function SiteSurvey() {
   };
 
   return (
-    <section className="section py-16 bg-white" id="pm-surya-ghar" aria-label="Book a free rooftop site survey for solar installation in Andhra Pradesh">
+    <section className="section py-16 bg-white scroll-mt-24 sm:scroll-mt-28" id="pm-surya-ghar" aria-label="Book a free rooftop site survey for solar installation in Andhra Pradesh">
       <div className="container-custom">
         <div className="text-center max-w-[800px] mx-auto mb-12">
           <span className="text-xs font-bold uppercase tracking-wider text-accent-500 bg-accent-500/10 px-3 py-1.5 rounded-full">Free On-Site Rooftop Assessment — Zero Obligation</span>

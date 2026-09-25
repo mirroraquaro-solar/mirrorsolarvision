@@ -64,7 +64,7 @@ export default function QuoteForm() {
   ];
 
   return (
-    <section className="section py-16 lg:py-20 bg-slate-50 border-t border-slate-200/80 scroll-mt-20" id="contact" aria-label="Get a free solar quote and custom rooftop layout">
+    <section className="section py-16 lg:py-20 bg-slate-50 border-t border-slate-200/80 scroll-mt-24 sm:scroll-mt-28" id="contact" aria-label="Get a free solar quote and custom rooftop layout">
       <div className="container-custom">
         <div className="text-center max-w-3xl mx-auto mb-12 space-y-3">
           <span className="text-xs font-extrabold uppercase tracking-wider text-accent-600 bg-accent-500/10 px-3.5 py-1.5 rounded-full border border-accent-500/20">

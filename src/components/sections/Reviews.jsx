@@ -253,7 +253,7 @@ export default function Reviews() {
 
   return (
     <section 
-      className="section py-16 sm:py-20 bg-gradient-to-b from-gray-50 via-white to-gray-50 overflow-hidden scroll-mt-20 border-y border-gray-100" 
+      className="section py-16 sm:py-20 bg-gradient-to-b from-gray-50 via-white to-gray-50 overflow-hidden scroll-mt-24 sm:scroll-mt-28 border-y border-gray-100" 
       id="testimonials" 
       aria-label="Customer reviews and testimonials from verified solar installations in Andhra Pradesh"
     >

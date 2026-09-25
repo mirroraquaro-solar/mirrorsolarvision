@@ -32,7 +32,7 @@ export default function WhyChooseUs() {
   ];
 
   return (
-    <section className="section py-16 bg-white overflow-hidden scroll-mt-20" id="why-choose-us" aria-label="Why choose Mirror Solar Vision for your rooftop solar installation">
+    <section className="section py-16 bg-white overflow-hidden scroll-mt-24 sm:scroll-mt-28" id="why-choose-us" aria-label="Why choose Mirror Solar Vision for your rooftop solar installation">
       <div className="container-custom">
         
         {/* Section Header */}

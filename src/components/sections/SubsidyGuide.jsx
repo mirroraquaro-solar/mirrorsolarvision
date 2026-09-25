@@ -67,7 +67,7 @@ export default function SubsidyGuide() {
   ];
 
   return (
-    <section className="section py-16 bg-gray-50 border-y border-gray-100 scroll-mt-20" id="subsidy-guide" aria-label="PM Surya Ghar Muft Bijli Yojana subsidy guide for Andhra Pradesh">
+    <section className="section py-16 bg-gray-50 border-y border-gray-100 scroll-mt-24 sm:scroll-mt-28" id="subsidy-guide" aria-label="PM Surya Ghar Muft Bijli Yojana subsidy guide for Andhra Pradesh">
       <div className="container-custom">
         
         {/* Section Header */}

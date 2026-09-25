@@ -431,10 +431,10 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
   }
 
   return (
-    <div className="bg-slate-50 min-h-screen text-slate-900 pb-28 scroll-mt-20 relative" id="store">
+    <div className="bg-slate-50 min-h-screen text-slate-900 pb-28 scroll-mt-24 sm:scroll-mt-28 relative" id="store">
       
       {/* Top Header / Sticky Navigation Bar */}
-      <div className="bg-[#0A192F] text-white border-b border-slate-800 sticky top-[78px] lg:top-[96px] z-30 shadow-md">
+      <div className="bg-[#0A192F] text-white border-b border-slate-800 sticky top-[72px] sm:top-[78px] z-30 shadow-md">
         <div className="container-custom py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button

@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function AboutGroup() {
   return (
-    <section className="section py-16 bg-gray-50 border-t border-gray-100 scroll-mt-20" id="about" aria-label="About Mirror Group and Mirror Aqua legacy behind Mirror Solar Vision">
+    <section className="section py-16 bg-gray-50 border-t border-gray-100 scroll-mt-24 sm:scroll-mt-28" id="about" aria-label="About Mirror Group and Mirror Aqua legacy behind Mirror Solar Vision">
       <div className="container-custom">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Text */}

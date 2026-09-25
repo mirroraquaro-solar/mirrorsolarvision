@@ -23,7 +23,7 @@ export default function Hero({ onNavigate }) {
   };
 
   return (
-    <section className="relative w-full overflow-hidden flex items-start lg:items-center min-h-[100vh] lg:min-h-[700px] pt-[105px] lg:pt-[118px] scroll-mt-20" id="home" aria-label="Hero banner">
+    <section className="relative w-full overflow-hidden flex items-start lg:items-center min-h-[calc(100vh-80px)] lg:min-h-[700px] pt-4 sm:pt-8 lg:pt-10 scroll-mt-24 sm:scroll-mt-28" id="home" aria-label="Hero banner">
       
       {/* Background Image of House with Solar Panels */}
       <div className="absolute inset-0 z-0">
