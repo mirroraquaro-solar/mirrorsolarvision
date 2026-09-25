@@ -183,31 +183,48 @@ export default function Footer({ onNavigate }) {
               </ul>
             </div>
 
-            {/* Solar Store Links */}
+            {/* Online Stores Links */}
             <div className="flex flex-col items-start text-left">
               <h4 className="text-white font-bold text-xs sm:text-sm mb-3 sm:mb-4 tracking-wider uppercase border-b border-accent-500/40 sm:border-0 pb-1 sm:pb-0 w-full">
-                Solar Store
+                Online Stores
               </h4>
               <ul className="space-y-2 sm:space-y-2.5 text-xs">
                 <li>
-                  <a href="#store" onClick={handleStoreClick} className="hover:text-accent-400 transition-colors flex items-center gap-1.5 py-0.5">
-                    <Package size={12} className="text-accent-500 shrink-0" />
-                    <span>Catalog</span>
+                  <a href="#store" onClick={handleStoreClick} className="hover:text-amber-400 transition-colors flex items-center gap-1.5 py-0.5 text-amber-300 font-semibold">
+                    <Package size={12} className="text-amber-400 shrink-0" />
+                    <span>Solar Store (Clips & Combos)</span>
                   </a>
                 </li>
                 <li>
-                  <a href="#store" onClick={handleStoreClick} className="hover:text-accent-400 transition-colors py-0.5 inline-block">
-                    Drain Clips
+                  <a 
+                    href="#aqua-store" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (onNavigate) onNavigate('aqua-store');
+                      else window.location.hash = '#aqua-store';
+                    }} 
+                    className="hover:text-cyan-400 transition-colors flex items-center gap-1.5 py-0.5 text-cyan-300 font-semibold"
+                  >
+                    <span className="w-3 h-3 rounded-full bg-cyan-500/30 flex items-center justify-center text-[8px] text-cyan-300">💧</span>
+                    <span>Aqua Store (PP Spun Filter)</span>
                   </a>
                 </li>
                 <li>
-                  <a href="#store" onClick={handleStoreClick} className="hover:text-accent-400 transition-colors py-0.5 inline-block">
-                    Panel Cleaner
+                  <a href="#store" onClick={handleStoreClick} className="hover:text-accent-400 transition-colors py-0.5 inline-block text-slate-400">
+                    Solar Drain Clips & Kits
                   </a>
                 </li>
                 <li>
-                  <a href="#store" onClick={handleStoreClick} className="hover:text-accent-400 transition-colors py-0.5 inline-block">
-                    ₹15k Combo
+                  <a 
+                    href="#aqua-store" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (onNavigate) onNavigate('aqua-store');
+                      else window.location.hash = '#aqua-store';
+                    }} 
+                    className="hover:text-cyan-400 transition-colors py-0.5 inline-block text-slate-400"
+                  >
+                    10" PP Filter Cartridges
                   </a>
                 </li>
                 <li>

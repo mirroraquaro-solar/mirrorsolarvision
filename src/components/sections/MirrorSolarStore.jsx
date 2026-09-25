@@ -25,9 +25,11 @@ import {
   Printer,
   Copy,
   FileText,
-  MessageSquare
+  MessageSquare,
+  Sun,
+  Droplets
 } from 'lucide-react';
-import { CONFIRMED_BULK_COMBO, INDIVIDUAL_PRODUCTS, BUSINESS_CONTACT, CUSTOMER_REVIEWS, SAMPLE_TEST_PRODUCT, isProductActive } from '../../data/bulkComboData';
+import { CONFIRMED_BULK_COMBO, INDIVIDUAL_PRODUCTS, BUSINESS_CONTACT, CUSTOMER_REVIEWS } from '../../data/bulkComboData';
 import { db } from '../../config/firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { submitBookingWithNotification, ADMIN_WHATSAPP, printConfirmationDocument, getCustomerWhatsAppUrl } from '../../services/notificationService';
@@ -223,45 +225,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleBuySampleProduct = (buyNow = false) => {
-    const cartItemId = `msv-sample-test-${Date.now()}`;
-    const newItem = {
-      cartItemId,
-      productId: SAMPLE_TEST_PRODUCT.id,
-      name: SAMPLE_TEST_PRODUCT.name,
-      variantLabel: '1 Sample Piece (₹10 Test Unit)',
-      category: 'Testing & Samples',
-      price: 10,
-      image: SAMPLE_TEST_PRODUCT.images[0],
-      quantity: 1
-    };
 
-    if (buyNow) {
-      setCheckoutData({
-        items: [newItem],
-        totalPrice: 10
-      });
-      setViewMode('checkout');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    setCart(prev => {
-      const existing = prev.find(item => item.productId === SAMPLE_TEST_PRODUCT.id);
-      if (existing) {
-        return prev.map(item =>
-          item.productId === SAMPLE_TEST_PRODUCT.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      return [...prev, newItem];
-    });
-
-    setCartNotification(`MSV Sample Test Clip (₹10) added to cart!`);
-    setIsCartOpen(true);
-    setTimeout(() => setCartNotification(null), 3500);
-  };
 
   useEffect(() => {
     const act = initialAction || window.location.hash.replace('#', '');
@@ -456,6 +420,26 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
               <span>Mirror Solar</span>
               <span className="text-[#F58220]">Store</span>
             </div>
+          </div>
+
+          {/* Center: Dual Store Quick Switcher */}
+          <div className="hidden md:flex items-center bg-slate-900/90 p-1 rounded-full border border-slate-700/60 shadow-inner">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-[#F58220] text-slate-950 shadow-sm">
+              <Sun size={13} className="text-slate-950 fill-slate-950" />
+              <span>Solar Store</span>
+            </div>
+            
+            <button
+              onClick={() => {
+                if (onNavigate) onNavigate('aqua-store');
+                else window.location.hash = '#aqua-store';
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-cyan-200 hover:text-white hover:bg-slate-800 transition-all cursor-pointer"
+              title="Switch to Mirror Aqua Store"
+            >
+              <Droplets size={13} className="text-cyan-400" />
+              <span>Aqua Store</span>
+            </button>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
@@ -813,58 +797,6 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
 
             </div>
           </div>
-
-          {/* 15-HOUR LIVE TEST SAMPLE PRODUCT CARD */}
-          {isProductActive(SAMPLE_TEST_PRODUCT) && (
-            <div className="max-w-5xl mx-auto mt-6 animate-fade-in-up">
-              <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border-2 border-amber-400/80 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 text-left">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-2xl p-2.5 border border-amber-200 flex items-center justify-center shrink-0 shadow-xs">
-                    <img 
-                      src={SAMPLE_TEST_PRODUCT.images[0]} 
-                      alt={SAMPLE_TEST_PRODUCT.name} 
-                      className="max-h-full max-w-full object-contain" 
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="bg-amber-500 text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                        {SAMPLE_TEST_PRODUCT.tag}
-                      </span>
-                      <span className="text-[11px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md">
-                        ⏳ Live Test • Auto-expires in 15 Hours
-                      </span>
-                    </div>
-                    <h4 className="text-lg sm:text-xl font-extrabold text-slate-900 mt-1">
-                      {SAMPLE_TEST_PRODUCT.name} — <span className="text-amber-600 font-black">₹10 Only</span>
-                    </h4>
-                    <p className="text-xs text-slate-600 max-w-xl mt-0.5 leading-relaxed">
-                      {SAMPLE_TEST_PRODUCT.shortDesc} Ideal for verifying live Razorpay payment gateway, automated WhatsApp booking confirmation, and Shiprocket dispatch pipeline.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => handleBuySampleProduct(false)}
-                    className="flex-1 md:flex-none bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 font-bold px-4 py-3 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
-                  >
-                    <ShoppingCart size={14} />
-                    <span>Add to Cart (₹10)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleBuySampleProduct(true)}
-                    className="flex-1 md:flex-none bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 font-black px-5 py-3 rounded-xl text-xs sm:text-sm shadow-md transition cursor-pointer flex items-center justify-center gap-1.5 text-center"
-                  >
-                    <span>Buy Now (₹10)</span>
-                    <ArrowRight size={14} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </section>
 
         {/* ========================================================================= */}

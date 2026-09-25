@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Phone, Zap, Menu, X, Package, User, Truck } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Phone, Zap, Menu, X, Package, User, Truck, ChevronDown, Sun, Droplets } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { BUSINESS_CONTACT } from '../../data/bulkComboData';
 
 export default function Header({ onNavigate }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isStoreDropdownOpen, setIsStoreDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
   
   const { isAuthenticated, userProfile, openAuthModal, logout } = useAuth();
 
@@ -17,8 +19,19 @@ export default function Header({ onNavigate }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsStoreDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleNavClick = (target) => {
     setIsMobileMenuOpen(false);
+    setIsStoreDropdownOpen(false);
     if (onNavigate) {
       onNavigate(target);
     } else {
@@ -28,6 +41,7 @@ export default function Header({ onNavigate }) {
 
   const scrollToSection = (sectionId) => {
     setIsMobileMenuOpen(false);
+    setIsStoreDropdownOpen(false);
     if (onNavigate) {
       onNavigate('home');
     }
@@ -68,7 +82,7 @@ export default function Header({ onNavigate }) {
           </a>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden xl:flex items-center gap-7">
+          <nav className="hidden xl:flex items-center gap-6">
             <a 
               href="#home" 
               onClick={(e) => { e.preventDefault(); handleNavClick('home'); }} 
@@ -77,15 +91,67 @@ export default function Header({ onNavigate }) {
               Home
             </a>
 
-            {/* Mirror Solar Store Pill Nav Link as shown in Image 3 */}
-            <a 
-              href="#store" 
-              onClick={(e) => { e.preventDefault(); handleNavClick('store'); }} 
-              className="inline-flex items-center gap-2 text-[14px] font-bold text-white bg-[#0A2540] hover:bg-[#071A2E] px-5 py-2 rounded-full shadow-sm transition-all duration-200 transform hover:scale-105"
-            >
-              <span className="w-4 h-4 rounded bg-accent-500 flex items-center justify-center text-slate-950 text-[10px]">📦</span>
-              <span>Mirror Solar Store</span>
-            </a>
+            {/* Dual Store Dropdown Navigation */}
+            <div className="relative" ref={dropdownRef}>
+              <button 
+                onClick={() => setIsStoreDropdownOpen(!isStoreDropdownOpen)}
+                onMouseEnter={() => setIsStoreDropdownOpen(true)}
+                className="inline-flex items-center gap-2 text-[14px] font-bold text-white bg-gradient-to-r from-[#0A2540] via-[#0F3460] to-[#0A2540] hover:shadow-lg px-4.5 py-2 rounded-full shadow-sm transition-all duration-200 transform hover:scale-105 cursor-pointer border border-slate-700/40"
+              >
+                <span className="w-5 h-5 rounded-full bg-accent-500 flex items-center justify-center text-slate-950 text-[11px] font-black">🛒</span>
+                <span>Store</span>
+                <span className="text-[10px] bg-accent-500/20 text-accent-300 font-extrabold px-1.5 py-0.5 rounded-full border border-accent-400/30 uppercase">2 Stores</span>
+                <ChevronDown size={14} className={`text-slate-300 transition-transform duration-200 ${isStoreDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Store Dropdown Menu */}
+              {isStoreDropdownOpen && (
+                <div 
+                  onMouseLeave={() => setIsStoreDropdownOpen(false)}
+                  className="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[350] p-2 animate-in fade-in slide-in-from-top-2 duration-200"
+                >
+                  <div className="px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                    Select Online Store
+                  </div>
+
+                  {/* Option 1: Solar Store */}
+                  <a
+                    href="#store"
+                    onClick={(e) => { e.preventDefault(); handleNavClick('store'); }}
+                    className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-amber-50/80 transition-colors group cursor-pointer"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 shrink-0 group-hover:bg-amber-500 group-hover:text-white transition-all">
+                      <Sun size={18} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black text-slate-900 group-hover:text-amber-700">Mirror Solar Store</span>
+                        <span className="text-[9px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">Solar</span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">Drain Clips, Combos & Solar Kits</p>
+                    </div>
+                  </a>
+
+                  {/* Option 2: Aqua Store */}
+                  <a
+                    href="#aqua-store"
+                    onClick={(e) => { e.preventDefault(); handleNavClick('aqua-store'); }}
+                    className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-cyan-50/80 transition-colors group cursor-pointer mt-1"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-600 shrink-0 group-hover:bg-cyan-600 group-hover:text-white transition-all">
+                      <Droplets size={18} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black text-slate-900 group-hover:text-cyan-700">Mirror Aqua Store</span>
+                        <span className="text-[9px] font-bold bg-cyan-100 text-cyan-800 px-1.5 py-0.5 rounded-full">Water</span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">10" PP Spun Filter & Spares</p>
+                    </div>
+                  </a>
+                </div>
+              )}
+            </div>
 
             {/* Track Order Direct Link */}
             <a 
@@ -174,14 +240,13 @@ export default function Header({ onNavigate }) {
 
           {/* Mobile Actions Container */}
           <div className="xl:hidden flex items-center gap-2">
-            <a 
-              href="#store" 
-              onClick={(e) => { e.preventDefault(); handleNavClick('store'); }} 
-              className="flex items-center gap-1.5 bg-accent-500 hover:bg-accent-400 active:scale-95 text-slate-950 text-xs font-black px-3 py-1.5 rounded-full shadow-sm transition-all"
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="flex items-center gap-1.5 bg-gradient-to-r from-[#0A2540] to-[#0F3460] active:scale-95 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm transition-all"
             >
-              <Package size={13} />
-              <span>Store</span>
-            </a>
+              <Package size={13} className="text-accent-400" />
+              <span>Stores</span>
+            </button>
 
             <a 
               href={`tel:${BUSINESS_CONTACT.phoneRaw}`} 
@@ -212,7 +277,7 @@ export default function Header({ onNavigate }) {
       />
 
       <nav 
-        className={`fixed ${isScrolled ? 'top-[72px] sm:top-[78px]' : 'top-[80px] sm:top-[90px]'} bottom-0 left-0 w-[290px] bg-white z-[320] shadow-2xl transition-all duration-300 ease-in-out xl:hidden flex flex-col p-6 overflow-y-auto ${
+        className={`fixed ${isScrolled ? 'top-[72px] sm:top-[78px]' : 'top-[80px] sm:top-[90px]'} bottom-0 left-0 w-[300px] bg-white z-[320] shadow-2xl transition-all duration-300 ease-in-out xl:hidden flex flex-col p-5 overflow-y-auto ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -220,34 +285,52 @@ export default function Header({ onNavigate }) {
           <a 
             href="#home" 
             onClick={(e) => { e.preventDefault(); handleNavClick('home'); }} 
-            className="py-2.5 text-sm font-bold text-primary-600 border-b border-slate-100"
+            className="py-2 text-sm font-bold text-primary-600 border-b border-slate-100"
           >
             Home
           </a>
           
+          {/* Mobile Online Stores Heading */}
+          <div className="text-[11px] font-black uppercase text-slate-400 tracking-wider pt-1">
+            Online Stores
+          </div>
+
           {/* Mobile Mirror Solar Store Link */}
           <a 
             href="#store" 
             onClick={(e) => { e.preventDefault(); handleNavClick('store'); }} 
-            className="py-3 px-4 bg-[#0A2540] text-white rounded-xl text-sm font-black flex items-center justify-between shadow-sm"
+            className="py-2.5 px-3.5 bg-[#0A2540] text-white rounded-xl text-xs font-black flex items-center justify-between shadow-sm"
           >
             <span className="flex items-center gap-2">
-              <span className="w-5 h-5 rounded bg-accent-500 flex items-center justify-center text-slate-950 text-xs">📦</span>
+              <Sun size={15} className="text-amber-400" />
               <span>Mirror Solar Store</span>
             </span>
-            <span className="text-[10px] bg-accent-500 text-slate-950 font-black px-2 py-0.5 rounded-full uppercase">Store</span>
+            <span className="text-[9px] bg-amber-400 text-slate-950 font-black px-2 py-0.5 rounded-full uppercase">Solar</span>
+          </a>
+
+          {/* Mobile Mirror Aqua Store Link */}
+          <a 
+            href="#aqua-store" 
+            onClick={(e) => { e.preventDefault(); handleNavClick('aqua-store'); }} 
+            className="py-2.5 px-3.5 bg-gradient-to-r from-cyan-900 to-blue-900 text-white rounded-xl text-xs font-black flex items-center justify-between shadow-sm"
+          >
+            <span className="flex items-center gap-2">
+              <Droplets size={15} className="text-cyan-300" />
+              <span>Mirror Aqua Store</span>
+            </span>
+            <span className="text-[9px] bg-cyan-400 text-slate-950 font-black px-2 py-0.5 rounded-full uppercase">Aqua</span>
           </a>
 
           {/* Mobile Track Orders Link */}
           <button 
             onClick={() => handleNavClick('orders')} 
-            className="py-2.5 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-900 rounded-xl text-xs font-extrabold flex items-center justify-between transition-colors text-left"
+            className="py-2 px-3.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-900 rounded-xl text-xs font-extrabold flex items-center justify-between transition-colors text-left"
           >
             <span className="flex items-center gap-2">
-              <Truck size={16} className="text-blue-600" />
+              <Truck size={15} className="text-blue-600" />
               <span>My Orders & Tracking</span>
             </span>
-            <span className="text-[10px] bg-blue-100 text-blue-700 font-black px-2 py-0.5 rounded-full uppercase">Track</span>
+            <span className="text-[9px] bg-blue-100 text-blue-700 font-black px-2 py-0.5 rounded-full uppercase">Track</span>
           </button>
 
           <button onClick={() => scrollToSection('projects')} className="py-2 text-left text-sm font-semibold text-slate-700 hover:text-primary-600">Projects</button>

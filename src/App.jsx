@@ -14,6 +14,7 @@ import NotificationPopup from './components/ui/NotificationPopup';
 
 // Code-split dynamic views for instant mobile speed
 const MirrorSolarStore = lazy(() => import('./components/sections/MirrorSolarStore'));
+const MirrorAquaStore = lazy(() => import('./components/sections/MirrorAquaStore'));
 const MyOrders = lazy(() => import('./components/checkout/MyOrders'));
 const PartnerRegistration = lazy(() => import('./pages/PartnerRegistration'));
 
@@ -22,9 +23,14 @@ const isOrderHash = (hash) => {
   return h === '#orders' || h === '#my-orders' || h === '#myorders' || h === '#track' || h === '#track-order' || h === '#tracking';
 };
 
+const isAquaHash = (hash) => {
+  const h = (hash || '').toLowerCase();
+  return h === '#aqua' || h === '#aqua-store' || h === '#mirror-aqua' || h === '#aqua-shop' || h === '#aqua-cart' || h === '#aqua-checkout' || h === '#aqua-track' || h === '#spun-filter' || h === '#pp-filter';
+};
+
 const isStoreHash = (hash) => {
   const h = (hash || '').toLowerCase();
-  return h === '#store' || h === '#bulk-combos' || h === '#bulk-combo' || h === '#bulk-combo-buy' || h === '#drain-clips' || h === '#drain-clips-buy' || h === '#shop';
+  return h === '#store' || h === '#solar-store' || h === '#bulk-combos' || h === '#bulk-combo' || h === '#bulk-combo-buy' || h === '#drain-clips' || h === '#drain-clips-buy' || h === '#shop';
 };
 
 function App() {
@@ -39,6 +45,7 @@ function App() {
   const [currentView, setCurrentView] = useState(() => {
     const hash = window.location.hash;
     if (isOrderHash(hash)) return 'orders';
+    if (isAquaHash(hash)) return 'aqua-store';
     if (isStoreHash(hash)) return 'store';
     if (hash === '#partner-registration') return 'partner-registration';
     return 'home';
@@ -49,6 +56,9 @@ function App() {
       const hash = window.location.hash;
       if (isOrderHash(hash)) {
         setCurrentView('orders');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (isAquaHash(hash)) {
+        setCurrentView('aqua-store');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (isStoreHash(hash)) {
         setCurrentView('store');
@@ -84,9 +94,15 @@ function App() {
         window.location.hash = '#orders';
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (view === 'store' || view === 'bulk-combos' || view === 'bulk-combo' || view === 'bulk-combo-buy' || view === 'drain-clips' || view === 'drain-clips-buy') {
+    } else if (view === 'aqua' || view === 'aqua-store' || view === 'mirror-aqua') {
+      setCurrentView('aqua-store');
+      if (window.location.hash !== '#aqua-store') {
+        window.location.hash = '#aqua-store';
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (view === 'store' || view === 'solar-store' || view === 'bulk-combos' || view === 'bulk-combo' || view === 'bulk-combo-buy' || view === 'drain-clips' || view === 'drain-clips-buy') {
       setCurrentView('store');
-      const finalAction = action || (view !== 'store' ? view : null);
+      const finalAction = action || (view !== 'store' && view !== 'solar-store' ? view : null);
       setStoreAction(finalAction);
       const targetHash = finalAction ? `#${finalAction}` : '#store';
       if (window.location.hash !== targetHash) {
@@ -136,6 +152,12 @@ function App() {
               key="view-store"
               initialView="store"
               initialAction={storeAction}
+              onBackToHome={() => handleNavigate('home')}
+              onNavigate={handleNavigate}
+            />
+          ) : currentView === 'aqua-store' ? (
+            <MirrorAquaStore
+              key="view-aqua-store"
               onBackToHome={() => handleNavigate('home')}
               onNavigate={handleNavigate}
             />

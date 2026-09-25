@@ -49,16 +49,9 @@ exports.createRazorpayOrder = functions.https.onRequest((req, res) => {
       if (Array.isArray(items) && items.length > 0) {
         for (const item of items) {
           const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
-          let itemPrice = Number(item.price);
+          let itemPrice = Number(item.price) || 199;
 
-          // Verify Sample Test Product expiry
-          if (item.productId === 'msv-sample-test-product' || item.id === 'msv-sample-test-product') {
-            const sampleExpiry = new Date('2026-09-25T13:10:00+05:30').getTime();
-            if (Date.now() > sampleExpiry) {
-              return res.status(400).send({ data: { error: 'The ₹10 Sample Product offer has expired.' } });
-            }
-            itemPrice = 10;
-          } else if (item.productId === 'msv-bulk-combo' || item.productId === 'bulk-combo-15000' || item.id === 'bulk-combo-15000') {
+          if (item.productId === 'msv-bulk-combo' || item.productId === 'bulk-combo-15000' || item.id === 'bulk-combo-15000') {
             itemPrice = 15000;
           } else if (item.productId === 'msv-drain-clips') {
             if (item.clipsCount && Number(item.clipsCount) > 0) {
@@ -66,15 +59,19 @@ exports.createRazorpayOrder = functions.https.onRequest((req, res) => {
             } else if (itemPrice < 300) {
               itemPrice = 300;
             }
+          } else if (item.productId === 'ma-prod-001' || item.sku === 'MA-PP-10-05M' || (item.name && item.name.toLowerCase().includes('pp spun'))) {
+            itemPrice = qty >= 10 ? 180 : 199;
           }
           calculatedTotal += (itemPrice * qty);
         }
       }
 
-      const finalAmount = calculatedTotal > 0 ? calculatedTotal : Math.max(10, Number(amount) || 300);
+      const finalAmount = calculatedTotal > 0 ? calculatedTotal : Math.max(10, Number(amount) || 199);
 
-      // Clean, official Website Booking ID format (e.g. MSV-729401)
-      const bookingId = `MSV-${Date.now().toString().slice(-6)}`;
+      // Clean, official Website Booking ID format (e.g. MSV-729401 or MA-729401)
+      const isAquaOrder = items && items.some(it => (it.productId || '').startsWith('ma-') || (it.sku || '').startsWith('MA-'));
+      const prefix = isAquaOrder ? 'MA' : 'MSV';
+      const bookingId = `${prefix}-${Date.now().toString().slice(-6)}`;
 
       const options = {
         amount: Math.round(finalAmount * 100), // paise
