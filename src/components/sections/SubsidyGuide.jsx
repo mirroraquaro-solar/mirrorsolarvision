@@ -11,17 +11,17 @@ export default function SubsidyGuide() {
     const bill = parseFloat(monthlyBill);
     if (isNaN(bill) || bill <= 0) return;
 
-    let size = 2;
-    let cost = 145000;
-    let subsidy = 60000;
+    let size = 3;
+    let cost = 210000;
+    let subsidy = 78000;
 
-    if (bill >= 1500 && bill < 3000) {
-      size = 3;
-      cost = 210000;
-      subsidy = 78000;
-    } else if (bill >= 3000) {
+    if (bill >= 2500 && bill < 4500) {
       size = 4;
       cost = 270000;
+      subsidy = 78000;
+    } else if (bill >= 4500) {
+      size = 5;
+      cost = 330000;
       subsidy = 78000;
     }
 
@@ -41,28 +41,28 @@ export default function SubsidyGuide() {
 
   const cards = [
     {
-      tabLabel: "2 kW System",
-      icon: <Sun size={24} />,
-      title: "2 kW Rooftop Solar System",
-      desc: "Designed for standard 2BHK households running basic cooling loads, a refrigerator, a washing machine, and standard kitchen appliances on single-phase supply.",
-      subsidy: "₹60,000 Direct Subsidy",
-      subNote: "₹30,000/kW for the first 2kW of installed capacity"
-    },
-    {
       tabLabel: "3 kW System",
-      icon: <Zap size={24} />,
+      icon: <Sun size={24} />,
       title: "3 kW Rooftop Solar System",
-      desc: "Recommended for modern households running multiple air conditioners, water heaters, EV chargers, and high-consumption appliances.",
+      desc: "Our primary residential system for 2–3 BHK homes. Runs lighting, fans, refrigeration, kitchen appliances, and 1–2 air conditioners on single/three-phase supply.",
       subsidy: "₹78,000 Direct Subsidy",
-      subNote: "₹30,000/kW for first 2kW + ₹18,000 for next 1kW"
+      subNote: "PM Surya Ghar DBT Central Subsidy — Maximum available residential subsidy cap"
     },
     {
-      tabLabel: "4 kW & Above",
-      icon: <Home size={24} />,
-      title: "4 kW & Above Systems",
-      desc: "Ideal for large residential buildings, joint family villas, and commercial properties with substantial cooling and machinery loads.",
+      tabLabel: "4–5 kW Systems",
+      icon: <Zap size={24} />,
+      title: "4 kW – 5 kW Rooftop Solar System",
+      desc: "Recommended for modern households and duplex homes running multiple air conditioners, water heaters, EV charging, and high-consumption appliances.",
       subsidy: "₹78,000 Maximum Subsidy",
-      subNote: "Government subsidy capped at maximum of ₹78,000"
+      subNote: "Eligible for full ₹78,000 Central DBT subsidy with maximum net-metered generation"
+    },
+    {
+      tabLabel: "10 kW & Above",
+      icon: <Home size={24} />,
+      title: "10 kW & Commercial Systems",
+      desc: "Engineered for large residences, commercial buildings, schools, hospitals, and industrial facilities with heavy 3-phase machinery and daytime loads.",
+      subsidy: "Commercial Tax Benefits",
+      subNote: "40% Accelerated Depreciation & significant commercial tariff savings"
     }
   ];
 

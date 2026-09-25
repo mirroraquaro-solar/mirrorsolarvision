@@ -246,7 +246,7 @@ export default function Reviews() {
   const categories = [
     { id: 'all', label: 'All Reviews', count: testimonials.length },
     { id: 'subsidy', label: 'PM Surya Ghar (₹78k Subsidy)', count: testimonials.filter(t => t.category === 'subsidy').length },
-    { id: 'residential', label: 'Residential Rooftop (2–6kW)', count: testimonials.filter(t => t.category === 'residential').length },
+    { id: 'residential', label: 'Residential Rooftop (3–6kW)', count: testimonials.filter(t => t.category === 'residential').length },
     { id: 'commercial', label: 'Commercial & Clinics (8–15kW)', count: testimonials.filter(t => t.category === 'commercial').length },
     { id: 'hardware', label: 'Drain Clips & Hardware Kits', count: testimonials.filter(t => t.category === 'hardware').length }
   ];

@@ -155,7 +155,7 @@ export const INDIVIDUAL_PRODUCTS = [
     defaultVariantIdx: 0,
     specs: [
       { label: 'Frame Sizes', val: '30mm, 33mm, 35mm, 40mm' },
-      { label: 'Calculation', val: '4 Clips per 1 kW (₹25 / clip)' },
+      { label: 'Calculation', val: '4 Clips per kW (e.g. 12 clips for 3 kW)' },
       { label: 'Material', val: 'UV-Stabilized High-Density Polymer' },
       { label: 'Durability', val: '10+ Years Outdoor Weather Resistance' }
     ]

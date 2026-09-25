@@ -130,7 +130,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
   // Drain Clips Dynamic Price Calculation
   const getActiveDrainClipConfig = () => {
     if (isCustomKwMode) {
-      const validKw = Math.max(1, Number(customKwInput) || 1);
+      const validKw = Math.max(3, Number(customKwInput) || 3);
       const clipsCount = validKw * 4;
       const price = clipsCount * 25; // Rs 25 per clip
       return {
@@ -720,14 +720,14 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                           <div className="flex items-center justify-between text-xs">
                             <span className="font-bold text-slate-700">Enter Capacity (kW):</span>
                             <span className="font-black text-amber-800">
-                              {Number(customKwInput) || 1} kW = {(Number(customKwInput) || 1) * 4} Clips
+                              {Number(customKwInput) || 3} kW = {(Number(customKwInput) || 3) * 4} Clips
                             </span>
                           </div>
 
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
-                              onClick={() => setCustomKwInput(prev => Math.max(1, (Number(prev) || 1) - 1))}
+                              onClick={() => setCustomKwInput(prev => Math.max(3, (Number(prev) || 3) - 1))}
                               className="w-9 h-9 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-800 font-bold flex items-center justify-center text-sm cursor-pointer"
                             >
                               -
@@ -736,12 +736,12 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                             <div className="relative flex-1">
                               <input
                                 type="number"
-                                min="1"
+                                min="3"
                                 max="500"
                                 value={customKwInput}
                                 onChange={(e) => setCustomKwInput(e.target.value)}
                                 className="w-full bg-white border border-amber-300 px-3 py-1.5 rounded-lg text-center text-sm font-black text-slate-900 focus:outline-none focus:border-accent-500"
-                                placeholder="e.g. 6, 8, 12..."
+                                placeholder="e.g. 3, 5, 8, 10..."
                               />
                               <span className="absolute right-3 top-1.5 text-xs text-slate-400 font-bold pointer-events-none">kW</span>
                             </div>

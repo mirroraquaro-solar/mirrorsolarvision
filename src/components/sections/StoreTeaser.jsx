@@ -179,7 +179,7 @@ export default function StoreTeaser({ onNavigateToStore }) {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2">
                           <div className="flex items-center gap-1.5">
                             <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
-                            <span>4 Clips per 1 kW (₹25/clip)</span>
+                            <span>4 Clips per kW (e.g. 12 pcs for 3 kW)</span>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
