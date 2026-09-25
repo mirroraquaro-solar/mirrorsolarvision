@@ -31,6 +31,9 @@ export default function Hero({ onNavigate }) {
           src="/assets/images/hero/hero-rooftop-solar.png" 
           alt="Rooftop solar installation background" 
           className="w-full h-full object-cover"
+          fetchpriority="high"
+          loading="eager"
+          decoding="async"
         />
         {/* Rich Slate-Blue Gradient Overlay */}
         <div className="absolute inset-0" style={{
