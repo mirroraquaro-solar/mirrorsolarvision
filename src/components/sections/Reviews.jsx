@@ -386,6 +386,8 @@ export default function Reviews() {
           className="relative w-full overflow-hidden py-4 mask-gradient group"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
+          onTouchStart={() => setIsPaused(true)}
+          onTouchEnd={() => setIsPaused(false)}
         >
           {/* Subtle Left and Right Vignette Gradients */}
           <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-16 bg-gradient-to-r from-gray-50 via-gray-50/80 to-transparent z-10 pointer-events-none" />
@@ -395,7 +397,7 @@ export default function Reviews() {
             {duplicatedList.map((t, idx) => (
               <div 
                 key={`${t.id}-${idx}`} 
-                className="w-[290px] sm:w-[380px] md:w-[410px] shrink-0 bg-white border border-gray-200/80 p-5 sm:p-6 rounded-3xl shadow-xs hover:shadow-lg hover:border-primary-200 transition-all duration-300 flex flex-col justify-between whitespace-normal text-left group/card relative overflow-hidden"
+                className="w-[82vw] max-w-[320px] sm:w-[380px] md:w-[410px] shrink-0 bg-white border border-gray-200/80 p-4 sm:p-6 rounded-3xl shadow-xs hover:shadow-lg hover:border-primary-200 transition-all duration-300 flex flex-col justify-between whitespace-normal text-left group/card relative overflow-hidden"
               >
                 {/* Accent top gradient bar on hover */}
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 via-accent-500 to-amber-500 opacity-0 group-hover/card:opacity-100 transition-opacity" />

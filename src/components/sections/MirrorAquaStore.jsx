@@ -2,32 +2,47 @@ import React, { useState } from 'react';
 import { ArrowLeft, Sun, Droplets, ShoppingBag, Truck, Search, Heart } from 'lucide-react';
 import { UIProvider, useUI } from '../../aqua/context/UIContext.jsx';
 import { WishlistProvider, useWishlist } from '../../aqua/context/WishlistContext.jsx';
-import { CartProvider, useCart } from '../../aqua/context/CartContext.jsx';
+import { useCart } from '../../context/CartContext.jsx';
 
 import { ProductLandingPage } from '../../aqua/components/landing/ProductLandingPage.jsx';
 import { ShopPage } from '../../aqua/pages/ShopPage.jsx';
-import { CartPage } from '../../aqua/pages/CartPage.jsx';
-import { CheckoutPage } from '../../aqua/pages/CheckoutPage.jsx';
 import { VideoTutorialPage } from '../../aqua/pages/VideoTutorialPage.jsx';
-import { TrackOrderPage } from '../../aqua/pages/TrackOrderPage.jsx';
 import { AccountPage } from '../../aqua/pages/AccountPage.jsx';
 import { FAQPage, ShippingInfoPage, LegalPage } from '../../aqua/pages/StaticPages.jsx';
 
-import { CartDrawer } from '../../aqua/components/drawers/CartDrawer.jsx';
 import { WishlistDrawer } from '../../aqua/components/drawers/WishlistDrawer.jsx';
 import { SearchDrawer } from '../../aqua/components/drawers/SearchDrawer.jsx';
 import { MobileNavDrawer } from '../../aqua/components/drawers/MobileNavDrawer.jsx';
 import { QuickViewModal } from '../../aqua/components/modals/QuickViewModal.jsx';
-import { WhatsAppBotButton } from '../../aqua/components/ui/WhatsAppBotButton.jsx';
 import '../../aqua/styles/tokens.css';
 
 function AquaStoreContent({ onBackToHome, onNavigate, initialPath = '/' }) {
   const [currentPath, setCurrentPath] = useState(initialPath);
-  const { setIsCartOpen, totalItemCount } = useCart();
+  const { setIsCartOpen, totalItemsCount } = useCart();
   const { setIsWishlistOpen, wishlistCount } = useWishlist();
   const { setIsSearchOpen, setIsNavOpen } = useUI();
 
   const handleNavigatePath = (path) => {
+    if (path === '/cart') {
+      setIsCartOpen(true);
+      return;
+    }
+    if (path === '/checkout') {
+      if (onNavigate) {
+        onNavigate('store', 'checkout');
+      } else {
+        window.location.hash = '#store';
+      }
+      return;
+    }
+    if (path === '/track' || path === '/track-order') {
+      if (onNavigate) {
+        onNavigate('orders');
+      } else {
+        window.location.hash = '#orders';
+      }
+      return;
+    }
     setCurrentPath(path);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -48,18 +63,6 @@ function AquaStoreContent({ onBackToHome, onNavigate, initialPath = '/' }) {
       return <VideoTutorialPage onNavigate={handleNavigatePath} />;
     }
 
-    if (currentPath === '/cart') {
-      return <CartPage onNavigate={handleNavigatePath} />;
-    }
-
-    if (currentPath === '/checkout') {
-      return <CheckoutPage onNavigate={handleNavigatePath} />;
-    }
-
-    if (currentPath === '/track' || currentPath === '/track-order') {
-      return <TrackOrderPage onNavigate={handleNavigatePath} />;
-    }
-
     if (currentPath === '/my-account') {
       return <AccountPage onNavigate={handleNavigatePath} />;
     }
@@ -76,7 +79,7 @@ function AquaStoreContent({ onBackToHome, onNavigate, initialPath = '/' }) {
       return (
         <LegalPage
           title="REPLACEMENT & COMPATIBILITY GUARANTEE"
-          content="Mirror Aqua provides a direct replacement guarantee if any spare part arrives damaged or does not fit your compatible 10-inch pre-filter bowl. Contact our technical support on WhatsApp within 7 days of delivery for immediate dispatch of replacement."
+          content="Mirror Aqua provides a direct replacement guarantee if any spare part arrives damaged or does not fit your compatible 10-inch pre-filter bowl. Contact our technical support within 7 days of delivery for immediate dispatch of replacement."
         />
       );
     }
@@ -135,7 +138,7 @@ function AquaStoreContent({ onBackToHome, onNavigate, initialPath = '/' }) {
               </div>
               <div className="flex items-center gap-1">
                 <span>Mirror Aqua</span>
-                <span className="text-cyan-400">Store</span>
+                <span className="text-cyan-400">Products</span>
               </div>
             </div>
           </div>
@@ -148,15 +151,15 @@ function AquaStoreContent({ onBackToHome, onNavigate, initialPath = '/' }) {
                 else window.location.hash = '#store';
               }}
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition-all cursor-pointer"
-              title="Switch to Mirror Solar Store"
+              title="Switch to Solar Products"
             >
               <Sun size={13} className="text-amber-400" />
-              <span>Solar Store</span>
+              <span>Solar Products</span>
             </button>
             
             <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-sm">
               <Droplets size={13} className="text-cyan-200 fill-cyan-200/30" />
-              <span>Aqua Store</span>
+              <span>Mirror Aqua (120g)</span>
             </div>
           </div>
 
@@ -189,7 +192,10 @@ function AquaStoreContent({ onBackToHome, onNavigate, initialPath = '/' }) {
 
             {/* Track Orders */}
             <button
-              onClick={() => handleNavigatePath('/track')}
+              onClick={() => {
+                if (onNavigate) onNavigate('orders');
+                else window.location.hash = '#orders';
+              }}
               className="inline-flex items-center gap-1.5 bg-[#122842] hover:bg-[#1A385C] border border-cyan-800/40 text-cyan-200 hover:text-white text-xs sm:text-sm font-bold px-3 py-1.5 rounded-xl shadow-sm transition-all cursor-pointer"
             >
               <Truck size={14} className="text-cyan-400" />
@@ -197,17 +203,17 @@ function AquaStoreContent({ onBackToHome, onNavigate, initialPath = '/' }) {
               <span className="md:hidden">Track</span>
             </button>
 
-            {/* Cart Drawer Button */}
+            {/* Master Cart Drawer Button */}
             <button
               onClick={() => setIsCartOpen(true)}
               className="inline-flex items-center gap-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs sm:text-sm font-bold px-3.5 py-1.5 rounded-xl shadow-md transition-all relative cursor-pointer"
-              title="Open Aqua Cart"
+              title="Open Master Cart"
             >
               <ShoppingBag size={15} />
               <span className="hidden sm:inline">Cart</span>
-              {totalItemCount > 0 && (
-                <span className="bg-white text-cyan-900 text-[11px] font-black px-1.5 py-0.2 rounded-full min-w-[18px] text-center">
-                  {totalItemCount}
+              {totalItemsCount > 0 && (
+                <span className="bg-amber-400 text-slate-950 text-[11px] font-black px-1.5 py-0.2 rounded-full min-w-[18px] text-center">
+                  {totalItemsCount}
                 </span>
               )}
             </button>
@@ -221,7 +227,6 @@ function AquaStoreContent({ onBackToHome, onNavigate, initialPath = '/' }) {
       </main>
 
       {/* Global Aqua Drawers & Modals */}
-      <CartDrawer onNavigate={handleNavigatePath} />
       <WishlistDrawer onNavigate={handleNavigatePath} />
       <SearchDrawer onNavigate={handleNavigatePath} />
       <MobileNavDrawer currentPath={currentPath} onNavigate={handleNavigatePath} />
@@ -234,13 +239,11 @@ export default function MirrorAquaStore({ onBackToHome, onNavigate, initialPath 
   return (
     <UIProvider>
       <WishlistProvider>
-        <CartProvider>
-          <AquaStoreContent 
-            onBackToHome={onBackToHome} 
-            onNavigate={onNavigate} 
-            initialPath={initialPath} 
-          />
-        </CartProvider>
+        <AquaStoreContent 
+          onBackToHome={onBackToHome} 
+          onNavigate={onNavigate} 
+          initialPath={initialPath} 
+        />
       </WishlistProvider>
     </UIProvider>
   );

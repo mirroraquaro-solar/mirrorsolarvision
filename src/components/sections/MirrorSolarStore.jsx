@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
-  ArrowRight,
   CheckCircle2, 
   ShoppingCart, 
   Star, 
@@ -16,18 +15,16 @@ import {
   Send, 
   Eye, 
   Truck, 
-  Share2, 
-  MessageCircle, 
   ShieldCheck, 
   Award, 
   Users, 
-  ThumbsUp,
-  Printer,
-  Copy,
-  FileText,
-  MessageSquare,
-  Sun,
-  Droplets
+  ThumbsUp, 
+  Printer, 
+  Copy, 
+  FileText, 
+  MessageSquare, 
+  Sun, 
+  Droplets 
 } from 'lucide-react';
 import { CONFIRMED_BULK_COMBO, INDIVIDUAL_PRODUCTS, BUSINESS_CONTACT, CUSTOMER_REVIEWS } from '../../data/bulkComboData';
 import { db } from '../../config/firebase';
@@ -93,10 +90,12 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
     addToCart,
     removeFromCart,
     updateQuantity,
-    cartTotal: cartTotalAmount,
-    cartCount: cartItemsCount,
+    clearCart,
+    totalAmount: cartTotalAmount,
+    totalItemsCount: cartItemsCount,
     isCartOpen,
-    setIsCartOpen
+    setIsCartOpen,
+    checkoutData: contextCheckoutData
   } = useCart();
   const [cartNotification, setCartNotification] = useState(null);
 
@@ -220,11 +219,20 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-
-
   useEffect(() => {
     const act = initialAction || window.location.hash.replace('#', '');
-    if (act === 'bulk-combo') {
+    if (act === 'checkout') {
+      if (contextCheckoutData) {
+        setCheckoutData(contextCheckoutData);
+      } else if (cart && cart.length > 0) {
+        setCheckoutData({
+          items: cart,
+          totalPrice: cartTotalAmount
+        });
+      }
+      setViewMode('checkout');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (act === 'bulk-combo') {
       setIsComboDetailOpen(true);
       setTimeout(() => {
         const el = document.getElementById('bulk-combos-section');
@@ -243,33 +251,6 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialAction]);
 
-  const handleShareProduct = async (product, variantLabel = '', price = null) => {
-    const pPrice = price || product.price || (product.variants && product.variants[0]?.price) || '';
-    const pName = product.name;
-    const shareText = `☀️ *${pName}* ${variantLabel ? `(${variantLabel})` : ''}\n💰 Price: ₹${pPrice}\n⭐ Rating: 5.0/5.0 (10,000+ Happy Customers)\n🚚 Fast Dispatch across AP & India with Live Tracking!\n\nOrder online here:`;
-    const shareUrl = window.location.href;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: pName,
-          text: `${shareText}\n${shareUrl}`,
-          url: shareUrl,
-        });
-        return;
-      } catch (err) {
-        if (err.name !== 'AbortError') {
-          const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`;
-          window.open(waUrl, '_blank');
-        }
-        return;
-      }
-    }
-
-    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`;
-    window.open(waUrl, '_blank');
-  };
-
   const updateCartQuantity = (cartItemId, delta) => {
     updateQuantity(cartItemId, delta);
   };
@@ -287,7 +268,9 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
 
   const handlePaymentSuccess = (orderData) => {
     setCompletedOrder(orderData);
-    if (typeof removeFromCart === 'function') {
+    if (typeof clearCart === 'function') {
+      clearCart();
+    } else if (typeof removeFromCart === 'function') {
       cart.forEach(item => removeFromCart(item.id || item.cartItemId));
     }
     setViewMode('success');
@@ -352,9 +335,10 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
 
   // If in Checkout View
   if (viewMode === 'checkout') {
+    const activeCheckout = checkoutData || contextCheckoutData || (cart && cart.length > 0 ? { items: cart, totalPrice: cartTotalAmount } : null);
     return (
       <CheckoutPage 
-        checkoutData={checkoutData} 
+        checkoutData={activeCheckout} 
         onBack={() => {
           setViewMode('store');
           window.scrollTo({ top: 0, behavior: 'smooth' });
