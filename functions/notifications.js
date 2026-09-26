@@ -2,9 +2,9 @@ const nodemailer = require("nodemailer");
 const admin = require("firebase-admin");
 
 // Environment & Default Configurations
-const rawAdminEmail = process.env.ADMIN_EMAIL || "balajiperuri09@gmail.com,mirrorsolarvision@gmail.com";
+const rawAdminEmail = process.env.ADMIN_EMAIL || "balajiperuri09@mail.com,balajiperuri09@gmail.com,mirrorsolarvision@gmail.com";
 const ADMIN_EMAILS = rawAdminEmail.split(',').map(e => e.trim()).filter(Boolean);
-const ADMIN_EMAIL = ADMIN_EMAILS[0] || "balajiperuri09@gmail.com";
+const ADMIN_EMAIL = ADMIN_EMAILS[0] || "balajiperuri09@mail.com";
 const ADMIN_WHATSAPP = (process.env.ADMIN_WHATSAPP || "919182612420").replace(/[^0-9]/g, "");
 const BUSINESS_NAME = process.env.BUSINESS_NAME || "Mirror Solar Vision";
 const BUSINESS_PHONE = "+91 91826 12420";
@@ -56,8 +56,17 @@ function formatINR(val) {
  */
 function extractProductSpecs(item, orderData = {}) {
   const name = item.name || item.productName || 'Solar Equipment';
-  const variantLabel = item.variantLabel || '';
-  const searchStr = `${name} ${variantLabel} ${orderData.productName || ''} ${orderData.selectedSize || ''} ${orderData.kw || ''}`;
+  // Aqua PP Spun Filter support
+  if (name.toLowerCase().includes('pp spun') || name.toLowerCase().includes('filter') || (item.productId || '').startsWith('ma-') || (item.sku || '').startsWith('MA-')) {
+    return {
+      name: name || '10" 5-Micron PP Spun Filter (120g)',
+      size: '10 Inch Standard',
+      kw: null,
+      clipsCount: `${item.quantity || 1} Unit(s) [120g/pc]`,
+      variantLabel: '10" 5-Micron Multi-Layer PP Spun Polypropylene (120g)',
+      category: 'Water Filtration'
+    };
+  }
 
   // 1. Extract Size (e.g. 30mm, 33mm, 35mm, 40mm)
   let size = item.selectedSize || item.size || orderData.selectedSize || orderData.size || '';
@@ -683,14 +692,15 @@ async function dispatchBookingNotifications(type, data) {
   let waText = '';
   let emailHtml = '';
   let emailSubject = '';
-  const customerEmail = data.email || data.customerEmail || data.address?.email || null;
-  const customerPhone = data.phone || data.customerPhone || data.address?.phone || null;
+  const customerEmail = data.email || data.customerEmail || data.address?.email || data.billing_email || data.userEmail || null;
+  const customerPhone = data.phone || data.customerPhone || data.address?.phone || data.billing_phone || null;
 
   if (type === 'order') {
     const bookingId = data.bookingId || data.firestoreOrderId || 'MSV-ORD';
     waText = renderOrderWhatsAppText(data);
     emailHtml = renderOrderEmailHtml(data);
-    emailSubject = `Order Confirmed: ${bookingId} — ${BUSINESS_NAME} (₹${Number(data.amount || 0).toLocaleString('en-IN')})`;
+    const storeBranding = (bookingId.startsWith('MA') || (data.items && data.items.some(it => (it.productId || '').startsWith('ma-')))) ? 'Mirror Aqua' : BUSINESS_NAME;
+    emailSubject = `Order Confirmed: ${bookingId} — ${storeBranding} (₹${Number(data.amount || 0).toLocaleString('en-IN')})`;
   } else if (type === 'site_survey') {
     waText = renderSurveyWhatsAppText(data);
     emailHtml = renderLeadEmailHtml(type, data);
@@ -709,9 +719,9 @@ async function dispatchBookingNotifications(type, data) {
     emailSubject = `New Notification from ${BUSINESS_NAME}`;
   }
 
-  // 1. Send Email: to Admin recipients (balajiperuri09@gmail.com & mirrorsolarvision@gmail.com) AND Customer
+  // 1. Send Email: to Admin recipients (balajiperuri09@mail.com, balajiperuri09@gmail.com, mirrorsolarvision@gmail.com) AND Customer
   const recipients = [...ADMIN_EMAILS];
-  if (customerEmail && !recipients.includes(customerEmail.trim())) {
+  if (customerEmail && customerEmail.trim() && !recipients.some(r => r.toLowerCase() === customerEmail.trim().toLowerCase())) {
     recipients.push(customerEmail.trim());
   }
 
