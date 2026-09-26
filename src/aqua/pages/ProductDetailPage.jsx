@@ -17,7 +17,7 @@ import { useCart } from '../context/CartContext.jsx';
 import { useWishlist } from '../context/WishlistContext.jsx';
 import { Button, Badge, Price, Rating } from '../components/ui/Primitives.jsx';
 import { WhyWePickedIt } from '../components/ui/WhyWePickedIt.jsx';
-import { analytics } from '../services/analytics.js';
+import { ProductCard } from '../components/ui/ProductCard.jsx';
 import './ProductDetailPage.css';
 
 export function ProductDetailPage({ slug, onNavigate }) {
