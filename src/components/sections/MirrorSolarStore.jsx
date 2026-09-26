@@ -33,6 +33,7 @@ import { CONFIRMED_BULK_COMBO, INDIVIDUAL_PRODUCTS, BUSINESS_CONTACT, CUSTOMER_R
 import { db } from '../../config/firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { submitBookingWithNotification, ADMIN_WHATSAPP, printConfirmationDocument, getCustomerWhatsAppUrl } from '../../services/notificationService';
+import { useCart } from '../../context/CartContext';
 import CheckoutPage from '../checkout/CheckoutPage';
 import OrderSuccess from '../checkout/OrderSuccess';
 import MyOrders from '../checkout/MyOrders';
@@ -86,9 +87,17 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
   const [activeProductDetail, setActiveProductDetail] = useState(null);
   const [activeComboMaterialModal, setActiveComboMaterialModal] = useState(null);
 
-  // Cart State
-  const [cart, setCart] = useState([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
+  // Master Cart Context
+  const {
+    cart,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    cartTotal: cartTotalAmount,
+    cartCount: cartItemsCount,
+    isCartOpen,
+    setIsCartOpen
+  } = useCart();
   const [cartNotification, setCartNotification] = useState(null);
 
   // Bulk Combo State (Secondary Section)
@@ -149,10 +158,6 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
 
   const activeDrainClipConfig = getActiveDrainClipConfig();
 
-  // Cart Calculations
-  const cartTotalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-
   // Handlers for Drain Clips
   const addToCartDrainClips = (buyNow = false) => {
     const config = getActiveDrainClipConfig();
@@ -160,6 +165,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
     const variantLabel = `${selectedDrainClipSize} • ${config.label}`;
 
     const newItem = {
+      id: cartItemId,
       cartItemId,
       productId: 'msv-drain-clips',
       name: drainClipsProduct.name,
@@ -168,7 +174,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
       size: selectedDrainClipSize,
       kw: config.kw,
       clipsCount: config.clipsCount,
-      category: 'Maintenance Accessories',
+      category: 'Solar Accessories',
       price: config.price,
       image: drainClipsProduct.images[0],
       quantity: 1
@@ -184,18 +190,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
       return;
     }
 
-    setCart(prev => {
-      const existing = prev.find(item => item.cartItemId === cartItemId);
-      if (existing) {
-        return prev.map(item => 
-          item.cartItemId === cartItemId 
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      return [...prev, newItem];
-    });
-
+    addToCart(newItem, 1);
     setCartNotification(`${drainClipsProduct.name} (${variantLabel}) added to cart!`);
     setIsCartOpen(true);
     setTimeout(() => setCartNotification(null), 3500);
@@ -276,17 +271,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
   };
 
   const updateCartQuantity = (cartItemId, delta) => {
-    setCart(prev => prev.map(item => {
-      if (item.cartItemId === cartItemId) {
-        const newQty = item.quantity + delta;
-        return newQty > 0 ? { ...item, quantity: newQty } : null;
-      }
-      return item;
-    }).filter(Boolean));
-  };
-
-  const removeFromCart = (cartItemId) => {
-    setCart(prev => prev.filter(item => item.cartItemId !== cartItemId));
+    updateQuantity(cartItemId, delta);
   };
 
   const handleProceedToCheckout = () => {
@@ -302,7 +287,9 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
 
   const handlePaymentSuccess = (orderData) => {
     setCompletedOrder(orderData);
-    setCart([]);
+    if (typeof removeFromCart === 'function') {
+      cart.forEach(item => removeFromCart(item.id || item.cartItemId));
+    }
     setViewMode('success');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -443,17 +430,6 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Highlighted Share Button on Top */}
-            <button
-              onClick={() => handleShareProduct(drainClipsProduct, `${selectedDrainClipSize} • ${activeDrainClipConfig.label}`, activeDrainClipConfig.price)}
-              className="inline-flex items-center gap-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 text-xs sm:text-sm font-black px-3 sm:px-3.5 py-2 rounded-xl shadow-md hover:scale-105 transition-all cursor-pointer"
-              title="Share Store Products on WhatsApp"
-            >
-              <MessageCircle size={15} className="fill-slate-950 text-slate-950" />
-              <span className="hidden sm:inline">Share on WhatsApp</span>
-              <span className="sm:hidden">Share</span>
-            </button>
-
             {/* Track Orders Button */}
             <button
               onClick={() => {
@@ -500,12 +476,9 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
         </div>
       )}
 
-      {/* Store Catalog Heading */}
+      {/* Store Catalog Heading (Single Clean Header) */}
       <div className="pt-10 pb-8 text-center">
         <div className="container-custom max-w-3xl mx-auto space-y-2.5">
-          <span className="text-xs font-extrabold uppercase tracking-wider text-accent-600 bg-accent-500/10 px-3.5 py-1.5 rounded-full border border-accent-500/20">
-            Store Catalog
-          </span>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 font-heading tracking-tight">
             Store Catalog
           </h1>
@@ -524,7 +497,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 max-w-5xl mx-auto">
             <div>
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 font-heading">
-                Featured Product
+                Most Selling Products
               </h2>
               <p className="text-xs sm:text-sm text-slate-500">
                 Order genuine anti-sludge drain clips directly with secure online payment & Shiprocket delivery tracking.
@@ -585,18 +558,6 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                         <span className="text-amber-700 text-[11px] font-semibold">({drainClipsProduct.reviewsCount} reviews)</span>
                       </div>
                     </div>
-
-                    {/* HIGHLIGHTED SHARE BUTTON ON TOP */}
-                    <button
-                      type="button"
-                      onClick={() => handleShareProduct(drainClipsProduct, `${selectedDrainClipSize} • ${activeDrainClipConfig.label}`, activeDrainClipConfig.price)}
-                      className="inline-flex items-center gap-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black text-xs px-3.5 py-1.5 rounded-xl shadow-md hover:scale-105 transition-all cursor-pointer"
-                      title="Share product on WhatsApp or other apps"
-                    >
-                      <MessageCircle size={14} className="fill-slate-950 text-slate-950" />
-                      <Share2 size={12} className="text-slate-950" />
-                      <span>SHARE PRODUCT</span>
-                    </button>
                   </div>
 
                   {/* Title & Description */}
@@ -780,17 +741,6 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                       <span>Buy Now (₹{activeDrainClipConfig.price.toLocaleString('en-IN')})</span>
                     </button>
                   </div>
-
-                  {/* Share on WhatsApp / Other Apps Button */}
-                  <button
-                    type="button"
-                    onClick={() => handleShareProduct(drainClipsProduct, `${selectedDrainClipSize} • ${activeDrainClipConfig.label}`, activeDrainClipConfig.price)}
-                    className="w-full bg-[#E7F8F0] hover:bg-[#D5F3E4] text-[#075E54] border border-[#25D366]/40 font-bold py-2.5 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-2 shadow-xs"
-                  >
-                    <MessageCircle size={15} className="text-[#25D366] fill-[#25D366]" />
-                    <Share2 size={13} className="text-[#075E54]" />
-                    <span>Share Product on WhatsApp / Other Apps</span>
-                  </button>
                 </div>
 
               </div>
@@ -800,9 +750,9 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
         </section>
 
         {/* ========================================================================= */}
-        {/* SECTION 2: FEATURED BULK COMBO — SECONDARY */}
+        {/* SECTION 2: BULK COMBO — SECONDARY */}
         {/* ========================================================================= */}
-        <section id="bulk-combos-section" aria-label="Featured Bulk Solar Installation Combo" className="space-y-6 pt-8 border-t-2 border-slate-200/80">
+        <section id="bulk-combos-section" aria-label="Bulk Solar Installation Combo" className="space-y-6 pt-8 border-t-2 border-slate-200/80">
           
           <div className="text-left max-w-2xl space-y-1">
             <div className="inline-flex items-center gap-1.5 text-xs font-black text-accent-600 bg-accent-500/10 px-3 py-1 rounded-full uppercase tracking-wider mb-1">
@@ -810,7 +760,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
               <span>Special Bulk Offer</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
-              Featured Bulk Combo
+              Bulk Combo
             </h2>
             <p className="text-xs sm:text-sm text-slate-600">
               Need materials in bulk? Explore our ready-to-order combo package.
@@ -1830,16 +1780,6 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                     Add to Cart
                   </button>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => handleShareProduct(activeProductDetail, '', activeProductDetail.price)}
-                  className="w-full bg-[#E7F8F0] hover:bg-[#D5F3E4] text-[#075E54] border border-[#25D366]/40 font-bold py-2.5 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-2 shadow-xs"
-                >
-                  <MessageCircle size={15} className="text-[#25D366] fill-[#25D366]" />
-                  <Share2 size={13} className="text-[#075E54]" />
-                  <span>Share this Product with Friends / Installers</span>
-                </button>
               </div>
 
             </div>

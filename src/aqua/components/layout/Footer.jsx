@@ -44,7 +44,7 @@ export function Footer({ onNavigate }) {
               />
             </div>
             <p className="footer-brand-desc">
-              Reliable PP spun sediment filters and genuine water purifier pre-filtration elements. Manufactured for consistent filtration performance and long-lasting reliability across India.
+              Reliable PP spun filters and genuine water purifier pre-filtration elements. Manufactured for consistent filtration performance and long-lasting reliability across India.
             </p>
           </div>
 
@@ -74,7 +74,7 @@ export function Footer({ onNavigate }) {
           <div className="footer-col">
             <h4 className="footer-heading">Filtration Disclosure</h4>
             <p className="footer-compliance-notice">
-              PP spun sediment filters are mechanical depth filters engineered strictly for suspended physical particulate reduction (sand, silt, rust, dirt). They do not reduce dissolved chemical salts (TDS) or replace microbiological disinfection stages (UV/RO).
+              PP spun filters are mechanical depth filters engineered strictly for suspended physical particulate reduction (sand, silt, rust, dirt). They do not reduce dissolved chemical salts (TDS) or replace microbiological disinfection stages (UV/RO).
             </p>
             <div className="footer-contact-info">
               <span>📍 Made in India</span>

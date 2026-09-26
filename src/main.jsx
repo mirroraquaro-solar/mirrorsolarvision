@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 import { AuthProvider } from './context/AuthContext'
+import { CartProvider } from './context/CartContext'
 
 const renderApp = () => {
   const rootEl = document.getElementById('root');
@@ -10,7 +11,9 @@ const renderApp = () => {
     ReactDOM.createRoot(rootEl).render(
       <React.StrictMode>
         <AuthProvider>
-          <App />
+          <CartProvider>
+            <App />
+          </CartProvider>
         </AuthProvider>
       </React.StrictMode>,
     );

@@ -10,7 +10,7 @@ export function FAQAccordion({ faqs = [] }) {
   const defaultFaqs = [
     {
       q: 'What is a PP spun filter?',
-      a: 'A Polypropylene (PP) spun filter is a depth sediment filter made from thermal-bonded polypropylene microfibers. It is designed to capture physical suspended particles such as silt, sand, rust, and dirt from incoming tap or borewell water.'
+      a: 'A Polypropylene (PP) spun filter is a depth pre-filter made from thermal-bonded polypropylene microfibers. It is designed to capture physical suspended particles such as silt, sand, rust, and dirt from incoming tap or borewell water.'
     },
     {
       q: 'What does 5 micron mean?',
@@ -22,19 +22,19 @@ export function FAQAccordion({ faqs = [] }) {
     },
     {
       q: 'Does this filter reduce TDS?',
-      a: 'No. PP spun sediment filters are intended exclusively for physical suspended-particle filtration. Total Dissolved Solids (TDS) reduction is performed by downstream fine purification stages.'
+      a: 'No. PP spun filters are intended exclusively for physical suspended-particle filtration. Total Dissolved Solids (TDS) reduction is performed by downstream fine purification stages.'
     },
     {
       q: 'Does this filter remove bacteria or viruses?',
-      a: 'No. A sediment filter is not a disinfection stage and should not be relied upon for microbiological purification. Disinfection is handled by technologies like UV lamps or fine purification stages.'
+      a: 'No. A PP spun filter is not a disinfection stage and should not be relied upon for microbiological purification. Disinfection is handled by technologies like UV lamps or fine purification stages.'
     },
     {
       q: 'How often should I replace it?',
-      a: 'Replacement frequency depends on your local water quality, daily usage volume, and sediment load. Typical indicators for replacement include visible dark discoloration, noticeable pressure drop, or your purifier manufacturer’s maintenance schedule.'
+      a: 'Replacement frequency depends on your local water quality, daily usage volume, and particulate load. Typical indicators for replacement include visible dark discoloration, noticeable pressure drop, or your purifier manufacturer’s maintenance schedule.'
     },
     {
-      q: 'Is this a 10-inch filter?',
-      a: 'Yes, this is a standard 10-inch (nominal length ~254 mm) cartridge designed for standard 10-inch pre-filter bowls.'
+      q: 'Is this a 10-inch filter and what is its weight?',
+      a: 'Yes, this is a standard 10-inch (nominal length ~254 mm) cartridge with a heavy-duty weight of 120g, designed for standard 10-inch pre-filter bowls.'
     },
     {
       q: 'Can I buy in bulk for service centers or dealerships?',
@@ -42,7 +42,7 @@ export function FAQAccordion({ faqs = [] }) {
     },
     {
       q: 'How do I know whether it fits my water purifier?',
-      a: 'Check your existing pre-filter bowl. If it uses a standard 10-inch drop-in cartridge, this filter will fit. If unsure, use our "Ask Mirror Aqua on WhatsApp" button with your purifier model name.'
+      a: 'Check your existing pre-filter bowl. If it uses a standard 10-inch drop-in cartridge, this filter will fit. You can reach out to our team with your purifier model name.'
     },
     {
       q: 'Does this filter contain any chemical binders?',
@@ -56,12 +56,6 @@ export function FAQAccordion({ faqs = [] }) {
     setOpenIndex(openIndex === idx ? -1 : idx);
   };
 
-  const handleWhatsAppHelp = () => {
-    analytics.trackWhatsAppClick('faq_extra_help_btn', { name: 'FAQ Section Assistance' });
-    const text = 'Hello Mirror Aqua, I have a specific question about the 10-Inch 5-Micron PP Spun Filter that was not answered in the FAQ.';
-    window.open(`https://wa.me/${WHATSAPP_NUM}?text=${encodeURIComponent(text)}`, '_blank');
-  };
-
   return (
     <section className="faq-section" id="faq">
       <div className="container container-narrow">
@@ -71,7 +65,7 @@ export function FAQAccordion({ faqs = [] }) {
             Technical & Product FAQs
           </h2>
           <p className="section-subtitle">
-            Clear, honest answers about sediment pre-filtration, sizing, compatibility, and maintenance.
+            Clear, honest answers about pre-filtration, sizing, compatibility, and maintenance.
           </p>
         </div>
 

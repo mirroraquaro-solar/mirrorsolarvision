@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageCircle, X, ShieldCheck } from 'lucide-react';
+import { MessageCircle, X } from 'lucide-react';
 import './WhatsAppBotButton.css';
 
 export function WhatsAppBotButton() {
@@ -7,7 +7,7 @@ export function WhatsAppBotButton() {
   const whatsappNumber = import.meta.env.VITE_WHATSAPP_BUSINESS_NUMBER || '919182612420';
 
   const handleOpenWhatsApp = () => {
-    const text = encodeURIComponent('Hello Mirror Aqua, I have an enquiry about water purifier spare parts and replacement filters.');
+    const text = encodeURIComponent('Hello Mirror Solar & Aqua team, I would like to inquire about products and orders.');
     const url = `https://wa.me/${whatsappNumber}?text=${text}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
@@ -18,13 +18,13 @@ export function WhatsAppBotButton() {
       <div className={`wa-bot-bubble ${showTooltip ? 'visible' : ''}`}>
         <div className="wa-bot-bubble-content">
           <div className="wa-bot-bubble-header">
-            <span className="wa-bot-title">Mirror Aqua Support</span>
+            <span className="wa-bot-title">Mirror Support</span>
             <span className="wa-bot-status-tag">
               <span className="wa-status-dot" /> Online
             </span>
           </div>
           <p className="wa-bot-bubble-msg">
-            Need help with 10" PP Spun Filter compatibility or bulk orders? Chat with our team on WhatsApp!
+            Need help with Solar products or 120g Spun Filters? Chat with our team on WhatsApp!
           </p>
         </div>
       </div>
@@ -37,8 +37,8 @@ export function WhatsAppBotButton() {
         onClick={handleOpenWhatsApp}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
-        aria-label="Chat with Mirror Aqua Support on WhatsApp"
-        title="Chat with Mirror Aqua on WhatsApp (+91 9182612420)"
+        aria-label="Chat with Mirror Solar & Aqua on WhatsApp"
+        title="Chat on WhatsApp (+91 9182612420)"
       >
         {/* Pulsing beacon circle */}
         <span className="wa-bot-ping-ring" aria-hidden="true" />
@@ -48,8 +48,8 @@ export function WhatsAppBotButton() {
           <svg
             className="wa-svg-icon"
             viewBox="0 0 24 24"
-            width="32"
-            height="32"
+            width="30"
+            height="30"
             fill="currentColor"
             xmlns="http://www.w3.org/2000/svg"
           >
@@ -58,9 +58,7 @@ export function WhatsAppBotButton() {
         </span>
 
         {/* Online Indicator Badge */}
-        <span className="wa-bot-badge">
-          <span className="wa-bot-badge-dot" />
-        </span>
+        <span className="wa-bot-online-badge" />
       </button>
     </div>
   );

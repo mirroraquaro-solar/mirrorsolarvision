@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Phone, Zap, Menu, X, Package, User, Truck, ChevronDown, Sun, Droplets } from 'lucide-react';
+import { Phone, Zap, Menu, X, ShoppingBag, User, Truck, ChevronDown, Sun, Droplets } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
 import { BUSINESS_CONTACT } from '../../data/bulkComboData';
 
 export default function Header({ onNavigate }) {
@@ -10,6 +11,7 @@ export default function Header({ onNavigate }) {
   const dropdownRef = useRef(null);
   
   const { isAuthenticated, userProfile, openAuthModal, logout } = useAuth();
+  const { totalItemsCount, setIsCartOpen } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -62,7 +64,7 @@ export default function Header({ onNavigate }) {
       >
         <div className="flex items-center justify-between h-full max-w-[1400px] mx-auto px-3.5 sm:px-8">
           
-          {/* Logo with clean mobile sizing and zero padding constraint */}
+          {/* Logo with strict containment */}
           <a 
             href="#home" 
             onClick={(e) => {
@@ -75,9 +77,14 @@ export default function Header({ onNavigate }) {
             <img 
               src="/assets/images/logo/mirror_solar-removebg-preview.png" 
               alt="Mirror Solar Vision Logo" 
-              className={`w-auto object-contain transition-all duration-300 origin-left scale-100 sm:scale-110 ${
-                isScrolled ? 'h-[50px] sm:h-[64px]' : 'h-[58px] sm:h-[76px]'
-              }`}
+              style={{
+                height: isScrolled ? '46px' : '54px',
+                maxHeight: isScrolled ? '46px' : '54px',
+                width: 'auto',
+                maxWidth: '200px',
+                objectFit: 'contain'
+              }}
+              className="w-auto transition-all duration-300"
             />
           </a>
 
@@ -91,7 +98,7 @@ export default function Header({ onNavigate }) {
               Home
             </a>
 
-            {/* Dual Store Dropdown Navigation */}
+            {/* Dual Products / Store Dropdown Navigation */}
             <div className="relative" ref={dropdownRef}>
               <button 
                 onClick={() => setIsStoreDropdownOpen(!isStoreDropdownOpen)}
@@ -103,22 +110,22 @@ export default function Header({ onNavigate }) {
                 className="inline-flex items-center gap-2 text-[14px] font-bold text-white bg-gradient-to-r from-[#0A2540] via-[#0F3460] to-[#0A2540] hover:shadow-lg px-4.5 py-2 rounded-full shadow-sm transition-all duration-200 transform hover:scale-105 cursor-pointer border border-slate-700/40"
               >
                 <span className="w-5 h-5 rounded-full bg-accent-500 flex items-center justify-center text-slate-950 text-[11px] font-black">🛒</span>
-                <span>Store</span>
-                <span className="text-[10px] bg-accent-500/20 text-accent-300 font-extrabold px-1.5 py-0.5 rounded-full border border-accent-400/30 uppercase">2 Stores</span>
+                <span>Products</span>
+                <span className="text-[10px] bg-accent-500/20 text-accent-300 font-extrabold px-1.5 py-0.5 rounded-full border border-accent-400/30 uppercase">2 Categories</span>
                 <ChevronDown size={14} className={`text-slate-300 transition-transform duration-200 ${isStoreDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
-              {/* Store Dropdown Menu */}
+              {/* Products Dropdown Menu */}
               {isStoreDropdownOpen && (
                 <div 
                   onMouseLeave={() => setIsStoreDropdownOpen(false)}
                   className="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[350] p-2 animate-in fade-in slide-in-from-top-2 duration-200"
                 >
                   <div className="px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
-                    Select Online Store
+                    Product Categories
                   </div>
 
-                  {/* Option 1: Solar Store */}
+                  {/* Option 1: Solar Products */}
                   <a
                     href="#store"
                     onClick={(e) => { e.preventDefault(); handleNavClick('store'); }}
@@ -130,14 +137,14 @@ export default function Header({ onNavigate }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-black text-slate-900 group-hover:text-amber-700">Mirror Solar Store</span>
+                        <span className="text-xs font-black text-slate-900 group-hover:text-amber-700">Solar Products</span>
                         <span className="text-[9px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">Solar</span>
                       </div>
-                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">Drain Clips, Combos & Solar Kits</p>
+                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">MSV Drain Clips & Bulk Combos</p>
                     </div>
                   </a>
 
-                  {/* Option 2: Aqua Store */}
+                  {/* Option 2: Mirror Aqua Products */}
                   <a
                     href="#aqua-store"
                     onClick={(e) => { e.preventDefault(); handleNavClick('aqua-store'); }}
@@ -149,10 +156,10 @@ export default function Header({ onNavigate }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-black text-slate-900 group-hover:text-cyan-700">Mirror Aqua Store</span>
-                        <span className="text-[9px] font-bold bg-cyan-100 text-cyan-800 px-1.5 py-0.5 rounded-full">Water</span>
+                        <span className="text-xs font-black text-slate-900 group-hover:text-cyan-700">Mirror Aqua Products</span>
+                        <span className="text-[9px] font-bold bg-cyan-100 text-cyan-800 px-1.5 py-0.5 rounded-full">Aqua</span>
                       </div>
-                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">10" PP Spun Filter & Spares</p>
+                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">10" 5-Micron PP Spun Filter (120g)</p>
                     </div>
                   </a>
                 </div>
@@ -192,15 +199,22 @@ export default function Header({ onNavigate }) {
             </button>
           </nav>
 
-          {/* Contact Details & CTA */}
-          <div className="hidden xl:flex items-center gap-5">
-            <a 
-              href={`tel:${BUSINESS_CONTACT.phoneRaw}`} 
-              className="flex items-center gap-1.5 text-[14px] font-bold text-slate-900 hover:text-primary-600 transition-colors"
+          {/* Desktop Right: Master Cart, Auth & Call */}
+          <div className="hidden xl:flex items-center gap-4">
+            {/* Master Cart Icon Button */}
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="relative inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-2 rounded-full font-bold text-xs transition-all cursor-pointer"
+              aria-label="Open Cart"
             >
-              <Phone size={16} className="text-emerald-500 fill-emerald-500/20" />
-              <span>{BUSINESS_CONTACT.phone}</span>
-            </a>
+              <ShoppingBag size={16} className="text-slate-700" />
+              <span>Cart</span>
+              {totalItemsCount > 0 && (
+                <span className="bg-amber-500 text-slate-950 text-[11px] font-black px-1.5 py-0.2 rounded-full shadow-sm animate-pulse">
+                  {totalItemsCount}
+                </span>
+              )}
+            </button>
 
             {/* Auth Dropdown or Button */}
             {isAuthenticated ? (
@@ -245,25 +259,32 @@ export default function Header({ onNavigate }) {
             </button>
           </div>
 
-          {/* Mobile Actions Container */}
+          {/* Mobile Right Actions Container */}
           <div className="xl:hidden flex items-center gap-2">
+            {/* Mobile Master Cart Trigger */}
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="relative flex items-center justify-center w-9 h-9 rounded-full bg-slate-100 text-slate-800 active:scale-95 transition-all"
+              aria-label="Open Shopping Cart"
+            >
+              <ShoppingBag size={17} />
+              {totalItemsCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-amber-500 text-slate-950 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                  {totalItemsCount}
+                </span>
+              )}
+            </button>
+
+            {/* Mobile Stores Quick Action */}
             <button 
               onClick={() => setIsMobileMenuOpen(true)}
               className="flex items-center gap-1.5 bg-gradient-to-r from-[#0A2540] to-[#0F3460] active:scale-95 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm transition-all"
             >
-              <Package size={13} className="text-accent-400" />
               <span>Stores</span>
+              <ChevronDown size={13} />
             </button>
-
-            <a 
-              href={`tel:${BUSINESS_CONTACT.phoneRaw}`} 
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-700 active:scale-95 transition-all"
-              aria-label="Call Us"
-            >
-              <Phone size={15} className="text-emerald-600" />
-            </a>
             
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu Toggle */}
             <button 
               className="flex items-center justify-center w-8 h-8 text-slate-900 focus:outline-none cursor-pointer"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -275,7 +296,7 @@ export default function Header({ onNavigate }) {
         </div>
       </header>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Nav Drawer */}
       <div 
         className={`fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[310] transition-opacity duration-300 xl:hidden ${
           isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
@@ -297,9 +318,9 @@ export default function Header({ onNavigate }) {
             Home
           </a>
           
-          {/* Mobile Online Stores Heading */}
+          {/* Mobile Online Categories Heading */}
           <div className="text-[11px] font-black uppercase text-slate-400 tracking-wider pt-1">
-            Online Stores
+            Product Categories
           </div>
 
           {/* Mobile Mirror Solar Store Link */}
@@ -310,7 +331,7 @@ export default function Header({ onNavigate }) {
           >
             <span className="flex items-center gap-2">
               <Sun size={15} className="text-amber-400" />
-              <span>Mirror Solar Store</span>
+              <span>Solar Products</span>
             </span>
             <span className="text-[9px] bg-amber-400 text-slate-950 font-black px-2 py-0.5 rounded-full uppercase">Solar</span>
           </a>
@@ -323,7 +344,7 @@ export default function Header({ onNavigate }) {
           >
             <span className="flex items-center gap-2">
               <Droplets size={15} className="text-cyan-300" />
-              <span>Mirror Aqua Store</span>
+              <span>Mirror Aqua (120g Filter)</span>
             </span>
             <span className="text-[9px] bg-cyan-400 text-slate-950 font-black px-2 py-0.5 rounded-full uppercase">Aqua</span>
           </a>
@@ -348,35 +369,6 @@ export default function Header({ onNavigate }) {
             <Phone size={17} className="text-emerald-500" />
             {BUSINESS_CONTACT.phone}
           </a>
-          
-          {/* Mobile Auth Section */}
-          <div className="pt-2 border-t border-slate-100">
-            {isAuthenticated ? (
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 py-1 text-sm font-bold text-slate-900">
-                  <User size={16} className="text-primary-600" />
-                  Hi, {userProfile?.fullName?.split(' ')[0] || 'User'}
-                </div>
-                <button onClick={logout} className="text-left text-sm font-semibold text-red-600 hover:text-red-700">Sign Out</button>
-              </div>
-            ) : (
-              <button 
-                onClick={() => { setIsMobileMenuOpen(false); openAuthModal(); }}
-                className="flex items-center gap-2 py-2 text-sm font-bold text-slate-900"
-              >
-                <User size={16} className="text-slate-400" />
-                Sign In / Register
-              </button>
-            )}
-          </div>
-          
-          <button 
-            onClick={() => scrollToSection('contact')}
-            className="mt-4 flex items-center justify-center gap-2 w-full bg-gradient-to-r from-primary-600 to-primary-700 text-white px-6 py-3 rounded-full font-bold text-[14px] shadow-md"
-          >
-            <Zap size={14} className="fill-white" />
-            Get Free Quote
-          </button>
         </div>
       </nav>
     </>

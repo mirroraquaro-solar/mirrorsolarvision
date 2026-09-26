@@ -13,7 +13,7 @@ export const STORIES = [
     publishedDate: 'February 12, 2026',
     category: 'Craft Heritage',
     coverImage: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=1200&q=80',
-    excerpt: 'In the salt-swept plains near Bhuj, master potter Ismail sits before a slow-turning stone wheel. He does not use industrial molds or chemical glazes. His raw material is wild alluvial sediment that has rested under dry riverbeds for decades.',
+    excerpt: 'In the salt-swept plains near Bhuj, master potter Ismail sits before a slow-turning stone wheel. He does not use industrial molds or chemical glazes. His raw material is wild alluvial clay that has rested under dry riverbeds for decades.',
     content: [
       {
         type: 'paragraph',

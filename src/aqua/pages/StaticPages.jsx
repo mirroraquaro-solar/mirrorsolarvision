@@ -27,7 +27,7 @@ export function FAQPage() {
   const faqs = [
     {
       q: 'What is a 10-inch 5-micron PP spun filter?',
-      a: 'A Polypropylene (PP) spun filter is a thermal-bonded depth cartridge designed to fit standard 10-inch pre-filter bowls. It physically captures suspended sediments such as silt, sand, mud, and pipe rust down to 5 microns.'
+      a: 'A Polypropylene (PP) spun filter is a thermal-bonded depth cartridge designed to fit standard 10-inch pre-filter bowls. It physically captures suspended particles such as silt, sand, mud, and pipe rust down to 5 microns.'
     },
     {
       q: 'Will this fit my water purifier bowl?',
@@ -35,7 +35,7 @@ export function FAQPage() {
     },
     {
       q: 'How frequently should I replace the spun filter?',
-      a: 'Replacement typically occurs every 1 to 3 months depending on raw water sediment levels, visible dark discoloration, or pressure drops.'
+      a: 'Replacement typically occurs every 1 to 3 months depending on raw water particulate levels, visible dark discoloration, or pressure drops.'
     },
     {
       q: 'Do you offer bulk trade pricing for service technicians?',

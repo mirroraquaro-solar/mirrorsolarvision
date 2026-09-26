@@ -46,7 +46,7 @@ export default function StoreTeaser({ onNavigateToStore }) {
     <section 
       className="section py-12 lg:py-16 bg-slate-50 border-b border-slate-200/80 scroll-mt-24 sm:scroll-mt-28 relative overflow-hidden" 
       id="bulk-combos" 
-      aria-label="Mirror Solar Store Products Showcase"
+      aria-label="Store Catalog Showcase"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -54,12 +54,8 @@ export default function StoreTeaser({ onNavigateToStore }) {
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-8 space-y-2">
-          <span className="text-xs font-extrabold uppercase tracking-wider text-accent-600 bg-accent-500/10 px-3.5 py-1.5 rounded-full border border-accent-500/20 inline-flex items-center gap-1.5">
-            <Package size={13} className="text-accent-600" />
-            <span>Store Catalog</span>
-          </span>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 font-heading tracking-tight">
-            Mirror Solar Store Products
+            Store Catalog
           </h2>
           <p className="text-xs sm:text-sm md:text-base text-slate-600 leading-relaxed">
             Explore our genuine solar accessories, drain clips, and complete installation combos.

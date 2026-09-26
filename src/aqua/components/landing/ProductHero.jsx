@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { ShoppingBag, Zap, ShieldCheck, CheckCircle2, Truck, Star, MapPin, Check } from 'lucide-react';
+import { ShoppingBag, Zap, ShieldCheck, CheckCircle2, Truck, Star, MapPin, Check, Plus, Minus } from 'lucide-react';
 import { ProductGallery } from './ProductGallery.jsx';
 import { useCart } from '../../context/CartContext.jsx';
 import { analytics } from '../../services/analytics.js';
 import './ProductLanding.css';
 
 export function ProductHero({ product, onNavigate }) {
-  const { addToCart, addItem, setIsCartOpen } = useCart();
+  const { addToCart, addItem, buyNow, setIsCartOpen } = useCart();
 
   // Pack Type State: 'single' | 'bulk' | 'custom'
   const [selectedPackType, setSelectedPackType] = useState('single');
@@ -14,10 +14,10 @@ export function ProductHero({ product, onNavigate }) {
   const [pincode, setPincode] = useState('');
   const [pincodeStatus, setPincodeStatus] = useState(null);
 
-  // Pricing Calculation: Single <10 pieces: ₹199/pc (MRP ₹399/pc), >=10 pieces: ₹180/pc (MRP ₹399/pc)
+  // Pricing Calculation: Single <10 pieces: ₹199/pc (MRP ₹549/pc), >=10 pieces: ₹180/pc (MRP ₹549/pc)
   const isBulkRate = selectedPackType === 'bulk' || quantity >= 10;
   const unitPrice = isBulkRate ? 180 : 199;
-  const unitMrp = 399;
+  const unitMrp = 549;
   const currentPrice = quantity * unitPrice;
   const currentMrp = quantity * unitMrp;
   const totalSavings = currentMrp - currentPrice;
@@ -38,40 +38,42 @@ export function ProductHero({ product, onNavigate }) {
     analytics.trackQuantitySelect(product, val, `Custom ${val} Units`);
   };
 
+  const getItemPayload = () => ({
+    id: `ma-spun-filter-120g-${selectedPackType}-${quantity}`,
+    cartItemId: `ma-spun-filter-120g-${selectedPackType}-${quantity}`,
+    itemKey: `ma-spun-filter-120g-${selectedPackType}-${quantity}`,
+    productId: 'ma-pp-10-05m',
+    name: 'Mirror Aqua 10-Inch 5-Micron PP Spun Filter (120 Grams)',
+    category: 'Mirror Aqua',
+    variant: `${quantity} Piece${quantity > 1 ? 's' : ''} (120g)`,
+    price: unitPrice,
+    mrp: unitMrp,
+    weight: '120g',
+    image: '/images/product/008.jpeg'
+  });
+
   const handleAddToCart = () => {
     if (isOutOfStock) return;
-    const addFn = addToCart || addItem;
-    const itemToAdd = {
-      ...product,
-      id: product?.id || 'ma-prod-001',
-      price: unitPrice,
-      sku: product?.sku || 'MA-PP-10-05M',
-      name: product?.name || 'Mirror Aqua 10-Inch 5-Micron PP Spun Filter',
-      selectedPack: `${quantity} Piece${quantity > 1 ? 's' : ''}`
-    };
-    if (typeof addFn === 'function') {
-      addFn(itemToAdd, quantity);
-    }
+    const itemToAdd = getItemPayload();
+    addToCart(itemToAdd, quantity);
     analytics.trackAddToCart(itemToAdd, quantity);
     if (setIsCartOpen) setIsCartOpen(true);
   };
 
   const handleBuyNow = () => {
     if (isOutOfStock) return;
-    const addFn = addToCart || addItem;
-    const itemToAdd = {
-      ...product,
-      id: product?.id || 'ma-prod-001',
-      price: unitPrice,
-      sku: product?.sku || 'MA-PP-10-05M',
-      name: product?.name || 'Mirror Aqua 10-Inch 5-Micron PP Spun Filter',
-      selectedPack: `${quantity} Piece${quantity > 1 ? 's' : ''}`
-    };
-    if (typeof addFn === 'function') {
-      addFn(itemToAdd, quantity);
+    const itemToAdd = getItemPayload();
+    if (typeof buyNow === 'function') {
+      buyNow(itemToAdd, quantity);
+    } else {
+      addToCart(itemToAdd, quantity);
     }
     analytics.trackBuyNow(itemToAdd, quantity);
-    onNavigate('/checkout');
+    if (typeof onNavigate === 'function') {
+      onNavigate('store', 'checkout');
+    } else {
+      window.location.hash = '#store';
+    }
   };
 
   const handleCheckPincode = (e) => {
@@ -85,7 +87,7 @@ export function ProductHero({ product, onNavigate }) {
 
   const scrollToReviews = (e) => {
     e.preventDefault();
-    const el = document.getElementById('reviews-section');
+    const el = document.getElementById('reviews');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -102,7 +104,7 @@ export function ProductHero({ product, onNavigate }) {
         <div className="hero-gallery-col">
           <ProductGallery
             images={product?.images || []}
-            productName={product?.name || 'Mirror Aqua 10-Inch 5-Micron PP Spun Filter'}
+            productName={product?.name || 'Mirror Aqua 10-Inch 5-Micron PP Spun Filter (120 Grams)'}
           />
         </div>
 
@@ -124,14 +126,15 @@ export function ProductHero({ product, onNavigate }) {
 
           {/* Primary Product Title */}
           <h1 className="hero-product-title">
-            10-INCH 5-MICRON PP SPUN SEDIMENT FILTER
+            10-INCH 5-MICRON PP SPUN FILTER <span className="text-cyan-600 font-black">(120 GRAMS)</span>
           </h1>
           <p className="hero-product-subtitle">
-            Precision-engineered 5-micron depth sediment filter for standard 10-inch pre-filter bowls. 100% pure melt-blown polypropylene with gradient multi-layer structure.
+            Heavy 120-gram precision-engineered 5-micron depth pre-filter for standard 10-inch bowls. 100% pure virgin polypropylene with multi-layer gradient matrix.
           </p>
 
           {/* Feature Badges */}
           <div className="hero-feature-badges">
+            <span className="hero-badge badge-amber font-black">⚡ 120 Grams Heavy Duty</span>
             <span className="hero-badge badge-cyan">5 Micron Depth</span>
             <span className="hero-badge badge-emerald">100% Virgin PP</span>
             <span className="hero-badge badge-slate">Universal 10-Inch Fit</span>
@@ -143,21 +146,17 @@ export function ProductHero({ product, onNavigate }) {
             <div className="price-main-row">
               <span className="price-currency">₹</span>
               <span className="price-amount">{currentPrice.toLocaleString('en-IN')}</span>
-              {currentMrp > currentPrice && (
-                <span className="price-mrp">
-                  MRP ₹{currentMrp.toLocaleString('en-IN')}
-                </span>
-              )}
-              {savingsPercent > 0 && (
-                <span className="price-discount-tag">
-                  {savingsPercent}% OFF
-                </span>
-              )}
+              <span className="price-mrp">
+                MRP ₹{currentMrp.toLocaleString('en-IN')}
+              </span>
+              <span className="price-discount-tag">
+                {savingsPercent}% OFF
+              </span>
             </div>
 
             <p className="price-unit-note">
               {quantity === 1 ? (
-                <>Single cartridge pack • <strong>₹199 / piece</strong> (Includes all taxes)</>
+                <>Single 120g cartridge • <strong>₹199 / piece</strong> (MRP ₹549 • Save ₹350)</>
               ) : (
                 <>Unit price: <strong>₹{unitPrice} per piece</strong> for {quantity} units • Total savings: <strong>₹{totalSavings.toLocaleString('en-IN')}</strong></>
               )}
@@ -169,7 +168,7 @@ export function ProductHero({ product, onNavigate }) {
               <span className="stock-text">
                 {isOutOfStock
                   ? 'Temporarily Out of Stock — Pre-order on WhatsApp'
-                  : 'In Stock — Dispatches within 24 Hours via Pan-India Courier'}
+                  : 'In Stock (120g Genuine) — Dispatches within 24 Hours'}
               </span>
             </div>
           </div>
@@ -195,11 +194,11 @@ export function ProductHero({ product, onNavigate }) {
                   <div className="pack-radio-circle">
                     {selectedPackType === 'single' && quantity === 1 && <div className="pack-radio-inner" />}
                   </div>
-                  <span className="pack-name-hero">1 Piece (Standard)</span>
+                  <span className="pack-name-hero">1 Piece (120g Standard)</span>
                   <span className="pack-price-hero">₹199</span>
                 </div>
                 <div className="pack-sub-info">
-                  <span>Standard Pack • ₹199/pc • 50% OFF</span>
+                  <span>120g Heavy Pack • ₹199/pc • 64% OFF (MRP ₹549)</span>
                 </div>
               </button>
 
@@ -210,72 +209,71 @@ export function ProductHero({ product, onNavigate }) {
                 onClick={() => handlePresetSelect(10, 'bulk')}
               >
                 <span className="pack-badge-hero popular-badge">
-                  ⭐ Best Value • Save ₹2,190
+                  ⭐ BEST VALUE • SAVE ₹3,690
                 </span>
                 <div className="pack-card-top">
                   <div className="pack-radio-circle">
                     {(selectedPackType === 'bulk' || quantity === 10) && <div className="pack-radio-inner" />}
                   </div>
-                  <span className="pack-name-hero">10 Pieces (Value Pack)</span>
+                  <span className="pack-name-hero">10 Pieces (Value Pack - 1.2kg)</span>
                   <span className="pack-price-hero">₹1,800</span>
                 </div>
                 <div className="pack-sub-info">
-                  <span>Wholesale Rate • ₹180/pc • 55% OFF</span>
+                  <span>Wholesale Rate • ₹180/pc • 67% OFF (MRP ₹5,490)</span>
                 </div>
               </button>
             </div>
 
             {/* Custom Quantity Stepper */}
-            <div className="custom-qty-container">
+            <div className="custom-qty-section">
               <div className="custom-qty-label-row">
-                <span className="custom-qty-title">Or Enter Any Custom Quantity:</span>
-                {quantity < 10 ? (
+                <span className="custom-qty-label">Or Enter Any Custom Quantity:</span>
+                {quantity < 10 && (
                   <span className="custom-qty-hint">
-                    💡 Tip: Buy <strong>{10 - quantity} more</strong> to unlock <strong>₹180/pc</strong> rate!
-                  </span>
-                ) : (
-                  <span className="custom-qty-hint success">
-                    🎉 Value Tier Applied: <strong>₹180 / piece</strong>
+                    💡 Tip: Buy 9 more to unlock <strong>₹180/pc</strong> rate
                   </span>
                 )}
               </div>
 
-              <div className="custom-qty-controls">
-                <button
-                  type="button"
-                  className="qty-stepper-btn"
-                  onClick={() => handleQuantityChange(quantity - 1)}
-                  disabled={quantity <= 1}
-                  aria-label="Decrease quantity"
-                >
-                  −
-                </button>
-                <input
-                  type="number"
-                  min="1"
-                  max="500"
-                  value={quantity}
-                  onChange={(e) => handleQuantityChange(e.target.value)}
-                  className="qty-stepper-input"
-                  aria-label="Filter quantity"
-                />
-                <button
-                  type="button"
-                  className="qty-stepper-btn"
-                  onClick={() => handleQuantityChange(quantity + 1)}
-                  aria-label="Increase quantity"
-                >
-                  +
-                </button>
-                <div className="qty-quick-buttons">
-                  {[2, 3, 5, 20].map((q) => (
+              <div className="custom-qty-controls-row">
+                <div className="stepper-box-hero">
+                  <button
+                    type="button"
+                    className="stepper-btn-hero"
+                    onClick={() => handleQuantityChange(quantity - 1)}
+                    disabled={quantity <= 1}
+                    aria-label="Decrease quantity"
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <input
+                    type="number"
+                    min="1"
+                    max="500"
+                    value={quantity}
+                    onChange={(e) => handleQuantityChange(e.target.value)}
+                    className="stepper-input-hero font-bold"
+                    aria-label="Custom quantity input"
+                  />
+                  <button
+                    type="button"
+                    className="stepper-btn-hero"
+                    onClick={() => handleQuantityChange(quantity + 1)}
+                    aria-label="Increase quantity"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+
+                <div className="quick-qty-chips">
+                  {[2, 3, 5, 20, 50].map((preset) => (
                     <button
-                      key={q}
+                      key={preset}
                       type="button"
-                      className={`qty-quick-pill ${quantity === q ? 'active' : ''}`}
-                      onClick={() => handlePresetSelect(q)}
+                      className={`qty-chip ${quantity === preset ? 'active' : ''}`}
+                      onClick={() => handlePresetSelect(preset, preset >= 10 ? 'bulk' : 'custom')}
                     >
-                      {q} Pcs
+                      {preset} Pcs
                     </button>
                   ))}
                 </div>
@@ -283,70 +281,74 @@ export function ProductHero({ product, onNavigate }) {
             </div>
           </div>
 
-          {/* High-Conversion Action Buttons */}
-          <div className="hero-cta-group">
+          {/* Primary CTA Action Buttons */}
+          <div className="hero-cta-buttons-block">
             <button
               type="button"
-              className="cta-btn cta-buy-now"
+              id="hero-buy-now-btn"
+              className="hero-btn-primary"
               onClick={handleBuyNow}
               disabled={isOutOfStock}
             >
-              <Zap size={18} />
-              <span>BUY NOW • ₹{currentPrice.toLocaleString('en-IN')} ({quantity} {quantity > 1 ? 'Units' : 'Unit'})</span>
+              <Zap size={18} className="fill-current" />
+              <span>
+                BUY NOW • ₹{currentPrice.toLocaleString('en-IN')}
+              </span>
             </button>
 
             <button
               type="button"
-              className="cta-btn cta-add-cart"
+              id="hero-add-to-cart-btn"
+              className="hero-btn-secondary"
               onClick={handleAddToCart}
               disabled={isOutOfStock}
             >
               <ShoppingBag size={18} />
-              <span>ADD {quantity > 1 ? `(${quantity})` : ''} TO CART</span>
+              <span>ADD TO CART</span>
             </button>
           </div>
 
-          {/* Integrated Pincode Checker */}
-          <div className="hero-pincode-checker">
+          {/* Pincode Serviceability & Logistics Check */}
+          <div className="hero-pincode-box">
             <form onSubmit={handleCheckPincode} className="pincode-form">
-              <div className="pincode-input-wrap">
-                <MapPin size={16} className="pincode-icon" />
-                <input
-                  type="text"
-                  maxLength={6}
-                  value={pincode}
-                  onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
-                  placeholder="Enter 6-digit delivery pincode"
-                  className="pincode-input"
-                />
-              </div>
-              <button type="submit" className="pincode-check-btn">
-                Check
+              <MapPin size={16} className="pincode-icon" />
+              <input
+                type="text"
+                maxLength={6}
+                value={pincode}
+                onChange={(e) => setPincode(e.target.value)}
+                placeholder="Enter 6-digit delivery pincode..."
+                className="pincode-input"
+              />
+              <button type="submit" className="pincode-btn">
+                Check Delivery
               </button>
             </form>
+
             {pincodeStatus && (
-              <p className={`pincode-result ${pincodeStatus.valid ? 'valid' : 'invalid'}`}>
-                {pincodeStatus.valid && <Check size={14} />}
-                {pincodeStatus.message}
-              </p>
+              <div className={`pincode-status ${pincodeStatus.valid ? 'status-success' : 'status-error'}`}>
+                {pincodeStatus.valid ? <CheckCircle2 size={14} /> : <span className="status-err-dot">●</span>}
+                <span>{pincodeStatus.message}</span>
+              </div>
             )}
           </div>
 
           {/* Trust Guarantees */}
-          <div className="hero-trust-indicators">
-            <div className="trust-indicator-item">
-              <Truck size={16} />
-              <span>Pan-India Courier Dispatch</span>
+          <div className="hero-trust-badges-row">
+            <div className="trust-item">
+              <Truck size={16} className="trust-icon" />
+              <span>Fast Shiprocket Dispatch</span>
             </div>
-            <div className="trust-indicator-item">
-              <ShieldCheck size={16} />
-              <span>100% Virgin Food-Grade Polypropylene</span>
+            <div className="trust-item">
+              <ShieldCheck size={16} className="trust-icon" />
+              <span>100% Fit Guarantee</span>
             </div>
-            <div className="trust-indicator-item">
-              <CheckCircle2 size={16} />
-              <span>Fits Standard 10-Inch Bowls</span>
+            <div className="trust-item">
+              <CheckCircle2 size={16} className="trust-icon" />
+              <span>120g Heavy Duty Media</span>
             </div>
           </div>
+
         </div>
       </div>
     </section>

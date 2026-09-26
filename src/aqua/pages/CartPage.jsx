@@ -426,7 +426,7 @@ export function CartPage({ onNavigate }) {
                 <div className="cart-table-rows">
                   {displayItems.map((item, idx) => {
                     const itemIdentifier = item.itemKey || item.productId || item.product?.id || `cart_item_${idx}`;
-                    const packLabel = item.product?.selectedPack || item.product?.category || '10-Inch 5-Micron Sediment Filter';
+                    const packLabel = item.product?.selectedPack || item.product?.category || '10-Inch 5-Micron PP Spun Filter';
 
                     return (
                       <div key={itemIdentifier || idx} className="cart-row-item">
@@ -444,7 +444,7 @@ export function CartPage({ onNavigate }) {
                               className="item-name"
                               onClick={() => onNavigate(`/product/${item.product?.slug || '10-inch-5-micron-pp-spun-filter'}`)}
                             >
-                              {item.product?.name || '10" PP Spun Sediment Filter'}
+                              {item.product?.name || '10" PP Spun Filter'}
                             </h3>
                             <span className="item-sku">SKU: {item.product?.sku || 'MA-PP-10-05M'}</span>
                           </div>

@@ -6,8 +6,8 @@ export function ProblemSection() {
   const suspendedParticles = [
     { name: 'Pipe Rust & Oxidation Flakes', desc: 'Iron particles from aging plumbing pipelines' },
     { name: 'Sand & Coarse Grit', desc: 'Abrasive mineral grains from borewell & municipal tanks' },
-    { name: 'Silt & Clay Sediments', desc: 'Fine colloidal mud that clouds incoming tap water' },
-    { name: 'Visible Suspended Matter', desc: 'Organic particles and overhead tank sediments' }
+    { name: 'Silt & Fine Clay', desc: 'Fine colloidal mud that clouds incoming tap water' },
+    { name: 'Visible Suspended Matter', desc: 'Organic particles and overhead tank impurities' }
   ];
 
   return (
@@ -24,7 +24,7 @@ export function ProblemSection() {
         </div>
 
         <div className="problem-grid">
-          {/* Left: What Sediment Filters Target */}
+          {/* Left: What Pre-Filters Target */}
           <div className="problem-card problem-card-threats">
             <h3 className="problem-card-title">
               <AlertCircle size={20} className="icon-warning" />
@@ -72,7 +72,7 @@ export function ProblemSection() {
               <div>
                 <strong>Important Technical Clarity:</strong>
                 <p>
-                  PP spun filters are mechanical sediment filters designed exclusively for physical suspended-particle reduction (sand, silt, mud, and pipe rust). They protect internal purification equipment by capturing coarse particulates at the primary pre-filtration stage.
+                  PP spun filters are mechanical pre-filters designed exclusively for physical suspended-particle reduction (sand, silt, mud, and pipe rust). They protect internal purification equipment by capturing coarse particulates at the primary pre-filtration stage.
                 </p>
               </div>
             </div>

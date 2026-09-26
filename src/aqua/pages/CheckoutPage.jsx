@@ -65,7 +65,7 @@ export function CheckoutPage({ onNavigate }) {
         price: 199,
         sku: 'MA-PP-10-05M',
         selectedPack: '1 Piece (Standard)',
-        category: 'Sediment Filter',
+        category: 'PP Spun Filter',
         stock: 500,
         images: [{ url: '/images/product/spun1.jpeg' }]
       };

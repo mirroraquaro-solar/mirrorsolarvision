@@ -112,14 +112,14 @@ export function ProductLandingPage({ slug = '10-inch-5-micron-pp-spun-filter', o
             {
               "@type": "ListItem",
               "position": 2,
-              "name": product.category || "Sediment Filter",
-              "item": "https://spunfilter.mirrorsolarvision.com/"
+              "name": product.category || "PP Spun Filter",
+              "item": "https://mirrorsolarvision.com/#aqua-store"
             },
             {
               "@type": "ListItem",
               "position": 3,
               "name": product.name,
-              "item": `https://spunfilter.mirrorsolarvision.com/`
+              "item": `https://mirrorsolarvision.com/#aqua-store`
             }
           ]
         }
@@ -152,7 +152,7 @@ export function ProductLandingPage({ slug = '10-inch-5-micron-pp-spun-filter', o
       {/* 3. How to Change Spun Filter (Video Tutorial & Step-by-Step Guide) */}
       <InstallationGuide />
 
-      {/* 4. Visual Pre-Filtration & Trapped Sediment Proof */}
+      {/* 4. Visual Pre-Filtration & Trapped Particulate Proof */}
       <ProblemSection />
 
       {/* 5. 6 Core Technical Benefits */}

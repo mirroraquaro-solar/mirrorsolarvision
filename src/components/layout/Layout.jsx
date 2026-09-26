@@ -1,6 +1,8 @@
 import React from 'react';
 import Header from './Header';
 import Footer from './Footer';
+import CartDrawer from '../checkout/CartDrawer';
+import { WhatsAppBotButton } from '../../aqua/components/ui/WhatsAppBotButton.jsx';
 
 export default function Layout({ children, onNavigate }) {
   return (
@@ -10,6 +12,11 @@ export default function Layout({ children, onNavigate }) {
         {children}
       </main>
       <Footer onNavigate={onNavigate} />
+      <CartDrawer 
+        onNavigate={onNavigate}
+        onProceedToCheckout={() => onNavigate('store', 'checkout')}
+      />
+      <WhatsAppBotButton />
     </div>
   );
 }

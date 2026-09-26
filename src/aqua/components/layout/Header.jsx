@@ -39,7 +39,7 @@ export function Header({ currentPath = '/', onNavigate }) {
         <div className="container announcement-content">
           <div className="announcement-left">
             <span className="announcement-pill">DISPATCH NOTICE</span>
-            <span>Mirror Aqua 10-Inch 5-Micron PP Spun Sediment Filters in Stock for Fast Pan-India Delivery</span>
+            <span>Mirror Aqua 10-Inch 5-Micron PP Spun Filters in Stock for Fast Pan-India Delivery</span>
           </div>
           <div className="announcement-right desktop-only">
             <span className="announcement-badge"><ShieldCheck size={13} /> 100% Polypropylene</span>

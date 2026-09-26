@@ -16,16 +16,23 @@ export function StickyMobileCTA({ product, onNavigate }) {
     const itemToAdd = {
       ...product,
       id: product?.id || 'ma-prod-001',
+      cartItemId: product?.id || 'ma-prod-001',
       price: basePrice,
+      mrp: product?.mrp || 549,
+      weight: '120g',
+      category: 'Mirror Aqua',
       sku: product?.sku || 'MA-PP-10-05M',
-      name: product?.name || 'Mirror Aqua 10-Inch 5-Micron PP Spun Filter',
-      selectedPack: '1 Piece (Standard)'
+      name: product?.name || 'Mirror Aqua 10-Inch 5-Micron PP Spun Filter (120g)',
+      variant: '1 Piece (120g Standard)',
+      image: '/images/product/008.jpeg'
     };
     if (typeof addFn === 'function') {
       addFn(itemToAdd, 1);
     }
     analytics.trackBuyNow(itemToAdd, 1);
-    onNavigate('/checkout');
+    if (typeof onNavigate === 'function') {
+      onNavigate('/checkout');
+    }
   };
 
   const handleAddToCart = () => {
@@ -34,10 +41,15 @@ export function StickyMobileCTA({ product, onNavigate }) {
     const itemToAdd = {
       ...product,
       id: product?.id || 'ma-prod-001',
+      cartItemId: product?.id || 'ma-prod-001',
       price: basePrice,
+      mrp: product?.mrp || 549,
+      weight: '120g',
+      category: 'Mirror Aqua',
       sku: product?.sku || 'MA-PP-10-05M',
-      name: product?.name || 'Mirror Aqua 10-Inch 5-Micron PP Spun Filter',
-      selectedPack: '1 Piece (Standard)'
+      name: product?.name || 'Mirror Aqua 10-Inch 5-Micron PP Spun Filter (120g)',
+      variant: '1 Piece (120g Standard)',
+      image: '/images/product/008.jpeg'
     };
     if (typeof addFn === 'function') {
       addFn(itemToAdd, 1);

@@ -226,9 +226,6 @@ function AquaStoreContent({ onBackToHome, onNavigate, initialPath = '/' }) {
       <SearchDrawer onNavigate={handleNavigatePath} />
       <MobileNavDrawer currentPath={currentPath} onNavigate={handleNavigatePath} />
       <QuickViewModal onNavigate={handleNavigatePath} />
-
-      {/* Floating WhatsApp Support Bot */}
-      <WhatsAppBotButton />
     </div>
   );
 }

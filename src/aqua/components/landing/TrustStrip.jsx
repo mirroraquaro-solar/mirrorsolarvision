@@ -7,12 +7,12 @@ export function TrustStrip() {
     {
       icon: <Filter size={24} className="pillar-icon" />,
       title: '5 MICRON RATING',
-      desc: 'Fine depth sediment filtration'
+      desc: 'Fine depth particulate filtration'
     },
     {
       icon: <Layers size={24} className="pillar-icon" />,
-      title: '100% POLYPROPYLENE',
-      desc: 'Melt-blown pure fiber construction'
+      title: '120g VIRGIN PP',
+      desc: 'Melt-blown heavy density fiber'
     },
     {
       icon: <CheckCircle2 size={24} className="pillar-icon" />,

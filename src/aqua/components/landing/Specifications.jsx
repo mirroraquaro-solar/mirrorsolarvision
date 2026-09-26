@@ -4,13 +4,14 @@ import './ProductLanding.css';
 
 export function Specifications({ specifications = {} }) {
   const specList = [
-    { label: 'Product Name', value: 'Mirror Aqua PP Spun Sediment Filter' },
-    { label: 'Filter Type', value: specifications.filterType || 'PP Spun Sediment Filter' },
+    { label: 'Product Name', value: 'Mirror Aqua 10-Inch PP Spun Filter' },
+    { label: 'Filter Type', value: specifications.filterType || 'PP Spun Pre-Filter' },
+    { label: 'Cartridge Weight', value: specifications.weight || '120g (Heavy-Duty Melt-Blown Density)' },
     { label: 'Micron Rating', value: specifications.micronRating || '5 Micron (µm)' },
     { label: 'Nominal Length', value: specifications.nominalLength || '10 Inch (approx. 254 mm)' },
     { label: 'Outer Diameter', value: specifications.outerDiameter || 'Approx. 60 – 63 mm' },
     { label: 'Inner Core Diameter', value: specifications.innerCoreDiameter || 'Approx. 28 – 30 mm' },
-    { label: 'Construction Material', value: specifications.material || '100% Pure Polypropylene (Melt-Blown Microfiber)' },
+    { label: 'Construction Material', value: specifications.material || '100% Pure Virgin Polypropylene' },
     { label: 'Application', value: specifications.application || 'Standard 10-Inch Pre-Filter Bowls' },
     { label: 'Operating Temperature', value: specifications.recommendedOperatingTemp || '4°C to 45°C' },
     { label: 'Max Working Pressure', value: specifications.maximumPressure || '125 PSI (Bowl Dependent)' },

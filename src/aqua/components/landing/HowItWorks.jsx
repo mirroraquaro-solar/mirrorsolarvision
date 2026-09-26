@@ -19,7 +19,7 @@ export function HowItWorks() {
     {
       number: '3',
       title: 'Downstream Protection',
-      desc: 'Clarified, sediment-free water passes smoothly into subsequent purification stages and booster pumps without abrasive wear.',
+      desc: 'Clarified, particulate-free water passes smoothly into subsequent purification stages and booster pumps without abrasive wear.',
       tag: 'Protected Water System'
     }
   ];
