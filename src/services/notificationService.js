@@ -2,9 +2,9 @@ import { collection, addDoc, doc, setDoc, serverTimestamp } from 'firebase/fires
 import { db } from '../config/firebase';
 
 export const ADMIN_WHATSAPP = '919182612420';
-export const ADMIN_EMAIL = 'balajiperuri09@gmail.com';
+export const ADMIN_EMAIL = 'balajiperuri09@mail.com';
 export const SENDER_EMAIL = 'mirrorsolarvision@gmail.com';
-export const ADMIN_EMAILS = ['balajiperuri09@gmail.com', 'mirrorsolarvision@gmail.com'];
+export const ADMIN_EMAILS = ['balajiperuri09@mail.com', 'balajiperuri09@gmail.com', 'mirrorsolarvision@gmail.com'];
 export const BUSINESS_PHONE = '+91 91826 12420';
 export const BUSINESS_NAME = 'Mirror Solar Vision';
 
