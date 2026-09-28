@@ -35,6 +35,85 @@ async function getShiprocketToken() {
   return data.token;
 }
 
+async function createShiprocketOrderForRecord(orderData, razorpay_payment_id) {
+  const orderBookingId = orderData.bookingId || orderData.firestoreOrderId;
+  const address = orderData.address || {};
+  const items = orderData.items || [];
+  const cleanPhone = (address.phone || orderData.customerPhone || '9849810668').replace(/[^0-9]/g, '');
+  const custEmail = address.email || orderData.customerEmail || 'orders@mirrorsolarvision.com';
+  const custName = (address.fullName || orderData.customerName || 'Customer').trim();
+  const nameParts = custName.split(' ');
+  const firstName = nameParts[0] || 'Customer';
+  const lastName = nameParts.slice(1).join(' ') || '';
+
+  const token = await getShiprocketToken();
+  
+  const orderItems = items.map(item => ({
+    name: (item.name || 'Solar Product').substring(0, 100),
+    sku: (item.productId || item.cartItemId || item.id || `SKU_${Date.now()}`).substring(0, 50),
+    units: Math.max(1, Number(item.quantity) || 1),
+    selling_price: Math.max(1, Number(item.price) || (orderData.amount / (items.length || 1))),
+    discount: 0,
+    tax: 0,
+    hsn: ''
+  }));
+
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const hh = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  const formattedOrderDate = `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+
+  const shiprocketPayload = {
+    order_id: orderBookingId,
+    order_date: formattedOrderDate,
+    pickup_location: "work",
+    channel_id: "",
+    comment: `Mirror Solar Store Booking ID: ${orderBookingId} - Phone: ${cleanPhone}`,
+    billing_customer_name: firstName,
+    billing_last_name: lastName || "Customer",
+    billing_address: address.flat || address.area || "Main Road",
+    billing_address_2: address.area || address.city || "Area",
+    billing_city: address.city || "Eluru",
+    billing_pincode: address.pincode || "534001",
+    billing_state: address.state || "Andhra Pradesh",
+    billing_country: "India",
+    billing_email: custEmail,
+    billing_phone: cleanPhone.length === 10 ? cleanPhone : "9849810668",
+    shipping_is_billing: true,
+    order_items: orderItems,
+    payment_method: "Prepaid",
+    sub_total: orderData.amount,
+    length: 10,
+    breadth: 10,
+    height: 10,
+    weight: 0.5
+  };
+
+  console.log("Sending Shiprocket Payload for Booking ID:", orderBookingId);
+
+  const createOrderRes = await fetch('https://apiv2.shiprocket.in/v1/external/orders/create/adhoc', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(shiprocketPayload)
+  });
+
+  if (!createOrderRes.ok) {
+    const errData = await createOrderRes.text();
+    console.error("Shiprocket creation failed:", errData);
+    throw new Error("Shiprocket returned error: " + errData);
+  }
+
+  const srData = await createOrderRes.json();
+  console.log("Shiprocket Order Created Successfully:", JSON.stringify(srData));
+  return srData;
+}
+
 exports.createRazorpayOrder = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
     if (req.method !== 'POST') {
@@ -194,84 +273,10 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
       
       const orderData = orderSnap.data();
       const orderBookingId = orderData.bookingId || firestoreOrderId;
-      const address = orderData.address || {};
-      const items = orderData.items || [];
-      const cleanPhone = (address.phone || orderData.customerPhone || '9849810668').replace(/[^0-9]/g, '');
-      const custEmail = address.email || orderData.customerEmail || 'orders@mirrorsolarvision.com';
-      const custName = (address.fullName || orderData.customerName || 'Customer').trim();
-      const nameParts = custName.split(' ');
-      const firstName = nameParts[0] || 'Customer';
-      const lastName = nameParts.slice(1).join(' ') || '';
 
       // 3. Create Shiprocket Order
       try {
-        const token = await getShiprocketToken();
-        
-        // Map items to Shiprocket format
-        const orderItems = items.map(item => ({
-          name: item.name || 'Solar Product',
-          sku: (item.productId || item.cartItemId || item.id || `SKU_${Date.now()}`).substring(0, 50),
-          units: Number(item.quantity) || 1,
-          selling_price: Number(item.price) || (orderData.amount / (items.length || 1)),
-          discount: 0,
-          tax: 0,
-          hsn: ''
-        }));
-
-        // Format order_date in Shiprocket expected format: 'YYYY-MM-DD HH:MM'
-        const now = new Date();
-        const yyyy = now.getFullYear();
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const dd = String(now.getDate()).padStart(2, '0');
-        const hh = String(now.getHours()).padStart(2, '0');
-        const min = String(now.getMinutes()).padStart(2, '0');
-        const formattedOrderDate = `${yyyy}-${mm}-${dd} ${hh}:${min}`;
-
-        const shiprocketPayload = {
-          order_id: orderBookingId, // Pass official MSV-XXXXXX Booking ID to Shiprocket
-          order_date: formattedOrderDate,
-          pickup_location: "work", // Matches exact primary pickup location nickname in Shiprocket
-          channel_id: "",
-          comment: `Mirror Solar Store Booking ID: ${orderBookingId} - Phone: ${cleanPhone}`,
-          billing_customer_name: firstName,
-          billing_last_name: lastName || "Customer",
-          billing_address: address.flat || address.area || "Main Road",
-          billing_address_2: address.area || address.city || "Area",
-          billing_city: address.city || "Eluru",
-          billing_pincode: address.pincode || "534001",
-          billing_state: address.state || "Andhra Pradesh",
-          billing_country: "India",
-          billing_email: custEmail,
-          billing_phone: cleanPhone.length === 10 ? cleanPhone : "9849810668",
-          shipping_is_billing: true,
-          order_items: orderItems,
-          payment_method: "Prepaid",
-          sub_total: orderData.amount,
-          length: 10,
-          breadth: 10,
-          height: 10,
-          weight: 0.5 // in kg
-        };
-
-        console.log("Sending Shiprocket Payload with Booking ID:", orderBookingId);
-
-        const createOrderRes = await fetch('https://apiv2.shiprocket.in/v1/external/orders/create/adhoc', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(shiprocketPayload)
-        });
-
-        if (!createOrderRes.ok) {
-          const errData = await createOrderRes.text();
-          console.error("Shiprocket creation failed:", errData);
-          throw new Error("Shiprocket returned error: " + errData);
-        }
-
-        const srData = await createOrderRes.json();
-        console.log("Shiprocket Order Created Successfully:", JSON.stringify(srData));
+        const srData = await createShiprocketOrderForRecord(orderData, razorpay_payment_id);
         
         // 4. Update Firestore with Shipping Details in both user subcollection and root collection
         const shippingSuccessUpdate = {
@@ -337,7 +342,6 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
           console.error("Order notification dispatch error:", notifErr);
         });
 
-        // We still return success: true because the PAYMENT was successful
         return res.status(200).send({ 
           data: { 
             success: true, 
@@ -376,26 +380,48 @@ exports.razorpayWebhook = functions.https.onRequest(async (req, res) => {
       // Find the order in Firestore using a Collection Group query
       const snapshot = await admin.firestore().collectionGroup('orders').where('razorpayOrderId', '==', rzpOrderId).limit(1).get();
       if (!snapshot.empty) {
-        const orderRef = snapshot.docs[0].ref;
-        const orderData = snapshot.docs[0].data();
+        const orderDocSnap = snapshot.docs[0];
+        const orderRef = orderDocSnap.ref;
+        const orderData = orderDocSnap.data();
+        const bookingId = orderData.bookingId || orderDocSnap.id;
 
-        // If not already paid, mark as paid
-        if (orderData.status !== 'paid') {
-          const updatedPaidOrder = {
-            ...orderData,
-            status: 'paid',
-            razorpayPaymentId: rzpPaymentId,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-          };
-          await orderRef.update({
-            status: 'paid',
-            razorpayPaymentId: rzpPaymentId,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-          });
+        // Also reference the root orders collection doc
+        const rootOrderDocRef = admin.firestore().collection('orders').doc(bookingId);
 
-          // Trigger automated WhatsApp & Email notification via webhook fallback
-          dispatchBookingNotifications('order', updatedPaidOrder).catch((e) => console.error("Webhook notification error:", e));
+        let srData = null;
+        if (!orderData.shiprocketOrderId && !orderData.shiprocketShipmentId) {
+          try {
+            srData = await createShiprocketOrderForRecord(orderData, rzpPaymentId);
+          } catch (srErr) {
+            console.error("Webhook Shiprocket creation warning:", srErr);
+          }
         }
+
+        const updateData = {
+          status: 'paid',
+          razorpayPaymentId: rzpPaymentId,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+
+        if (srData) {
+          updateData.shiprocketOrderId = srData.order_id || null;
+          updateData.shiprocketShipmentId = srData.shipment_id || null;
+          updateData.shiprocketAwb = srData.awb_code || null;
+          updateData.shiprocketStatus = srData.status || srData.status_code || 'PROCESSING';
+          updateData.shiprocketResponse = JSON.stringify(srData);
+        }
+
+        await orderRef.update(updateData).catch(() => {});
+        await rootOrderDocRef.update(updateData).catch(() => {});
+
+        const updatedFullOrder = {
+          ...orderData,
+          ...updateData,
+          bookingId
+        };
+
+        // Trigger automated WhatsApp & Email notifications
+        dispatchBookingNotifications('order', updatedFullOrder).catch((e) => console.error("Webhook notification error:", e));
       }
     }
 

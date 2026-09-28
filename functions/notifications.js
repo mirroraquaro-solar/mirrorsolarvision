@@ -56,6 +56,9 @@ function formatINR(val) {
  */
 function extractProductSpecs(item, orderData = {}) {
   const name = item.name || item.productName || 'Solar Equipment';
+  const variantLabel = item.variantLabel || item.variant || '';
+  const searchStr = `${name} ${variantLabel} ${item.title || ''} ${orderData.productName || ''} ${orderData.selectedSize || ''} ${orderData.kw || ''} ${orderData.selectedVariant || ''}`.toLowerCase();
+
   // Aqua PP Spun Filter support
   if (name.toLowerCase().includes('pp spun') || name.toLowerCase().includes('filter') || (item.productId || '').startsWith('ma-') || (item.sku || '').startsWith('MA-')) {
     return {

@@ -353,9 +353,12 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
           o.shiprocketShipmentId?.toString() === queryTerm ||
           o.shiprocketAwb?.toString() === queryTerm ||
           o.razorpayOrderId?.toLowerCase() === lowerTerm ||
-          (cleanDigits.length >= 10 && (
-            o.customerPhone === cleanDigits || 
-            o.address?.phone?.replace(/[^0-9]/g, '') === cleanDigits
+          o.customerName?.toLowerCase().includes(lowerTerm) ||
+          o.address?.fullName?.toLowerCase().includes(lowerTerm) ||
+          o.customerEmail?.toLowerCase().includes(lowerTerm) ||
+          (cleanDigits.length >= 6 && (
+            (o.customerPhone && o.customerPhone.includes(cleanDigits)) || 
+            (o.address?.phone && o.address.phone.replace(/[^0-9]/g, '').includes(cleanDigits))
           ))
       );
 
@@ -377,7 +380,10 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
             loc.firestoreOrderId?.toLowerCase() === lowerTerm ||
             loc.shiprocketShipmentId?.toString() === queryTerm ||
             loc.shiprocketAwb?.toString() === queryTerm ||
-            (cleanDigits.length >= 10 && locDigits.includes(cleanDigits))
+            loc.customerName?.toLowerCase().includes(lowerTerm) ||
+            loc.address?.fullName?.toLowerCase().includes(lowerTerm) ||
+            loc.customerEmail?.toLowerCase().includes(lowerTerm) ||
+            (cleanDigits.length >= 6 && locDigits.includes(cleanDigits))
           ) {
             if (!newlyFound.some((n) => n.id === loc.id)) {
               newlyFound.push(loc);
@@ -388,7 +394,7 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
         console.warn('LocalStorage search error:', localErr);
       }
 
-      // 2. Search by doc ID in root 'orders'
+      // 2. Search in Firestore root 'orders'
       if (db) {
         try {
           const rootDocRef = doc(db, 'orders', queryTerm);
@@ -400,12 +406,12 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
             }
           }
         } catch {
-          // Continue searching other criteria
+          // Continue
         }
 
         // 3. Search by bookingId in root 'orders'
         try {
-          const bookingQ = query(collection(db, 'orders'), where('bookingId', '==', queryTerm));
+          const bookingQ = query(collection(db, 'orders'), where('bookingId', '==', queryTerm.toUpperCase()));
           const bookingSnap = await getDocs(bookingQ);
           bookingSnap.forEach((d) => {
             const data = { id: d.id, ...d.data() };
@@ -417,10 +423,10 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
           // Continue
         }
 
-        // 4. Search by phone number in root 'orders' if 10 digits
+        // 4. Search by phone number in root 'orders'
         if (cleanDigits.length >= 10) {
           try {
-            const phoneQ = query(collection(db, 'orders'), where('customerPhone', '==', cleanDigits));
+            const phoneQ = query(collection(db, 'orders'), where('customerPhone', '==', cleanDigits.slice(-10)));
             const phoneSnap = await getDocs(phoneQ);
             phoneSnap.forEach((d) => {
               const data = { id: d.id, ...d.data() };
@@ -433,7 +439,23 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
           }
         }
 
-        // 5. Search by Shiprocket Shipment ID
+        // 5. Search by customer email
+        if (queryTerm.includes('@')) {
+          try {
+            const emailQ = query(collection(db, 'orders'), where('customerEmail', '==', queryTerm.trim().toLowerCase()));
+            const emailSnap = await getDocs(emailQ);
+            emailSnap.forEach((d) => {
+              const data = { id: d.id, ...d.data() };
+              if (!newlyFound.some((n) => n.id === data.id)) {
+                newlyFound.push(data);
+              }
+            });
+          } catch {
+            // Continue
+          }
+        }
+
+        // 6. Search by Shiprocket Shipment ID
         try {
           const srQ = query(collection(db, 'orders'), where('shiprocketShipmentId', '==', queryTerm));
           const srSnap = await getDocs(srQ);
@@ -447,7 +469,7 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
           // Continue
         }
 
-        // 6. Search by Shiprocket AWB
+        // 7. Search by Shiprocket AWB
         try {
           const awbQ = query(collection(db, 'orders'), where('shiprocketAwb', '==', queryTerm));
           const awbSnap = await getDocs(awbQ);
