@@ -2,6 +2,5 @@
 User-agent: *
 Allow: /
 
-# Sitemap references
-Sitemap: https://mirror-solar-vision.web.app/sitemap.xml
+# Sitemap reference
 Sitemap: https://mirrorsolarvision.com/sitemap.xml
