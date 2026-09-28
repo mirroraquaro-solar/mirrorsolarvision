@@ -131,26 +131,47 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // Listen to auth state changes
+  // Listen to auth state changes (Deferred after initial render for fast FCP/LCP)
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      if (user) {
-        await fetchProfile(user.uid);
-        
-        // Execute pending action if logged in successfully
-        if (pendingAction) {
-          pendingAction();
-          setPendingAction(null);
-          setPendingMessage('');
-        }
-      } else {
-        setUserProfile(null);
-      }
-      setLoading(false);
-    });
+    let unsubscribe = () => {};
+    let isMounted = true;
 
-    return unsubscribe;
+    const initAuth = () => {
+      if (!isMounted) return;
+      unsubscribe = onAuthStateChanged(auth, async (user) => {
+        if (!isMounted) return;
+        setCurrentUser(user);
+        if (user) {
+          await fetchProfile(user.uid);
+          
+          // Execute pending action if logged in successfully
+          if (pendingAction) {
+            pendingAction();
+            setPendingAction(null);
+            setPendingMessage('');
+          }
+        } else {
+          setUserProfile(null);
+        }
+        setLoading(false);
+      });
+    };
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const handle = window.requestIdleCallback(initAuth, { timeout: 1500 });
+      return () => {
+        isMounted = false;
+        window.cancelIdleCallback(handle);
+        unsubscribe();
+      };
+    } else {
+      const timer = setTimeout(initAuth, 100);
+      return () => {
+        isMounted = false;
+        clearTimeout(timer);
+        unsubscribe();
+      };
+    }
   }, [pendingAction]);
 
   const value = {

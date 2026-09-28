@@ -27,10 +27,10 @@ export default function NotificationPopup() {
     >
       <button 
         onClick={() => setIsVisible(false)}
-        className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+        className="absolute top-1 right-1 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
         aria-label="Close notification"
       >
-        <X size={16} />
+        <X size={18} />
       </button>
 
       <div className="flex flex-col pr-4">

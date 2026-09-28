@@ -28,14 +28,24 @@ export default function Hero({ onNavigate }) {
       {/* Background Image of House with Solar Panels */}
       <div className="absolute inset-0 z-0">
         <picture>
-          <source media="(max-width: 640px)" srcSet="/assets/images/hero/hero-rooftop-solar-mobile.webp" type="image/webp" />
-          <source srcSet="/assets/images/hero/hero-rooftop-solar.webp" type="image/webp" />
+          <source 
+            type="image/avif" 
+            srcSet="/assets/images/hero/hero-rooftop-solar-480.avif 480w, /assets/images/hero/hero-rooftop-solar-768.avif 768w, /assets/images/hero/hero-rooftop-solar-1200.avif 1200w"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1200px"
+          />
+          <source 
+            type="image/webp" 
+            srcSet="/assets/images/hero/hero-rooftop-solar-480.webp 480w, /assets/images/hero/hero-rooftop-solar-768.webp 768w, /assets/images/hero/hero-rooftop-solar-1200.webp 1200w"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1200px"
+          />
           <img 
-            src="/assets/images/hero/hero-rooftop-solar.webp" 
+            src="/assets/images/hero/hero-rooftop-solar-1200.webp" 
+            srcSet="/assets/images/hero/hero-rooftop-solar-480.webp 480w, /assets/images/hero/hero-rooftop-solar-768.webp 768w, /assets/images/hero/hero-rooftop-solar-1200.webp 1200w"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1200px"
             alt="Rooftop solar installation background" 
             className="w-full h-full object-cover"
-            width="1280"
-            height="720"
+            width="1200"
+            height="675"
             fetchpriority="high"
             loading="eager"
             decoding="async"

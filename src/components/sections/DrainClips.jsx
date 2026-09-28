@@ -4,12 +4,12 @@ import { submitBookingWithNotification, ADMIN_WHATSAPP, printConfirmationDocumen
 
 export default function DrainClips() {
   const images = [
-    '/assets/images/001.png',
-    '/assets/images/002.png',
-    '/assets/images/003.png',
-    '/assets/images/004.png',
-    '/assets/images/005.png',
-    '/assets/images/006.png'
+    '/assets/images/001.webp',
+    '/assets/images/002.webp',
+    '/assets/images/003.webp',
+    '/assets/images/004.webp',
+    '/assets/images/005.webp',
+    '/assets/images/006.webp'
   ];
 
   const [activeImage, setActiveImage] = useState(images[0]);

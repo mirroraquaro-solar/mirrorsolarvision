@@ -45,8 +45,9 @@
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap" />
     </noscript>
 
-    <!-- LCP Critical Image Preload (Modern WebP) -->
-    <link rel="preload" as="image" type="image/webp" href="/assets/images/hero/hero-rooftop-solar.webp" fetchpriority="high" />
+    <!-- LCP Critical Image Preload (Responsive WebP) -->
+    <link rel="preload" as="image" type="image/webp" href="/assets/images/hero/hero-rooftop-solar-480.webp" media="(max-width: 640px)" fetchpriority="high" />
+    <link rel="preload" as="image" type="image/webp" href="/assets/images/hero/hero-rooftop-solar-1200.webp" media="(min-width: 641px)" fetchpriority="high" />
 
     <!-- Schema.org JSON-LD Structured Data: LocalBusiness, Products, FAQs, Breadcrumbs -->
     <script type="application/ld+json">
