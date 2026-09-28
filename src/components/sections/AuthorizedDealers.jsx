@@ -13,7 +13,7 @@ export default function AuthorizedDealers() {
     <section className="py-10 bg-[#FFF8ED] border-b border-orange-100 overflow-hidden" aria-label="Authorized Dealers across Andhra Pradesh">
       <div className="container-custom mb-6 text-center">
         <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 font-heading">
-          Authorized Dealers <span className="text-accent-500">all over AP</span>
+          Authorized Dealers <span className="text-amber-800 font-black">all over AP</span>
         </h2>
         <p className="text-sm text-slate-500 mt-2">
           Strong network of certified solar installation & dealership partners across all 26 districts of Andhra Pradesh.

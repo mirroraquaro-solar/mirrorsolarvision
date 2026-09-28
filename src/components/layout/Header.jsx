@@ -75,8 +75,12 @@ export default function Header({ onNavigate }) {
             aria-label="Mirror Solar Vision Home"
           >
             <img 
-              src="/assets/images/logo/mirror_solar-removebg-preview.png" 
+              src="/assets/images/logo/mirror_solar-removebg-preview.webp" 
               alt="Mirror Solar Vision Logo" 
+              width="200"
+              height="54"
+              loading="eager"
+              decoding="async"
               style={{
                 height: isScrolled ? '46px' : '54px',
                 maxHeight: isScrolled ? '46px' : '54px',

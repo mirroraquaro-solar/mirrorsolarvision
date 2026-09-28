@@ -37,7 +37,7 @@ export default function WhyChooseUs() {
         
         {/* Section Header */}
         <div className="text-center max-w-[800px] mx-auto mb-10">
-          <span className="text-xs font-bold uppercase tracking-wider text-accent-500 bg-accent-500/10 px-3 py-1.5 rounded-full">
+          <span className="text-xs font-bold uppercase tracking-wider text-accent-600 bg-accent-500/10 px-3 py-1.5 rounded-full">
             Why Homeowners Across AP Trust Us
           </span>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 mt-4 mb-3">
@@ -83,37 +83,41 @@ export default function WhyChooseUs() {
               {cards[activeTab].desc}
             </p>
 
-            {/* Navigation Arrows & Dots */}
+            {/* Navigation Arrows & Dots with Accessible Touch Targets */}
             <div className="flex items-center justify-between pt-5 mt-4 border-t border-gray-200/80">
               <button
                 onClick={() => setActiveTab(prev => (prev - 1 + cards.length) % cards.length)}
                 aria-label="Previous Feature"
-                className="w-8 h-8 rounded-full bg-white border border-gray-200 text-gray-700 flex items-center justify-center shadow-xs cursor-pointer"
+                className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-white border border-gray-200 text-gray-700 flex items-center justify-center shadow-xs cursor-pointer hover:bg-gray-50 transition"
               >
-                <ChevronLeft size={18} />
+                <ChevronLeft size={20} />
               </button>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-0.5">
                 {cards.map((_, dotIdx) => (
                   <button
                     key={dotIdx}
                     onClick={() => setActiveTab(dotIdx)}
                     aria-label={`Go to feature ${dotIdx + 1}`}
-                    className={`transition-all duration-300 rounded-full cursor-pointer ${
-                      activeTab === dotIdx 
-                        ? 'w-6 h-2 bg-primary-600' 
-                        : 'w-2 h-2 bg-gray-300'
-                    }`}
-                  />
+                    className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-full cursor-pointer transition focus:outline-none"
+                  >
+                    <span
+                      className={`transition-all duration-300 rounded-full ${
+                        activeTab === dotIdx 
+                          ? 'w-6 h-2 bg-primary-600' 
+                          : 'w-2.5 h-2.5 bg-gray-300 hover:bg-gray-400'
+                      }`}
+                    />
+                  </button>
                 ))}
               </div>
 
               <button
                 onClick={() => setActiveTab(prev => (prev + 1) % cards.length)}
                 aria-label="Next Feature"
-                className="w-8 h-8 rounded-full bg-white border border-gray-200 text-gray-700 flex items-center justify-center shadow-xs cursor-pointer"
+                className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-white border border-gray-200 text-gray-700 flex items-center justify-center shadow-xs cursor-pointer hover:bg-gray-50 transition"
               >
-                <ChevronRight size={18} />
+                <ChevronRight size={20} />
               </button>
             </div>
           </div>

@@ -345,7 +345,7 @@ export default function QuoteForm() {
                         />
                         <span className="font-bold text-slate-900">{item.label}</span>
                       </div>
-                      <span className="text-[11px] text-slate-500 mt-1 pl-5">{item.desc}</span>
+                      <span className="text-[11px] text-slate-700 font-medium mt-1 pl-5">{item.desc}</span>
                     </label>
                   ))}
                 </div>
@@ -384,7 +384,7 @@ export default function QuoteForm() {
               </button>
 
               <div className="text-center">
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-slate-600 font-medium">
                   🔒 We respect your privacy. Details are directly transmitted to Mirror Solar Vision design engineers.
                 </p>
               </div>

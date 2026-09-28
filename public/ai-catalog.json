@@ -1,0 +1,50 @@
+{
+  "$schema": "https://agenticresourcediscovery.org/spec/schema.json",
+  "version": "1.0",
+  "name": "Mirror Solar Vision AI Catalog",
+  "description": "Comprehensive catalog of rooftop solar solutions, PM Surya Ghar subsidy consulting, and solar installation hardware by Mirror Solar Vision in Andhra Pradesh.",
+  "provider": {
+    "name": "Mirror Solar Vision",
+    "url": "https://mirrorsolarvision.com",
+    "contact": "mirrorsolarvision@gmail.com"
+  },
+  "resources": [
+    {
+      "id": "msv-drain-clips",
+      "name": "MSV Heavy-Duty Solar Drain Clips",
+      "type": "product",
+      "url": "https://mirrorsolarvision.com/#store",
+      "description": "Capillary-action anti-soiling sludge & water drain clips for solar panel frame edges. Sized per kW (4 clips per kW @ ₹25/clip).",
+      "pricing": {
+        "currency": "INR",
+        "unitPrice": 25,
+        "comboStartingPrice": 300
+      }
+    },
+    {
+      "id": "installer-bulk-combo",
+      "name": "₹15,000 Bulk Solar Installation Combo",
+      "type": "product",
+      "url": "https://mirrorsolarvision.com/#store",
+      "description": "Standardized all-in-one solar rooftop hardware and accessory bundle for EPC solar installers: 100 MC4 pairs, 100 anchor fasteners, 200 structure bolts, 200 panel clamps, 200 UV drain clips, and 11 automated sprinkler sets.",
+      "pricing": {
+        "currency": "INR",
+        "flatPrice": 15000
+      }
+    },
+    {
+      "id": "pm-surya-ghar-subsidy",
+      "name": "PM Surya Ghar DBT Subsidy Consultation",
+      "type": "service",
+      "url": "https://mirrorsolarvision.com/#subsidy-guide",
+      "description": "End-to-end liaison for central government solar DBT subsidy up to ₹78,000 for 3kW+ rooftop systems across APEPDCL, APSPDCL, and APCPDCL."
+    },
+    {
+      "id": "order-tracking",
+      "name": "Order Tracking & Status API/UI",
+      "type": "tool",
+      "url": "https://mirrorsolarvision.com/#orders",
+      "description": "Look up live dispatch status, AWB tracking, and invoice details using Phone number, Email, or Booking ID."
+    }
+  ]
+}

@@ -18,6 +18,7 @@ import { Button, Price } from '../components/ui/Primitives.jsx';
 import { isFreeShippingRegion, shippingService } from '../services/shipping.js';
 import { analytics } from '../services/analytics.js';
 import { PaymentSuccessModal } from '../components/modals/PaymentSuccessModal.jsx';
+import { loadRazorpay } from '../../services/razorpayLoader.js';
 import './CheckoutPage.css';
 
 export function CheckoutPage({ onNavigate }) {
@@ -309,7 +310,12 @@ export function CheckoutPage({ onNavigate }) {
         }
       };
 
-      const rzp = new window.Razorpay(options);
+      const RazorpayInstance = await loadRazorpay();
+      if (!RazorpayInstance) {
+        throw new Error('Razorpay SDK could not be loaded. Please check your internet connection.');
+      }
+
+      const rzp = new RazorpayInstance(options);
       rzp.on('payment.failed', function (resp) {
         setCheckoutError(resp.error?.description || 'Payment was declined. Please retry.');
         setIsProcessing(false);

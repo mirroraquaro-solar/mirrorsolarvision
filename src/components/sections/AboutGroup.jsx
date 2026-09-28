@@ -20,16 +20,16 @@ export default function AboutGroup() {
             </p>
             <div className="flex gap-4">
               <div className="bg-white p-4 rounded-xl border border-gray-100 flex-1 text-center shadow-sm">
-                <h4 className="text-xl font-bold text-primary-500 mb-1">~20 Years</h4>
-                <p className="text-[10px] text-gray-500 uppercase font-semibold">Water Purification Legacy</p>
+                <h3 className="text-xl font-extrabold text-primary-700 mb-1">~20 Years</h3>
+                <p className="text-[10px] text-gray-600 uppercase font-bold">Water Purification Legacy</p>
               </div>
               <div className="bg-white p-4 rounded-xl border border-gray-100 flex-1 text-center shadow-sm">
-                <h4 className="text-xl font-bold text-accent-500 mb-1">Lakhs+</h4>
-                <p className="text-[10px] text-gray-500 uppercase font-semibold">Families Served in AP</p>
+                <h3 className="text-xl font-extrabold text-amber-800 mb-1">Lakhs+</h3>
+                <p className="text-[10px] text-gray-600 uppercase font-bold">Families Served in AP</p>
               </div>
               <div className="bg-white p-4 rounded-xl border border-gray-100 flex-1 text-center shadow-sm">
-                <h4 className="text-xl font-bold text-primary-500 mb-1">26</h4>
-                <p className="text-[10px] text-gray-500 uppercase font-semibold">AP Districts Covered</p>
+                <h3 className="text-xl font-extrabold text-primary-700 mb-1">26</h3>
+                <p className="text-[10px] text-gray-600 uppercase font-bold">AP Districts Covered</p>
               </div>
             </div>
           </div>

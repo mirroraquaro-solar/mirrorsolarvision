@@ -260,8 +260,8 @@ export default function Reviews() {
       <div className="container-custom">
         {/* Header and Trust Indicators */}
         <div className="text-center max-w-[840px] mx-auto mb-10">
-          <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-accent-600 bg-accent-50 border border-accent-200/60 px-3.5 py-1.5 rounded-full shadow-xs mb-3.5">
-            <Sparkles size={14} className="text-accent-500 animate-pulse" />
+          <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-900 bg-amber-100/80 border border-amber-300/70 px-3.5 py-1.5 rounded-full shadow-xs mb-3.5">
+            <Sparkles size={14} className="text-amber-700" />
             <span>10,000+ Happy Customers Across 26 Districts of Andhra Pradesh</span>
           </div>
           
@@ -276,40 +276,40 @@ export default function Reviews() {
           {/* Quick Metrics Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-8 pt-6 border-t border-gray-200/80 text-left">
             <div className="bg-white p-3.5 rounded-2xl border border-gray-200/70 shadow-xs">
-              <div className="flex items-center gap-1.5 text-amber-500 mb-1">
+              <div className="flex items-center gap-1.5 text-amber-600 mb-1">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} size={14} className="fill-amber-400 text-amber-400" />
                 ))}
               </div>
               <div className="text-base sm:text-lg font-black text-gray-900">4.98 / 5.0</div>
-              <div className="text-[11px] text-gray-500 font-medium">2,840+ Verified Ratings</div>
+              <div className="text-[11px] text-gray-600 font-medium">2,840+ Verified Ratings</div>
             </div>
 
             <div className="bg-white p-3.5 rounded-2xl border border-gray-200/70 shadow-xs">
-              <div className="flex items-center gap-1.5 text-emerald-600 mb-1">
+              <div className="flex items-center gap-1.5 text-emerald-700 mb-1">
                 <ShieldCheck size={16} />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Direct DBT</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">Direct DBT</span>
               </div>
               <div className="text-base sm:text-lg font-black text-gray-900">₹78,000 Subsidy</div>
-              <div className="text-[11px] text-gray-500 font-medium">100% Approval Assistance</div>
+              <div className="text-[11px] text-gray-600 font-medium">100% Approval Assistance</div>
             </div>
 
             <div className="bg-white p-3.5 rounded-2xl border border-gray-200/70 shadow-xs">
-              <div className="flex items-center gap-1.5 text-primary-600 mb-1">
+              <div className="flex items-center gap-1.5 text-primary-700 mb-1">
                 <Zap size={16} />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-primary-700">DISCOM Sync</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-primary-800">DISCOM Sync</span>
               </div>
               <div className="text-base sm:text-lg font-black text-gray-900">₹0 Energy Bills</div>
-              <div className="text-[11px] text-gray-500 font-medium">APEPDCL & APSPDCL Net Meter</div>
+              <div className="text-[11px] text-gray-600 font-medium">APEPDCL & APSPDCL Net Meter</div>
             </div>
 
             <div className="bg-white p-3.5 rounded-2xl border border-gray-200/70 shadow-xs">
-              <div className="flex items-center gap-1.5 text-accent-600 mb-1">
+              <div className="flex items-center gap-1.5 text-amber-800 mb-1">
                 <Award size={16} />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-accent-700">Mirror Quality</span>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-900">Mirror Quality</span>
               </div>
               <div className="text-base sm:text-lg font-black text-gray-900">25-Yr Warranty</div>
-              <div className="text-[11px] text-gray-500 font-medium">Tier-1 DCR Solar Panels</div>
+              <div className="text-[11px] text-gray-600 font-medium">Tier-1 DCR Solar Panels</div>
             </div>
           </div>
         </div>
@@ -440,9 +440,9 @@ export default function Reviews() {
                       {t.avatar}
                     </div>
                     <div className="leading-tight">
-                      <h4 className="text-sm font-bold text-gray-900 group-hover/card:text-primary-700 transition-colors flex items-center gap-1">
+                      <h3 className="text-sm font-bold text-gray-900 group-hover/card:text-primary-700 transition-colors flex items-center gap-1">
                         <span>{t.name}</span>
-                      </h4>
+                      </h3>
                       <div className="flex items-center gap-1 text-[11px] text-gray-500 font-medium mt-0.5">
                         <MapPin size={10} className="text-gray-400 shrink-0" />
                         <span>{t.location}</span>

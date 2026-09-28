@@ -36,18 +36,17 @@
     <meta name="twitter:image" content="https://mirrorsolarvision.com/assets/images/logo/msv_logo_500x300.png" />
 
     <!-- Performance: DNS Prefetch & Preconnect for Fast Loading -->
-    <link rel="dns-prefetch" href="https://checkout.razorpay.com" />
-    <link rel="dns-prefetch" href="https://api.razorpay.com" />
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
     <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap" />
+    </noscript>
 
-    <!-- LCP Critical Image Preload -->
-    <link rel="preload" as="image" href="/assets/images/hero/hero-rooftop-solar.png" fetchpriority="high" />
-
-    <!-- Razorpay Checkout Script (Deferred for optimal performance) -->
-    <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+    <!-- LCP Critical Image Preload (Modern WebP) -->
+    <link rel="preload" as="image" type="image/webp" href="/assets/images/hero/hero-rooftop-solar.webp" fetchpriority="high" />
 
     <!-- Schema.org JSON-LD Structured Data: LocalBusiness, Products, FAQs, Breadcrumbs -->
     <script type="application/ld+json">

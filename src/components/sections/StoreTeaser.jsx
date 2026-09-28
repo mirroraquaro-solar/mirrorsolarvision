@@ -130,14 +130,18 @@ export default function StoreTeaser({ onNavigateToStore }) {
                         <img 
                           src={drainClips.images[0]} 
                           alt={drainClips.name} 
+                          width="300"
+                          height="200"
+                          loading="lazy"
+                          decoding="async"
                           className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105" 
                         />
                         <span className="absolute top-2.5 left-2.5 bg-accent-500 text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                           {drainClips.tag}
                         </span>
                       </div>
-                      <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500 font-bold">
-                        <span className="text-slate-400">Sizes:</span>
+                      <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-600 font-bold">
+                        <span className="text-slate-600">Sizes:</span>
                         <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">30mm</span>
                         <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">33mm</span>
                         <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">35mm</span>
@@ -154,7 +158,7 @@ export default function StoreTeaser({ onNavigateToStore }) {
                         <div className="flex items-center gap-1 text-amber-500 font-bold text-xs">
                           <Star size={12} className="fill-amber-400 text-amber-400" />
                           <span>4.9</span>
-                          <span className="text-slate-400 font-medium">(128 reviews)</span>
+                          <span className="text-slate-600 font-medium">(128 reviews)</span>
                         </div>
                       </div>
 
@@ -195,7 +199,7 @@ export default function StoreTeaser({ onNavigateToStore }) {
                       {/* Price & Actions */}
                       <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
-                          <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Starting From</span>
+                          <span className="text-[9px] sm:text-[10px] text-slate-600 font-bold uppercase tracking-wider block">Starting From</span>
                           <div className="flex items-baseline gap-1.5">
                             <span className="text-2xl sm:text-3xl font-black text-slate-950 font-heading">₹300</span>
                             <span className="text-[11px] sm:text-xs text-slate-500 font-semibold">(3 kW / 12 Clips)</span>
@@ -241,7 +245,7 @@ export default function StoreTeaser({ onNavigateToStore }) {
                         <div className="grid grid-cols-3 gap-1.5 sm:gap-2 w-full">
                           {combo.materialsIncluded.map((mat) => (
                             <div key={mat.id} className="bg-white rounded-xl p-1 sm:p-1.5 border border-slate-200/70 flex flex-col items-center justify-center shadow-xs">
-                              <img src={mat.image} alt={mat.name} className="h-8 sm:h-10 w-auto object-contain" />
+                              <img src={mat.image} alt={mat.name} width="40" height="40" loading="lazy" decoding="async" className="h-8 sm:h-10 w-auto object-contain" />
                               <span className="text-[8px] sm:text-[9px] font-black text-primary-700 bg-primary-50 px-1 rounded mt-0.5 truncate">{mat.countLabel}</span>
                             </div>
                           ))}
@@ -290,7 +294,7 @@ export default function StoreTeaser({ onNavigateToStore }) {
                       {/* Price & Action Buttons */}
                       <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
-                          <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Combo Price</span>
+                          <span className="text-[9px] sm:text-[10px] text-slate-600 font-bold uppercase tracking-wider block">Combo Price</span>
                           <span className="text-2xl sm:text-3xl font-black text-slate-950 font-heading">₹15,000</span>
                         </div>
 
@@ -320,19 +324,23 @@ export default function StoreTeaser({ onNavigateToStore }) {
             </div>
           </div>
 
-          {/* Navigation Dots / Pills Indicator */}
-          <div className="flex items-center justify-center gap-2 mt-5">
+          {/* Navigation Dots with Accessible Touch Targets */}
+          <div className="flex items-center justify-center gap-1 mt-5">
             {[0, 1].map((idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentSlide(idx)}
                 aria-label={`Go to slide ${idx + 1}`}
-                className={`transition-all duration-300 rounded-full cursor-pointer ${
-                  currentSlide === idx 
-                    ? 'w-8 h-2.5 bg-primary-600' 
-                    : 'w-2.5 h-2.5 bg-slate-300 hover:bg-slate-400'
-                }`}
-              />
+                className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-full cursor-pointer transition focus:outline-none"
+              >
+                <span
+                  className={`transition-all duration-300 rounded-full ${
+                    currentSlide === idx 
+                      ? 'w-8 h-2.5 bg-primary-600' 
+                      : 'w-2.5 h-2.5 bg-slate-300 hover:bg-slate-400'
+                  }`}
+                />
+              </button>
             ))}
           </div>
 

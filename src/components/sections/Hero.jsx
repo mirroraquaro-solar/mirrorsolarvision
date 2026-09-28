@@ -27,14 +27,20 @@ export default function Hero({ onNavigate }) {
       
       {/* Background Image of House with Solar Panels */}
       <div className="absolute inset-0 z-0">
-        <img 
-          src="/assets/images/hero/hero-rooftop-solar.png" 
-          alt="Rooftop solar installation background" 
-          className="w-full h-full object-cover"
-          fetchpriority="high"
-          loading="eager"
-          decoding="async"
-        />
+        <picture>
+          <source media="(max-width: 640px)" srcSet="/assets/images/hero/hero-rooftop-solar-mobile.webp" type="image/webp" />
+          <source srcSet="/assets/images/hero/hero-rooftop-solar.webp" type="image/webp" />
+          <img 
+            src="/assets/images/hero/hero-rooftop-solar.webp" 
+            alt="Rooftop solar installation background" 
+            className="w-full h-full object-cover"
+            width="1280"
+            height="720"
+            fetchpriority="high"
+            loading="eager"
+            decoding="async"
+          />
+        </picture>
         {/* Rich Slate-Blue Gradient Overlay */}
         <div className="absolute inset-0" style={{
           background: 'linear-gradient(to right, rgba(8, 17, 36, 0.96) 0%, rgba(8, 17, 36, 0.88) 40%, rgba(8, 17, 36, 0.45) 75%, rgba(8, 17, 36, 0.1) 100%)'
@@ -186,9 +192,13 @@ export default function Hero({ onNavigate }) {
             <div className="absolute inset-0 bg-gradient-to-b from-yellow-500 via-orange-500 to-emerald-500 p-[3px] [clip-path:polygon(50%_0%,_100%_25%,_100%_75%,_50%_100%,_0%_75%,_0%_25%)] shadow-2xl">
               <div className="w-full h-full bg-slate-950 [clip-path:polygon(50%_0%,_100%_25%,_100%_75%,_50%_100%,_0%_75%,_0%_25%)] overflow-hidden relative">
                 <img 
-                  src="/assets/images/logo/pm-modi.jpg" 
+                  src="/assets/images/logo/pm-modi.webp" 
                   alt="PM Narendra Modi — PM Surya Ghar" 
                   className="w-full h-full object-cover object-top scale-105"
+                  width="280"
+                  height="340"
+                  loading="lazy"
+                  decoding="async"
                 />
                 
                 <div className="absolute bottom-0 left-0 right-0 h-[30%] bg-gradient-to-t from-black/90 to-transparent"></div>

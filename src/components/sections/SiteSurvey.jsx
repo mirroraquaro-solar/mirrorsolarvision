@@ -39,7 +39,7 @@ export default function SiteSurvey() {
     <section className="section py-16 bg-white scroll-mt-24 sm:scroll-mt-28" id="pm-surya-ghar" aria-label="Book a free rooftop site survey for solar installation in Andhra Pradesh">
       <div className="container-custom">
         <div className="text-center max-w-[800px] mx-auto mb-12">
-          <span className="text-xs font-bold uppercase tracking-wider text-accent-500 bg-accent-500/10 px-3 py-1.5 rounded-full">Free On-Site Rooftop Assessment — Zero Obligation</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-accent-600 bg-accent-500/10 px-3 py-1.5 rounded-full">Free On-Site Rooftop Assessment — Zero Obligation</span>
           <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mt-4 mb-4">Book Your Free Rooftop Site Survey in Andhra Pradesh (PM Surya Ghar)</h2>
           <p className="text-base text-gray-600 leading-relaxed">Our design engineers will physically visit your location, measure your rooftop area, test shadow patterns throughout the day, assess structural load-bearing capacity, and recommend the optimal solar system capacity — completely free of charge. No commitments required.</p>
         </div>
@@ -218,7 +218,7 @@ export default function SiteSurvey() {
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                   />
-                  <p className="text-[10px] text-gray-400 mt-1">For confirmation note & schedule</p>
+                  <p className="text-[10px] text-gray-600 font-medium mt-1">For confirmation note & schedule</p>
                 </div>
               </div>
 

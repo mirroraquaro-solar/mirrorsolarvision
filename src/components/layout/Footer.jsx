@@ -94,8 +94,12 @@ export default function Footer({ onNavigate }) {
               {/* Crisp, clean logo container with minimal padding */}
               <div className="bg-white rounded-2xl p-2 sm:p-2.5 shadow-md inline-flex items-center justify-center mb-3 sm:mb-4 transition-transform hover:scale-105">
                 <img 
-                  src="/assets/images/logo/mirror_solar-removebg-preview.png" 
+                  src="/assets/images/logo/mirror_solar-removebg-preview.webp" 
                   alt="Mirror Solar Vision Logo" 
+                  width="240"
+                  height="96"
+                  loading="lazy"
+                  decoding="async"
                   className="h-20 sm:h-28 md:h-36 w-auto object-contain max-w-[240px] sm:max-w-[300px] scale-105" 
                 />
               </div>
@@ -263,18 +267,18 @@ export default function Footer({ onNavigate }) {
       </div>
 
       {/* Compliance / GST Bar */}
-      <div className="bg-slate-900 border-t border-slate-800/80 py-3.5 text-[10px] sm:text-[11px] text-slate-400 text-center px-4 leading-relaxed">
+      <div className="bg-slate-900 border-t border-slate-800/80 py-3.5 text-[10px] sm:text-[11px] text-slate-300 text-center px-4 leading-relaxed font-medium">
         GST Registered: Mirror Aqua / Mirror Solar Vision • Andhra Pradesh State Jurisdiction • Registered PM Surya Ghar Muft Bijli Yojana Installer • APEPDCL, APCPDCL & APSPDCL Net Metering
       </div>
 
       {/* Footer Bottom Copyright */}
-      <div className="border-t border-slate-900 py-4 sm:py-5 text-center text-xs text-slate-500">
+      <div className="border-t border-slate-900 py-4 sm:py-5 text-center text-xs text-slate-300">
         <div className="container-custom px-4 flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3">
-          <p className="text-[11px] sm:text-xs">
-            &copy; {new Date().getFullYear()} <strong className="text-slate-400 font-semibold">Mirror Solar Vision</strong>. All rights reserved.
+          <p className="text-[11px] sm:text-xs text-slate-300 font-medium">
+            &copy; {new Date().getFullYear()} <strong className="text-white font-bold">Mirror Solar Vision</strong>. All rights reserved.
           </p>
           <div className="flex gap-4">
-            <span className="text-slate-400 sm:text-slate-500 text-[11px] sm:text-xs font-medium">Fast dispatch across all 26 AP districts</span>
+            <span className="text-slate-300 text-[11px] sm:text-xs font-medium">Fast dispatch across all 26 AP districts</span>
           </div>
         </div>
       </div>

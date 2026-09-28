@@ -24,7 +24,7 @@ export const CONFIRMED_BULK_COMBO = {
       displayQty: '100 MC4 Pairs',
       description: 'High-durability IP68 waterproof 1000V/1500V DC rated MC4 solar connectors with copper terminals for secure module interconnections.',
       icon: 'zap',
-      image: '/assets/images/products/mc4.jpg'
+      image: '/assets/images/products/mc4.webp'
     },
     {
       id: 'anchor-bolts',
@@ -35,7 +35,7 @@ export const CONFIRMED_BULK_COMBO = {
       displayQty: '100 Anchor Bolts',
       description: 'Heavy-duty stainless steel concrete foundation expansion anchor fasteners with washers and hex nuts for solar frame structures.',
       icon: 'shield',
-      image: '/assets/images/products/anchor_bolts.jpg'
+      image: '/assets/images/products/anchor_bolts.webp'
     },
     {
       id: 'structure-bolts',
@@ -46,7 +46,7 @@ export const CONFIRMED_BULK_COMBO = {
       displayQty: '200 Structure Nuts & Bolts',
       description: 'Corrosion-resistant SS304 structural hex bolts with flange nuts and spring washers for module mounting rails.',
       icon: 'settings',
-      image: '/assets/images/products/structure_bolts.jpg'
+      image: '/assets/images/products/structure_bolts.webp'
     },
     {
       id: 'panel-bolts',
@@ -57,7 +57,7 @@ export const CONFIRMED_BULK_COMBO = {
       displayQty: '200 Panel Nuts & Bolts',
       description: 'Precision engineered solar panel clamp socket allen bolts with spring washers and slide channel nuts for end/mid clamps.',
       icon: 'check-circle',
-      image: '/assets/images/products/panel_bolts.jpg'
+      image: '/assets/images/products/panel_bolts.webp'
     },
     {
       id: 'drain-clips',
@@ -68,7 +68,7 @@ export const CONFIRMED_BULK_COMBO = {
       displayQty: '200 Drain Clips',
       description: 'UV-stabilized anti-soiling sludge and water drain clips for panel bottom frames to prevent sludge accumulation.',
       icon: 'droplets',
-      image: '/assets/images/001.png'
+      image: '/assets/images/001.webp'
     },
     {
       id: 'sprinkler-sets',
@@ -79,7 +79,7 @@ export const CONFIRMED_BULK_COMBO = {
       displayQty: '11 Sprinkler Sets',
       description: 'High-precision 360° solar panel automated cleaning micro-sprinkler nozzles with mounting brackets and tubing connectors.',
       icon: 'sparkles',
-      image: '/assets/images/products/sprinklers.jpg'
+      image: '/assets/images/products/sprinklers.webp'
     }
   ],
   highlights: [
@@ -112,9 +112,9 @@ export const INDIVIDUAL_PRODUCTS = [
     clipsPerKw: 4,
     sizes: ['30mm', '33mm', '35mm', '40mm'],
     images: [
-      '/assets/images/001.png',
+      '/assets/images/001.webp',
       '/assets/images/products/drain-clip-35mm-1.webp',
-      '/assets/images/products/clip-green-1.jpg'
+      '/assets/images/products/clip-green-1.webp'
     ],
     variants: [
       { id: '3kw', kw: 3, label: '3 kW (12 Clips)', price: 300, clipsCount: 12, unit: '12 Clips (3 kW)' },

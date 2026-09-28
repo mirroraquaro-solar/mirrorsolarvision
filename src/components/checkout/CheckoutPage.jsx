@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Check, Lock, AlertCircle, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { loadRazorpay } from '../../services/razorpayLoader';
 
 const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
   const [loading, setLoading] = useState(false);
@@ -188,11 +189,12 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
         }
       };
 
-      if (!window.Razorpay) {
-        throw new Error("Razorpay SDK not loaded. Please check your internet connection.");
+      const RazorpayInstance = await loadRazorpay();
+      if (!RazorpayInstance) {
+        throw new Error("Razorpay SDK could not be loaded. Please check your internet connection.");
       }
 
-      const rzp1 = new window.Razorpay(options);
+      const rzp1 = new RazorpayInstance(options);
       rzp1.on('payment.failed', function (response){
         setError(`Payment Failed: ${response.error.description}`);
       });
