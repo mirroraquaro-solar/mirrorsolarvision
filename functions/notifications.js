@@ -2,7 +2,7 @@ const nodemailer = require("nodemailer");
 const admin = require("firebase-admin");
 
 // Environment & Default Configurations
-const rawAdminEmail = process.env.ADMIN_EMAIL || "balajiperuri09@mail.com,balajiperuri09@gmail.com,mirrorsolarvision@gmail.com";
+const rawAdminEmail = process.env.ADMIN_EMAIL || "balajiperuri09@mail.com,balajiperuri09@gmail.com,mirrorsolarvision@gmail.com,mirroraquaro@gmail.com";
 const ADMIN_EMAILS = rawAdminEmail.split(',').map(e => e.trim()).filter(Boolean);
 const ADMIN_EMAIL = ADMIN_EMAILS[0] || "balajiperuri09@mail.com";
 const ADMIN_WHATSAPP = (process.env.ADMIN_WHATSAPP || "919182612420").replace(/[^0-9]/g, "");
@@ -722,7 +722,7 @@ async function dispatchBookingNotifications(type, data) {
     emailSubject = `New Notification from ${BUSINESS_NAME}`;
   }
 
-  // 1. Send Email: to Admin recipients (balajiperuri09@mail.com, balajiperuri09@gmail.com, mirrorsolarvision@gmail.com) AND Customer
+  // 1. Send Email: to Admin recipients (balajiperuri09@mail.com, balajiperuri09@gmail.com, mirrorsolarvision@gmail.com, mirroraquaro@gmail.com) AND Customer
   const recipients = [...ADMIN_EMAILS];
   if (customerEmail && customerEmail.trim() && !recipients.some(r => r.toLowerCase() === customerEmail.trim().toLowerCase())) {
     recipients.push(customerEmail.trim());
