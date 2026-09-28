@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useCart } from '../context/CartContext.jsx';
 import { Button, Price } from '../components/ui/Primitives.jsx';
-import { isFreeShippingRegion } from '../services/shipping.js';
+import { isFreeShippingRegion, shippingService } from '../services/shipping.js';
 import { analytics } from '../services/analytics.js';
 import { PaymentSuccessModal } from '../components/modals/PaymentSuccessModal.jsx';
 import './CheckoutPage.css';
