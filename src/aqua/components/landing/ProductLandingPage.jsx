@@ -10,6 +10,7 @@ import { BulkEnquiry } from './BulkEnquiry.jsx';
 import { FAQAccordion } from './FAQAccordion.jsx';
 import { ReviewsSection } from './ReviewsSection.jsx';
 import { StickyMobileCTA } from './StickyMobileCTA.jsx';
+import { RelatedProducts } from './RelatedProducts.jsx';
 import { PRODUCTS } from '../../data/products.js';
 import { analytics } from '../../services/analytics.js';
 import './ProductLanding.css';
@@ -21,6 +22,13 @@ export function ProductLandingPage({ slug = '10-inch-5-micron-pp-spun-filter', o
     return PRODUCTS.find(p => p.slug === slug) || PRODUCTS[0];
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const local = PRODUCTS.find(p => p.slug === slug);
+    if (local) {
+      setProduct(local);
+    }
+  }, [slug]);
 
   useEffect(() => {
     let isMounted = true;
@@ -36,7 +44,7 @@ export function ProductLandingPage({ slug = '10-inch-5-micron-pp-spun-filter', o
           }
         }
       } catch (err) {
-        console.warn('Using local fallback product dataset:', err.message);
+        // Fallback to local dataset silently
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -57,12 +65,12 @@ export function ProductLandingPage({ slug = '10-inch-5-micron-pp-spun-filter', o
     analytics.trackViewItem(product);
 
     // Update document title & meta description
-    if (product.seo?.title) {
-      document.title = product.seo.title;
+    if (product.seo?.title || product.name) {
+      document.title = product.seo?.title || `${product.name} | Mirror Aqua`;
     }
-    if (product.seo?.description) {
+    if (product.seo?.description || product.shortDescription) {
       const metaDesc = document.querySelector('meta[name="description"]');
-      if (metaDesc) metaDesc.setAttribute('content', product.seo.description);
+      if (metaDesc) metaDesc.setAttribute('content', product.seo?.description || product.shortDescription);
     }
 
     // Inject JSON-LD Structured Data Schema
@@ -81,7 +89,7 @@ export function ProductLandingPage({ slug = '10-inch-5-micron-pp-spun-filter', o
           },
           "offers": {
             "@type": "Offer",
-            "url": `https://spunfilter.mirrorsolarvision.com/`,
+            "url": `https://spunfilter.mirrorsolarvision.com/product/${product.slug}`,
             "priceCurrency": "INR",
             "price": product.price,
             "priceValidUntil": "2027-12-31",
@@ -93,10 +101,10 @@ export function ProductLandingPage({ slug = '10-inch-5-micron-pp-spun-filter', o
           "@type": "FAQPage",
           "mainEntity": (product.faqs || []).map(f => ({
             "@type": "Question",
-            "name": f.q,
+            "name": f.question || f.q,
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": f.a
+              "text": f.answer || f.a
             }
           }))
         },
@@ -107,7 +115,7 @@ export function ProductLandingPage({ slug = '10-inch-5-micron-pp-spun-filter', o
               "@type": "ListItem",
               "position": 1,
               "name": "Mirror Aqua",
-              "item": "https://spunfilter.mirrorsolarvision.com/"
+              "item": "https://mirrorsolarvision.com/#aqua-store"
             },
             {
               "@type": "ListItem",
@@ -152,26 +160,27 @@ export function ProductLandingPage({ slug = '10-inch-5-micron-pp-spun-filter', o
       {/* 3. How to Change Spun Filter (Video Tutorial & Step-by-Step Guide) */}
       <InstallationGuide />
 
-      {/* 4. Visual Pre-Filtration & Trapped Particulate Proof */}
+      {/* 5. Visual Pre-Filtration & Trapped Particulate Proof */}
       <ProblemSection />
 
-      {/* 5. 6 Core Technical Benefits */}
+      {/* 6. 6 Core Technical Benefits */}
       <BenefitsSection benefits={product.benefits || []} />
 
-      {/* 6. Technical Specifications Table */}
+      {/* 7. Technical Specifications Table */}
       <Specifications specifications={product.specifications || {}} />
 
-      {/* 7. B2B Bulk Order & Wholesale Pricing (CRM) */}
+      {/* 8. B2B Bulk Order & Wholesale Pricing (CRM) */}
       <BulkEnquiry />
 
       {/* 9. Technical FAQ Accordion */}
       <FAQAccordion faqs={product.faqs || []} />
 
-      {/* 8. Verified Technician & Customer Reviews */}
+      {/* 10. Verified Technician & Customer Reviews */}
       <ReviewsSection />
 
-      {/* 9. Mobile Sticky Bottom Action Bar */}
+      {/* 11. Mobile Sticky Bottom Action Bar */}
       <StickyMobileCTA product={product} onNavigate={onNavigate} />
     </div>
   );
 }
+

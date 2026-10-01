@@ -139,6 +139,159 @@ export const PRODUCTS = [
         answer: 'No. Mirror Aqua filters are manufactured with 100% pure melt-blown food-grade polypropylene microfibers bonded thermally without glues, solvents, or wetting agents.'
       }
     ]
+  },
+  {
+    id: 'ma-prod-002',
+    sku: 'MA-PP-5PK-WR',
+    slug: '5-spun-filter-pack-with-free-wrench',
+    name: 'Mirror Aqua 5 Micron 120g Spun Filter – Pack of 5 + Free Filter Spanner',
+    shortDescription: 'Get 5 Mirror Aqua 10-Inch 5-Micron 120g PP Spun Filters + 1 FREE Filter Spanner.',
+    description: 'Get 5 Mirror Aqua 10-Inch 5-Micron 120g PP Spun Filters + 1 FREE Filter Spanner. High-density 120g pure polypropylene depth filtration helps reduce dirt, sand, rust, and suspended particles before water reaches internal purification stages. Compatible with standard 10-inch filter housings for all domestic RO water purifiers and pre-filtration systems. Made in India.',
+    
+    // Categorization
+    category: 'Mirror Aqua',
+    productType: 'Pack of 5 (120g) + 1 Free Spanner',
+    brand: 'Mirror Aqua',
+    countryOfOrigin: 'Made in India',
+    weight: '120g per filter (600g Total Media + Spanner)',
+    
+    // Commercial Data
+    price: 995,
+    mrp: 2899,
+    taxClass: 'gst_18',
+    stock: 180,
+    stockStatus: 'instock',
+    whatsappEnabled: true,
+    bulkEnabled: true,
+    offer: 'Buy 5 Spun Filters + Get 1 Filter Spanner FREE',
+    freeItem: '1 FREE Filter Spanner / Wrench',
+    
+    // Configured Commercial Pack Tiers
+    packTiers: [
+      {
+        id: 'combo-1',
+        quantity: 1,
+        label: 'Pack of 5 + 1 Free Filter Spanner',
+        unitPrice: 995,
+        totalPrice: 995,
+        mrpTotal: 2899,
+        savingsPercent: 66,
+        badge: 'Special Offer • 1 Spanner Free',
+        isPopular: true
+      },
+      {
+        id: 'combo-2',
+        quantity: 2,
+        label: 'Pack of 10 + 2 Free Filter Spanners',
+        unitPrice: 945,
+        totalPrice: 1890,
+        mrpTotal: 5798,
+        savingsPercent: 67,
+        badge: 'Double Saver • Save ₹3,908'
+      }
+    ],
+
+    // Technical Specifications
+    specifications: {
+      brand: 'Mirror Aqua',
+      filterSize: '10 Inch',
+      micronRating: '5 Micron',
+      weight: '120g per filter',
+      material: '100% PP Material (Virgin Polypropylene)',
+      offer: 'Buy 5 Spun Filters + Get 1 Filter Spanner FREE',
+      freeGift: '1 FREE Filter Spanner / Wrench',
+      filtrationReduction: 'Helps reduce dirt, sand, rust and suspended particles',
+      suitability: 'RO water purifiers and pre-filtration systems',
+      compatibility: 'Compatible with standard 10-inch filter housings',
+      nominalLength: '10 Inch (approx. 254 mm)',
+      outerDiameter: 'Approx. 60 – 63 mm',
+      innerCoreDiameter: 'Approx. 28 – 30 mm',
+      operatingTemp: '4°C to 45°C',
+      maxPressure: '125 PSI (Bowl Dependent)',
+      countryOfOrigin: 'Made in India'
+    },
+
+    // Verified Highlights / Key Features
+    highlights: [
+      'Pack of 5 Spun Filters',
+      '1 FREE Filter Spanner / Wrench',
+      '120g PP Spun Filter (Heavy-Duty Media)',
+      '10-inch standard size',
+      '5-micron filtration',
+      '100% PP material (Pure Virgin Polypropylene)',
+      'Helps reduce dirt, sand, rust and suspended particles',
+      'Suitable for RO water purifiers and pre-filtration systems',
+      'Compatible with standard 10-inch filter housings',
+      'Made in India'
+    ],
+
+    // Gallery Images
+    images: [
+      {
+        id: 'img-combo-1',
+        url: '/images/product/5-spun-with-wrench-combo.jpg',
+        altText: 'Mirror Aqua 5 Micron 120g Spun Filter – Pack of 5 + Free Filter Spanner',
+        isPrimary: true
+      },
+      {
+        id: 'img-combo-2',
+        url: '/images/product/003.jpeg',
+        altText: 'PP Spun Filter with Filter Spanner Wrench Tool'
+      },
+      {
+        id: 'img-combo-3',
+        url: '/images/product/008.jpeg',
+        altText: 'Mirror Aqua 120g PP Spun 5-Micron Cartridges'
+      },
+      {
+        id: 'img-combo-4',
+        url: '/images/product/0010.jpeg',
+        altText: '100% Pure Polypropylene Sealed Pack'
+      },
+      {
+        id: 'img-combo-5',
+        url: '/images/product/004.jpeg',
+        altText: 'Virgin Polypropylene Microfiber Depth Matrix'
+      },
+      {
+        id: 'img-combo-6',
+        url: '/images/product/002.jpeg',
+        altText: '10-Inch Housing Bowl Installation'
+      }
+    ],
+
+    // Compatibility List
+    compatibleSystems: [
+      'Standard 10-Inch Domestic Filter Housings across India',
+      'Kent Grand, Prime, Pearl, Elegant (External Pre-Filter Bowls)',
+      'Aquaguard / Eureka Forbes (Universal 10-Inch Outer Housings)',
+      'Livpure, Pureit, Blue Star, Havells, AO Smith (10-Inch Outer Housings)',
+      'RO Water Purifiers & Multi-Stage Pre-Filtration Systems'
+    ],
+
+    // FAQs
+    faqs: [
+      {
+        question: 'What is included in this offer?',
+        answer: 'You get 5 pieces of Mirror Aqua 10-Inch 5-Micron 120g PP Spun Filters PLUS 1 FREE Filter Spanner / Wrench for easy housing bowl removal and tightening.'
+      },
+      {
+        question: 'What is the weight and micron rating of each filter?',
+        answer: 'Each filter in this pack weighs a genuine 120g and provides true 5-micron pre-filtration using 100% pure PP material.'
+      },
+      {
+        question: 'What impurities does this filter help reduce?',
+        answer: 'It helps reduce physical suspended impurities including dirt, sand, rust, silt, and algae, safeguarding downstream RO membranes and booster pumps.'
+      },
+      {
+        question: 'Will these filters and the spanner fit my water purifier?',
+        answer: 'Yes. The 10-inch standard size fits standard 10-inch filter housings across all major brands (Kent, Aquaguard, Pureit, Livpure, etc.), and the included spanner is universally designed for 10-inch bowls.'
+      },
+      {
+        question: 'Where is this product manufactured?',
+        answer: 'Mirror Aqua 120g Spun Filters and accessories are 100% Made in India under strict quality inspection.'
+      }
+    ]
   }
 ];
 
@@ -153,6 +306,7 @@ export function getProductById(id) {
 export const CATEGORIES = [
   { id: 'all', name: 'All Products' },
   { id: 'spun-filters', name: 'PP Spun Filters (120g)' },
-  { id: 'packs', name: 'Multi-Packs' },
+  { id: 'combos', name: 'Value Combos & Offers' },
   { id: 'wholesale', name: 'Wholesale / B2B' }
 ];
+

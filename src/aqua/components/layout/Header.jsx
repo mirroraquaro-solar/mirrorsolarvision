@@ -26,7 +26,9 @@ export function Header({ currentPath = '/', onNavigate }) {
   }, []);
 
   const navLinks = [
-    { label: 'PP Spun Filter (10")', path: '/product/10-inch-5-micron-pp-spun-filter', isHighlight: true },
+    { label: '10" PP Filter (120g)', path: '/product/10-inch-5-micron-pp-spun-filter' },
+    { label: '5 Filters + Free Wrench 🎁', path: '/product/5-spun-filter-pack-with-free-wrench', isHighlight: true },
+    { label: 'All Products', path: '/shop' },
     { label: 'How to Change Filter 🎥', path: '/how-to-change-spun-filter' },
     { label: 'Track Order 🚚', path: '/track' },
     { label: 'Bulk Enquiry', path: '#bulk-enquiry', isAnchor: true }

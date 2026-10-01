@@ -1,55 +1,101 @@
-import React, { useState } from 'react';
-import { ShoppingBag, Zap, ShieldCheck, CheckCircle2, Truck, Star, MapPin, Check, Plus, Minus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ShoppingBag, Zap, ShieldCheck, CheckCircle2, Truck, Star, MapPin, Check, Plus, Minus, Gift, Sparkles, Droplets, Layers } from 'lucide-react';
 import { ProductGallery } from './ProductGallery.jsx';
 import { useCart } from '../../context/CartContext.jsx';
 import { analytics } from '../../services/analytics.js';
+import { PRODUCTS } from '../../data/products.js';
 import './ProductLanding.css';
 
 export function ProductHero({ product, onNavigate }) {
   const { addToCart, addItem, buyNow, setIsCartOpen } = useCart();
+  
+  // Local active product state to allow instant 1-click option switching
+  const [activeProduct, setActiveProduct] = useState(() => product || PRODUCTS[0]);
 
-  // Pack Type State: 'single' | 'bulk' | 'custom'
-  const [selectedPackType, setSelectedPackType] = useState('single');
+  useEffect(() => {
+    if (product) {
+      setActiveProduct(product);
+    }
+  }, [product]);
+
+  const currentProd = activeProduct || PRODUCTS[0];
+  const isComboProduct = currentProd.id === 'ma-prod-002' || currentProd.slug?.includes('free-wrench');
+
+  const [selectedPackTierId, setSelectedPackTierId] = useState(
+    currentProd.packTiers?.[0]?.id || 'single'
+  );
   const [quantity, setQuantity] = useState(1);
   const [pincode, setPincode] = useState('');
   const [pincodeStatus, setPincodeStatus] = useState(null);
 
-  // Pricing Calculation: Single <10 pieces: ₹199/pc (MRP ₹549/pc), >=10 pieces: ₹180/pc (MRP ₹549/pc)
-  const isBulkRate = selectedPackType === 'bulk' || quantity >= 10;
-  const unitPrice = isBulkRate ? 180 : 199;
-  const unitMrp = 549;
-  const currentPrice = quantity * unitPrice;
-  const currentMrp = quantity * unitMrp;
+  useEffect(() => {
+    setSelectedPackTierId(currentProd.packTiers?.[0]?.id || 'single');
+    setQuantity(currentProd.packTiers?.[0]?.quantity || 1);
+  }, [currentProd.id]);
+
+  const handleSwitchOption = (targetProd) => {
+    setActiveProduct(targetProd);
+    setSelectedPackTierId(targetProd.packTiers?.[0]?.id || 'single');
+    setQuantity(targetProd.packTiers?.[0]?.quantity || 1);
+    if (typeof onNavigate === 'function') {
+      onNavigate(`/product/${targetProd.slug}`);
+    }
+    analytics.trackPageView(`/product/${targetProd.slug}`);
+    analytics.trackViewItem(targetProd);
+  };
+
+  // Pricing Calculation based on active product and tier
+  let unitPrice = currentProd.price || 199;
+  let unitMrp = currentProd.mrp || 549;
+
+  if (isComboProduct) {
+    unitPrice = quantity >= 2 ? 945 : 995;
+    unitMrp = 2899;
+  } else {
+    unitPrice = quantity >= 10 ? 180 : 199;
+    unitMrp = 549;
+  }
+
+  const activeTier = currentProd.packTiers?.find(t => t.id === selectedPackTierId);
+  const currentPrice = (selectedPackTierId === activeTier?.id && activeTier && quantity === activeTier.quantity)
+    ? activeTier.totalPrice
+    : quantity * unitPrice;
+  const currentMrp = (selectedPackTierId === activeTier?.id && activeTier && quantity === activeTier.quantity)
+    ? activeTier.mrpTotal
+    : quantity * unitMrp;
   const totalSavings = currentMrp - currentPrice;
   const savingsPercent = Math.round(((currentMrp - currentPrice) / currentMrp) * 100);
 
-  const isOutOfStock = product?.stockStatus === 'outofstock' || product?.stock === 0;
+  const isOutOfStock = currentProd?.stockStatus === 'outofstock' || currentProd?.stock === 0;
 
-  const handlePresetSelect = (presetQty, packType = 'custom') => {
-    setSelectedPackType(packType);
-    setQuantity(presetQty);
-    analytics.trackQuantitySelect(product, presetQty, `${presetQty} Piece(s)`);
+  const handleTierSelect = (tier) => {
+    setSelectedPackTierId(tier.id);
+    setQuantity(tier.quantity);
+    analytics.trackQuantitySelect(currentProd, tier.quantity, tier.label);
   };
 
   const handleQuantityChange = (newQty) => {
-    const val = Math.max(1, Math.min(500, parseInt(newQty, 10) || 1));
-    setSelectedPackType('custom');
+    const val = Math.max(1, Math.min(200, parseInt(newQty, 10) || 1));
+    setSelectedPackTierId('custom');
     setQuantity(val);
-    analytics.trackQuantitySelect(product, val, `Custom ${val} Units`);
+    analytics.trackQuantitySelect(currentProd, val, `Custom ${val} Units`);
   };
 
   const getItemPayload = () => ({
-    id: `ma-spun-filter-120g-${selectedPackType}-${quantity}`,
-    cartItemId: `ma-spun-filter-120g-${selectedPackType}-${quantity}`,
-    itemKey: `ma-spun-filter-120g-${selectedPackType}-${quantity}`,
-    productId: 'ma-pp-10-05m',
-    name: 'Mirror Aqua 10-Inch 5-Micron PP Spun Filter (120 Grams)',
-    category: 'Mirror Aqua',
-    variant: `${quantity} Piece${quantity > 1 ? 's' : ''} (120g)`,
-    price: unitPrice,
-    mrp: unitMrp,
-    weight: '120g',
-    image: '/images/product/008.jpeg'
+    id: `${currentProd.id}-${selectedPackTierId}-${quantity}`,
+    cartItemId: `${currentProd.id}-${selectedPackTierId}-${quantity}`,
+    itemKey: `${currentProd.id}-${selectedPackTierId}-${quantity}`,
+    productId: currentProd.id,
+    sku: currentProd.sku,
+    name: currentProd.name,
+    category: currentProd.category || 'Mirror Aqua',
+    variant: activeTier && quantity === activeTier.quantity 
+      ? activeTier.label 
+      : `${quantity} ${quantity > 1 ? (isComboProduct ? 'Combos' : 'Units') : (isComboProduct ? 'Combo' : 'Unit')} (${currentProd.productType})`,
+    price: Math.round(currentPrice / quantity),
+    mrp: Math.round(currentMrp / quantity),
+    weight: currentProd.weight || '120g',
+    image: currentProd.images?.[0]?.url || '/images/product/008.jpeg'
   });
 
   const handleAddToCart = () => {
@@ -82,7 +128,7 @@ export function ProductHero({ product, onNavigate }) {
       setPincodeStatus({ valid: false, message: 'Please enter a valid 6-digit Indian pincode.' });
       return;
     }
-    setPincodeStatus({ valid: true, message: `Dispatches in 24 hrs to ${pincode.trim()} via Pan-India Courier.` });
+    setPincodeStatus({ valid: true, message: `Dispatches in 24 hrs to ${pincode.trim()} via Pan-India Express Courier.` });
   };
 
   const scrollToReviews = (e) => {
@@ -98,13 +144,54 @@ export function ProductHero({ product, onNavigate }) {
   };
 
   return (
-    <section className="product-hero-section" aria-label="Mirror Aqua Spun Filter Product Overview">
+    <section className="product-hero-section" aria-label="Mirror Aqua Product Overview">
+      {/* Top Product Switcher Navigation Banner */}
+      <div className="max-w-[1400px] mx-auto px-4 pt-4 pb-2">
+        <div className="bg-gradient-to-r from-slate-900 via-[#0B2545] to-slate-900 p-2 rounded-2xl border border-cyan-500/30 shadow-md flex flex-col sm:flex-row items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2 pl-2">
+            <Sparkles size={16} className="text-amber-400 animate-pulse shrink-0" />
+            <span className="text-xs sm:text-sm font-extrabold text-white tracking-wide">
+              Select Mirror Aqua Option:
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {PRODUCTS.map((prod) => {
+              const isActive = prod.id === currentProd.id;
+              const isCombo = prod.id === 'ma-prod-002';
+              return (
+                <button
+                  key={prod.id}
+                  type="button"
+                  onClick={() => handleSwitchOption(prod)}
+                  className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20 scale-[1.02] border border-cyan-300'
+                      : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700'
+                  }`}
+                >
+                  {isCombo ? <Gift size={13} className="text-amber-300 shrink-0" /> : <Droplets size={13} className="text-cyan-300 shrink-0" />}
+                  <span className="truncate">
+                    {isCombo ? '5 Spun + 1 Free Spanner (₹995)' : '10" 120g Spun Filter (₹199)'}
+                  </span>
+                  {isCombo && (
+                    <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase tracking-tighter shrink-0">
+                      FREE TOOL
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       <div className="container product-hero-container">
         {/* Left / Top Column: High-Res Interactive Gallery */}
         <div className="hero-gallery-col">
           <ProductGallery
-            images={product?.images || []}
-            productName={product?.name || 'Mirror Aqua 10-Inch 5-Micron PP Spun Filter (120 Grams)'}
+            images={currentProd?.images || []}
+            productName={currentProd?.name || 'Mirror Aqua Water Filter Product'}
           />
         </div>
 
@@ -124,21 +211,95 @@ export function ProductHero({ product, onNavigate }) {
             </div>
           </div>
 
+          {/* In-Hero Option Selector Tabs */}
+          <div className="mb-3 p-2.5 bg-slate-900/90 rounded-2xl border border-cyan-500/30">
+            <div className="flex items-center justify-between mb-2 px-1">
+              <span className="text-[11px] font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <Layers size={13} className="text-cyan-400" /> Choose Option / Package:
+              </span>
+              <span className="text-[10px] text-cyan-400 font-bold bg-cyan-950/80 px-2 py-0.5 rounded-full border border-cyan-800/50">
+                2 Available Options
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {PRODUCTS.map((prod) => {
+                const isSelected = prod.id === currentProd.id;
+                const isCombo = prod.id === 'ma-prod-002';
+                return (
+                  <button
+                    key={prod.id}
+                    type="button"
+                    onClick={() => handleSwitchOption(prod)}
+                    className={`text-left p-2.5 rounded-xl border transition-all relative flex flex-col justify-between cursor-pointer ${
+                      isSelected
+                        ? 'bg-gradient-to-br from-cyan-950 via-[#0B2545] to-blue-950 border-cyan-400 shadow-md shadow-cyan-500/20 ring-1 ring-cyan-400'
+                        : 'bg-slate-800/70 hover:bg-slate-800 border-slate-700/80 text-slate-300'
+                    }`}
+                  >
+                    {isCombo ? (
+                      <span className="absolute -top-2 right-2 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tight shadow">
+                        🎁 FREE SPANNER OFFER
+                      </span>
+                    ) : (
+                      <span className="absolute -top-2 right-2 bg-slate-700 text-cyan-300 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tight">
+                        STANDARD PACK
+                      </span>
+                    )}
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? 'border-cyan-400 bg-cyan-400' : 'border-slate-500'}`}>
+                        {isSelected && <div className="w-1.5 h-1.5 bg-slate-950 rounded-full" />}
+                      </div>
+                      <span className={`text-xs font-black line-clamp-1 ${isSelected ? 'text-white' : 'text-slate-200'}`}>
+                        {isCombo ? '5 Spun + Free Wrench' : '10" 120g Spun Filter'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1.5 pl-5.5 text-[11px]">
+                      <span className="font-extrabold text-cyan-400">
+                        {isCombo ? '₹995 combo' : 'From ₹199 (Save ₹350)'}
+                      </span>
+                      <span className="text-slate-400 text-[10px]">
+                        {isCombo ? '66% OFF' : '64% - 67% OFF'}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Primary Product Title */}
           <h1 className="hero-product-title">
-            10-INCH 5-MICRON PP SPUN FILTER <span className="text-cyan-600 font-black">(120 GRAMS)</span>
+            {isComboProduct ? (
+              <>MIRROR AQUA 5 MICRON 120G SPUN FILTER <span className="text-cyan-600 font-black">– PACK OF 5 + FREE FILTER SPANNER</span></>
+            ) : (
+              <>10-INCH 5-MICRON PP SPUN FILTER <span className="text-cyan-600 font-black">(120 GRAMS)</span></>
+            )}
           </h1>
           <p className="hero-product-subtitle">
-            Heavy 120-gram precision-engineered 5-micron depth pre-filter for standard 10-inch bowls. 100% pure virgin polypropylene with multi-layer gradient matrix.
+            {currentProd.shortDescription}
           </p>
 
           {/* Feature Badges */}
           <div className="hero-feature-badges">
-            <span className="hero-badge badge-amber font-black">⚡ 120 Grams Heavy Duty</span>
-            <span className="hero-badge badge-cyan">5 Micron Depth</span>
-            <span className="hero-badge badge-emerald">100% Virgin PP</span>
-            <span className="hero-badge badge-slate">Universal 10-Inch Fit</span>
-            <span className="hero-badge badge-slate">Made in India</span>
+            {isComboProduct ? (
+              <>
+                <span className="hero-badge badge-amber font-black">🎁 1 Free Filter Spanner / Wrench</span>
+                <span className="hero-badge badge-cyan">Pack of 5 Spun Filters</span>
+                <span className="hero-badge badge-cyan">120g PP Spun Filter</span>
+                <span className="hero-badge badge-emerald">5 Micron Depth</span>
+                <span className="hero-badge badge-slate">10-Inch Standard Size</span>
+                <span className="hero-badge badge-slate">100% PP Material</span>
+                <span className="hero-badge badge-slate">Made in India</span>
+              </>
+            ) : (
+              <>
+                <span className="hero-badge badge-amber font-black">⚡ 120 Grams Heavy Duty</span>
+                <span className="hero-badge badge-cyan">5 Micron Depth</span>
+                <span className="hero-badge badge-emerald">100% Virgin PP</span>
+                <span className="hero-badge badge-slate">Universal 10-Inch Fit</span>
+                <span className="hero-badge badge-slate">Made in India</span>
+              </>
+            )}
           </div>
 
           {/* Pricing Glass Card */}
@@ -155,10 +316,18 @@ export function ProductHero({ product, onNavigate }) {
             </div>
 
             <p className="price-unit-note">
-              {quantity === 1 ? (
-                <>Single 120g cartridge • <strong>₹199 / piece</strong> (MRP ₹549 • Save ₹350)</>
+              {isComboProduct ? (
+                quantity === 1 ? (
+                  <>1 Value Combo (5 Spun Filters + 1 Wrench <strong>FREE</strong>) • <strong>₹995</strong> (MRP ₹2,899 • Save ₹1,904)</>
+                ) : (
+                  <>Combo price: <strong>₹{unitPrice} per pack</strong> for {quantity} packs ({quantity * 5} filters + {quantity} free wrenches) • Total savings: <strong>₹{totalSavings.toLocaleString('en-IN')}</strong></>
+                )
               ) : (
-                <>Unit price: <strong>₹{unitPrice} per piece</strong> for {quantity} units • Total savings: <strong>₹{totalSavings.toLocaleString('en-IN')}</strong></>
+                quantity === 1 ? (
+                  <>Single 120g cartridge • <strong>₹199 / piece</strong> (MRP ₹549 • Save ₹350)</>
+                ) : (
+                  <>Unit price: <strong>₹{unitPrice} per piece</strong> for {quantity} units • Total savings: <strong>₹{totalSavings.toLocaleString('en-IN')}</strong></>
+                )
               )}
             </p>
 
@@ -168,6 +337,8 @@ export function ProductHero({ product, onNavigate }) {
               <span className="stock-text">
                 {isOutOfStock
                   ? 'Temporarily Out of Stock — Pre-order on WhatsApp'
+                  : isComboProduct
+                  ? 'In Stock (5 Filters + 1 Free Wrench Set) — Dispatches within 24 Hours'
                   : 'In Stock (120g Genuine) — Dispatches within 24 Hours'}
               </span>
             </div>
@@ -176,61 +347,54 @@ export function ProductHero({ product, onNavigate }) {
           {/* Flexible Quantity & Pack Selector */}
           <div className="hero-pack-selector-block">
             <div className="pack-selector-header">
-              <span className="pack-label-title">Select Quantity or Pack:</span>
+              <span className="pack-label-title">Select Pack Option:</span>
               <a href="#bulk-enquiry" onClick={scrollToBulk} className="bulk-link-hint">
-                Need 50+ pieces? Get B2B Trade Quote
+                Need wholesale / B2B bulk quote?
               </a>
             </div>
 
             {/* Quick Pack Preset Cards */}
             <div className="pack-options-grid-presets">
-              {/* Option 1: 1 Piece Standard ₹199 */}
-              <button
-                type="button"
-                className={`pack-card-hero ${selectedPackType === 'single' && quantity === 1 ? 'selected' : ''}`}
-                onClick={() => handlePresetSelect(1, 'single')}
-              >
-                <div className="pack-card-top">
-                  <div className="pack-radio-circle">
-                    {selectedPackType === 'single' && quantity === 1 && <div className="pack-radio-inner" />}
+              {currentProd.packTiers?.map((tier) => (
+                <button
+                  key={tier.id}
+                  type="button"
+                  className={`pack-card-hero ${selectedPackTierId === tier.id ? 'selected' : ''}`}
+                  onClick={() => handleTierSelect(tier)}
+                >
+                  {tier.badge && (
+                    <span className="pack-badge-hero popular-badge">
+                      {tier.badge}
+                    </span>
+                  )}
+                  <div className="pack-card-top">
+                    <div className="pack-radio-circle">
+                      {selectedPackTierId === tier.id && <div className="pack-radio-inner" />}
+                    </div>
+                    <span className="pack-name-hero">{tier.label}</span>
+                    <span className="pack-price-hero">₹{tier.totalPrice.toLocaleString('en-IN')}</span>
                   </div>
-                  <span className="pack-name-hero">1 Piece (120g Standard)</span>
-                  <span className="pack-price-hero">₹199</span>
-                </div>
-                <div className="pack-sub-info">
-                  <span>120g Heavy Pack • ₹199/pc • 64% OFF (MRP ₹549)</span>
-                </div>
-              </button>
-
-              {/* Option 2: 10 Pieces Value Pack ₹1,800 */}
-              <button
-                type="button"
-                className={`pack-card-hero ${selectedPackType === 'bulk' || quantity === 10 ? 'selected' : ''}`}
-                onClick={() => handlePresetSelect(10, 'bulk')}
-              >
-                <span className="pack-badge-hero popular-badge">
-                  ⭐ BEST VALUE • SAVE ₹3,690
-                </span>
-                <div className="pack-card-top">
-                  <div className="pack-radio-circle">
-                    {(selectedPackType === 'bulk' || quantity === 10) && <div className="pack-radio-inner" />}
+                  <div className="pack-sub-info">
+                    <span>{tier.savingsPercent}% OFF • Save ₹{(tier.mrpTotal - tier.totalPrice).toLocaleString('en-IN')}</span>
                   </div>
-                  <span className="pack-name-hero">10 Pieces (Value Pack - 1.2kg)</span>
-                  <span className="pack-price-hero">₹1,800</span>
-                </div>
-                <div className="pack-sub-info">
-                  <span>Wholesale Rate • ₹180/pc • 67% OFF (MRP ₹5,490)</span>
-                </div>
-              </button>
+                </button>
+              ))}
             </div>
 
             {/* Custom Quantity Stepper */}
             <div className="custom-qty-section">
               <div className="custom-qty-label-row">
-                <span className="custom-qty-label">Or Enter Any Custom Quantity:</span>
-                {quantity < 10 && (
+                <span className="custom-qty-label">
+                  {isComboProduct ? 'Or Enter Number of Combo Packs:' : 'Or Enter Custom Filter Quantity:'}
+                </span>
+                {!isComboProduct && (
                   <span className="custom-qty-hint">
-                    💡 Tip: Buy 9 more to unlock <strong>₹180/pc</strong> rate
+                    💡 Tip: Buy 10+ to unlock <strong>₹180/pc</strong> rate
+                  </span>
+                )}
+                {isComboProduct && (
+                  <span className="custom-qty-hint">
+                    💡 Tip: Order 2+ combos to get <strong>₹945/combo</strong> rate
                   </span>
                 )}
               </div>
@@ -249,7 +413,7 @@ export function ProductHero({ product, onNavigate }) {
                   <input
                     type="number"
                     min="1"
-                    max="500"
+                    max="200"
                     value={quantity}
                     onChange={(e) => handleQuantityChange(e.target.value)}
                     className="stepper-input-hero font-bold"
@@ -266,16 +430,27 @@ export function ProductHero({ product, onNavigate }) {
                 </div>
 
                 <div className="quick-qty-chips">
-                  {[2, 3, 5, 20, 50].map((preset) => (
-                    <button
-                      key={preset}
-                      type="button"
-                      className={`qty-chip ${quantity === preset ? 'active' : ''}`}
-                      onClick={() => handlePresetSelect(preset, preset >= 10 ? 'bulk' : 'custom')}
-                    >
-                      {preset} Pcs
-                    </button>
-                  ))}
+                  {isComboProduct
+                    ? [1, 2, 3, 5, 10].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          className={`qty-chip ${quantity === preset ? 'active' : ''}`}
+                          onClick={() => handleQuantityChange(preset)}
+                        >
+                          {preset} {preset === 1 ? 'Combo' : 'Combos'}
+                        </button>
+                      ))
+                    : [1, 2, 5, 10, 20].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          className={`qty-chip ${quantity === preset ? 'active' : ''}`}
+                          onClick={() => handleQuantityChange(preset)}
+                        >
+                          {preset} Pcs
+                        </button>
+                      ))}
                 </div>
               </div>
             </div>
@@ -337,7 +512,7 @@ export function ProductHero({ product, onNavigate }) {
           <div className="hero-trust-badges-row">
             <div className="trust-item">
               <Truck size={16} className="trust-icon" />
-              <span>Fast Shiprocket Dispatch</span>
+              <span>Fast Pan-India Dispatch</span>
             </div>
             <div className="trust-item">
               <ShieldCheck size={16} className="trust-icon" />
@@ -354,3 +529,5 @@ export function ProductHero({ product, onNavigate }) {
     </section>
   );
 }
+
+

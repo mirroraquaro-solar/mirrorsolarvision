@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Eye, ShoppingBag } from 'lucide-react';
-import { Badge, Price, Rating } from '../ui/Primitives.jsx';
+import { Heart, Eye, ShoppingBag, Gift, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useCart } from '../../context/CartContext.jsx';
 import { useWishlist } from '../../context/WishlistContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
@@ -8,13 +7,14 @@ import './ProductCard.css';
 
 export function ProductCard({ product, onNavigate }) {
   const [isHovered, setIsHovered] = useState(false);
-  const { addToCart } = useCart();
+  const { addToCart, setIsCartOpen } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { openQuickView } = useUI();
 
   const isFavorited = isInWishlist(product.id);
   const primaryImg = product.images?.[0]?.url;
   const secondaryImg = product.images?.[1]?.url || primaryImg;
+  const isCombo = product.id === 'ma-prod-002' || product.slug?.includes('free-wrench');
 
   const handleCardClick = (e) => {
     // Avoid triggering navigation if clicked on interactive buttons
@@ -22,6 +22,26 @@ export function ProductCard({ product, onNavigate }) {
     if (onNavigate) {
       onNavigate(`/product/${product.slug}`);
     }
+  };
+
+  const handleQuickAdd = (e) => {
+    e.stopPropagation();
+    const itemToAdd = {
+      id: `${product.id}-tier-1`,
+      cartItemId: `${product.id}-tier-1`,
+      itemKey: `${product.id}-tier-1`,
+      productId: product.id,
+      sku: product.sku,
+      name: product.name,
+      category: product.category || 'Mirror Aqua',
+      variant: product.packTiers?.[0]?.label || '1 Standard Unit',
+      price: product.price,
+      mrp: product.mrp,
+      weight: product.weight || '120g',
+      image: product.images?.[0]?.url || '/images/product/008.jpeg'
+    };
+    addToCart(itemToAdd, 1);
+    if (setIsCartOpen) setIsCartOpen(true);
   };
 
   return (
@@ -41,14 +61,14 @@ export function ProductCard({ product, onNavigate }) {
 
         {/* Badges Container */}
         <div className="product-card-badges">
-          {product.isEditorsPick && (
-            <Badge type="editors-pick" text="Editor's Pick" />
-          )}
-          {product.handmade && !product.isEditorsPick && (
-            <Badge type="handmade" text="Handmade" />
-          )}
-          {product.limitedEdition && (
-            <Badge type="limited" text="Limited" />
+          {isCombo ? (
+            <span className="badge badge-editors-pick flex items-center gap-1 font-black">
+              <Gift size={12} /> 1 WRENCH FREE
+            </span>
+          ) : (
+            <span className="badge badge-handmade font-bold">
+              ⚡ 120g Heavy Duty
+            </span>
           )}
         </div>
 
@@ -79,10 +99,7 @@ export function ProductCard({ product, onNavigate }) {
           </button>
           <button
             className="action-btn action-btn-primary"
-            onClick={(e) => {
-              e.stopPropagation();
-              addToCart(product, 1);
-            }}
+            onClick={handleQuickAdd}
             title="Add to Cart"
           >
             <ShoppingBag size={15} />
@@ -93,16 +110,29 @@ export function ProductCard({ product, onNavigate }) {
 
       <div className="product-card-info">
         <span className="product-card-origin">
-          {product.craft} • {product.placeOfOrigin}
+          {product.brand || 'Mirror Aqua'} • 100% Virgin PP
         </span>
         <h3 className="product-card-title">{product.name}</h3>
         <p className="product-card-descriptor">{product.shortDescription}</p>
 
         <div className="product-card-bottom">
-          <Price price={product.price} salePrice={product.salePrice} />
-          <Rating score={5} count={product.stock > 10 ? 18 : 9} />
+          <div className="flex items-baseline gap-2">
+            <span className="text-lg font-black text-white font-heading">
+              ₹{product.price.toLocaleString('en-IN')}
+            </span>
+            {product.mrp > product.price && (
+              <span className="text-xs text-slate-400 line-through">
+                MRP ₹{product.mrp.toLocaleString('en-IN')}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1 text-xs text-amber-400 font-bold">
+            <span>★ 4.9</span>
+            <span className="text-slate-400 font-normal">({product.id === 'ma-prod-002' ? '190+' : '340+'})</span>
+          </div>
         </div>
       </div>
     </div>
   );
 }
+

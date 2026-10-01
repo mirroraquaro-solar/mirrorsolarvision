@@ -33,6 +33,30 @@
       }
     },
     {
+      "id": "ma-pp-spun-filter-120g",
+      "name": "Mirror Aqua 10-Inch 5-Micron PP Spun Filter (120g)",
+      "type": "product",
+      "url": "https://mirrorsolarvision.com/#aqua-store",
+      "description": "Heavy 120-gram 100% pure melt-blown virgin polypropylene 5-micron pre-filter cartridge for domestic RO water purifiers.",
+      "pricing": {
+        "currency": "INR",
+        "singleUnitPrice": 199,
+        "packOf10Price": 1800
+      }
+    },
+    {
+      "id": "ma-5-spun-free-wrench-combo",
+      "name": "Mirror Aqua 5 PP Spun Filters (120g Each) + 1 Free RO Housing Wrench",
+      "type": "product",
+      "url": "https://mirrorsolarvision.com/#aqua-store",
+      "description": "Super saver combo pack of 5 heavy 120g 5-micron PP spun depth pre-filters plus 1 Free heavy-duty RO filter housing spanner wrench for effortless DIY filter replacement.",
+      "pricing": {
+        "currency": "INR",
+        "comboPrice": 995,
+        "mrp": 2899
+      }
+    },
+    {
       "id": "pm-surya-ghar-subsidy",
       "name": "PM Surya Ghar DBT Subsidy Consultation",
       "type": "service",

@@ -138,6 +138,8 @@ exports.createRazorpayOrder = functions.https.onRequest((req, res) => {
             } else if (itemPrice < 300) {
               itemPrice = 300;
             }
+          } else if (item.productId === 'ma-prod-002' || item.sku === 'MA-PP-5PK-WR' || (item.name && item.name.toLowerCase().includes('5 spun') && (item.name.toLowerCase().includes('wrench') || item.name.toLowerCase().includes('runch')))) {
+            itemPrice = qty >= 2 ? 945 : 995;
           } else if (item.productId === 'ma-prod-001' || item.sku === 'MA-PP-10-05M' || (item.name && item.name.toLowerCase().includes('pp spun'))) {
             itemPrice = qty >= 10 ? 180 : 199;
           }

@@ -9,29 +9,32 @@ export function StickyMobileCTA({ product, onNavigate }) {
 
   const basePrice = product?.price || 199;
   const isOutOfStock = product?.stockStatus === 'outofstock' || product?.stock === 0;
+  const isCombo = product?.id === 'ma-prod-002' || product?.slug?.includes('free-wrench');
 
   const handleBuyNow = () => {
     if (isOutOfStock) return;
     const addFn = addToCart || addItem;
     const itemToAdd = {
       ...product,
-      id: product?.id || 'ma-prod-001',
-      cartItemId: product?.id || 'ma-prod-001',
+      id: `${product?.id || 'ma-prod-001'}-tier-1`,
+      cartItemId: `${product?.id || 'ma-prod-001'}-tier-1`,
       price: basePrice,
       mrp: product?.mrp || 549,
-      weight: '120g',
-      category: 'Mirror Aqua',
+      weight: product?.weight || '120g',
+      category: product?.category || 'Mirror Aqua',
       sku: product?.sku || 'MA-PP-10-05M',
       name: product?.name || 'Mirror Aqua 10-Inch 5-Micron PP Spun Filter (120g)',
-      variant: '1 Piece (120g Standard)',
-      image: '/images/product/008.jpeg'
+      variant: product?.packTiers?.[0]?.label || (isCombo ? '1 Combo (5 Filters + 1 Free Wrench)' : '1 Piece (120g Standard)'),
+      image: product?.images?.[0]?.url || '/images/product/008.jpeg'
     };
     if (typeof addFn === 'function') {
       addFn(itemToAdd, 1);
     }
     analytics.trackBuyNow(itemToAdd, 1);
     if (typeof onNavigate === 'function') {
-      onNavigate('/checkout');
+      onNavigate('store', 'checkout');
+    } else {
+      window.location.hash = '#store';
     }
   };
 
@@ -40,16 +43,16 @@ export function StickyMobileCTA({ product, onNavigate }) {
     const addFn = addToCart || addItem;
     const itemToAdd = {
       ...product,
-      id: product?.id || 'ma-prod-001',
-      cartItemId: product?.id || 'ma-prod-001',
+      id: `${product?.id || 'ma-prod-001'}-tier-1`,
+      cartItemId: `${product?.id || 'ma-prod-001'}-tier-1`,
       price: basePrice,
       mrp: product?.mrp || 549,
-      weight: '120g',
-      category: 'Mirror Aqua',
+      weight: product?.weight || '120g',
+      category: product?.category || 'Mirror Aqua',
       sku: product?.sku || 'MA-PP-10-05M',
       name: product?.name || 'Mirror Aqua 10-Inch 5-Micron PP Spun Filter (120g)',
-      variant: '1 Piece (120g Standard)',
-      image: '/images/product/008.jpeg'
+      variant: product?.packTiers?.[0]?.label || (isCombo ? '1 Combo (5 Filters + 1 Free Wrench)' : '1 Piece (120g Standard)'),
+      image: product?.images?.[0]?.url || '/images/product/008.jpeg'
     };
     if (typeof addFn === 'function') {
       addFn(itemToAdd, 1);
@@ -62,11 +65,13 @@ export function StickyMobileCTA({ product, onNavigate }) {
     <aside className="sticky-mobile-cta-bar" aria-label="Quick Purchase Actions">
       <div className="sticky-mobile-inner">
         <div className="sticky-price-info">
-          <span className="sticky-label">Mirror Aqua 10" PP Filter</span>
+          <span className="sticky-label truncate max-w-[140px] sm:max-w-none">
+            {isCombo ? '5 Filters + 1 Free Wrench' : 'Mirror Aqua 10" PP Filter'}
+          </span>
           <div className="sticky-price-row">
-            <span className="sticky-price">₹{basePrice}</span>
+            <span className="sticky-price">₹{basePrice.toLocaleString('en-IN')}</span>
             {product?.mrp > basePrice && (
-              <span className="sticky-mrp">₹{product.mrp}</span>
+              <span className="sticky-mrp">₹{product.mrp.toLocaleString('en-IN')}</span>
             )}
           </div>
         </div>
@@ -80,7 +85,7 @@ export function StickyMobileCTA({ product, onNavigate }) {
             aria-label="Add to Cart"
           >
             <ShoppingBag size={18} />
-            <span>Add to Cart</span>
+            <span>Add</span>
           </button>
 
           <button
@@ -98,3 +103,4 @@ export function StickyMobileCTA({ product, onNavigate }) {
     </aside>
   );
 }
+

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Filter, SlidersHorizontal, ArrowUpDown, Sparkles, Check, X } from 'lucide-react';
+import { Filter, SlidersHorizontal, ArrowUpDown, Sparkles, Check, X, Gift, Droplets } from 'lucide-react';
 import { PRODUCTS, CATEGORIES } from '../data/products.js';
 import { ProductCard } from '../components/product/ProductCard.jsx';
 import { Button } from '../components/ui/Primitives.jsx';
@@ -8,9 +8,8 @@ import './ShopPage.css';
 
 export function ShopPage({ initialFilter = null, onNavigate }) {
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [filterType, setFilterType] = useState(initialFilter || 'all'); // 'all' | 'handmade' | 'editors-pick' | 'new' | 'limited'
+  const [filterType, setFilterType] = useState(initialFilter || 'all'); // 'all' | 'combos' | 'single'
   const [sortBy, setSortBy] = useState('featured'); // 'featured' | 'price-low' | 'price-high' | 'name'
-  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   useEffect(() => {
     if (initialFilter) setFilterType(initialFilter);
@@ -23,25 +22,18 @@ export function ShopPage({ initialFilter = null, onNavigate }) {
   const filteredProducts = useMemo(() => {
     let list = [...PRODUCTS];
 
-    // Category filter
-    if (selectedCategory !== 'all') {
-      list = list.filter(p => p.category.toLowerCase().replace(/[^a-z0-9]/g, '-') === selectedCategory || p.category.toLowerCase() === selectedCategory);
-    }
-
-    // Special merchandising filters
-    if (filterType === 'handmade') {
-      list = list.filter(p => p.handmade);
-    } else if (filterType === 'editors-pick') {
-      list = list.filter(p => p.isEditorsPick);
-    } else if (filterType === 'limited') {
-      list = list.filter(p => p.limitedEdition);
+    // Category / Filter Type
+    if (selectedCategory === 'combos' || filterType === 'combos') {
+      list = list.filter(p => p.id === 'ma-prod-002' || p.slug.includes('free-wrench'));
+    } else if (selectedCategory === 'spun-filters' || filterType === 'spun-filters') {
+      list = list.filter(p => p.id === 'ma-prod-001');
     }
 
     // Sorting
     if (sortBy === 'price-low') {
-      list.sort((a, b) => (a.salePrice || a.price) - (b.salePrice || b.price));
+      list.sort((a, b) => a.price - b.price);
     } else if (sortBy === 'price-high') {
-      list.sort((a, b) => (b.salePrice || b.price) - (a.salePrice || a.price));
+      list.sort((a, b) => b.price - a.price);
     } else if (sortBy === 'name') {
       list.sort((a, b) => a.name.localeCompare(b.name));
     }
@@ -54,10 +46,10 @@ export function ShopPage({ initialFilter = null, onNavigate }) {
       {/* Shop Header Banner */}
       <div className="shop-header-banner">
         <div className="container">
-          <span className="section-eyebrow">Discovery Collection</span>
-          <h1 className="shop-title">OUR COMPLETE CATALOGUE</h1>
+          <span className="section-eyebrow">Mirror Aqua Water Purification</span>
+          <h1 className="shop-title">GENUINE PP PRE-FILTERS & COMBOS</h1>
           <p className="shop-subtitle">
-            Every piece is chosen with attention to natural materials, human craftsmanship, and authentic Indian provenance.
+            Heavy 120-gram 100% pure melt-blown virgin polypropylene pre-filter cartridges and universal servicing tools for domestic & commercial water purifiers.
           </p>
         </div>
       </div>
@@ -69,25 +61,19 @@ export function ShopPage({ initialFilter = null, onNavigate }) {
             className={`pill-btn ${filterType === 'all' && selectedCategory === 'all' ? 'active' : ''}`}
             onClick={() => { setFilterType('all'); setSelectedCategory('all'); }}
           >
-            All Finds
+            All Products ({PRODUCTS.length})
           </button>
           <button
-            className={`pill-btn ${filterType === 'editors-pick' ? 'active' : ''}`}
-            onClick={() => setFilterType('editors-pick')}
+            className={`pill-btn ${filterType === 'combos' || selectedCategory === 'combos' ? 'active' : ''}`}
+            onClick={() => { setFilterType('combos'); setSelectedCategory('combos'); }}
           >
-            ✨ Editor's Picks
+            🎁 Combos & Free Tool Offers
           </button>
           <button
-            className={`pill-btn ${filterType === 'handmade' ? 'active' : ''}`}
-            onClick={() => setFilterType('handmade')}
+            className={`pill-btn ${filterType === 'spun-filters' || selectedCategory === 'spun-filters' ? 'active' : ''}`}
+            onClick={() => { setFilterType('spun-filters'); setSelectedCategory('spun-filters'); }}
           >
-            Handmade Crafts
-          </button>
-          <button
-            className={`pill-btn ${filterType === 'limited' ? 'active' : ''}`}
-            onClick={() => setFilterType('limited')}
-          >
-            Limited Editions
+            ⚡ 10" PP Spun Filters (120g)
           </button>
         </div>
 
@@ -95,7 +81,7 @@ export function ShopPage({ initialFilter = null, onNavigate }) {
         <div className="shop-toolbar">
           <div className="toolbar-left">
             <span className="product-count-text">
-              Showing <strong>{filteredProducts.length}</strong> unique finds
+              Showing <strong>{filteredProducts.length}</strong> products
             </span>
           </div>
 
@@ -106,13 +92,15 @@ export function ShopPage({ initialFilter = null, onNavigate }) {
               <select
                 id="category-select"
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                onChange={(e) => {
+                  setSelectedCategory(e.target.value);
+                  setFilterType(e.target.value);
+                }}
                 className="shop-select"
               >
-                <option value="all">All Categories</option>
-                <option value="home-living">Home & Living</option>
-                <option value="textiles-rugs">Textiles & Rugs</option>
-                <option value="kitchen-dining">Kitchen & Dining</option>
+                <option value="all">All Products</option>
+                <option value="combos">Combos & Free Gift Packs</option>
+                <option value="spun-filters">PP Spun Filters (120g)</option>
               </select>
             </div>
 
@@ -167,3 +155,4 @@ export function ShopPage({ initialFilter = null, onNavigate }) {
     </div>
   );
 }
+
