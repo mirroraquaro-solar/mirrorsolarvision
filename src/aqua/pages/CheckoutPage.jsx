@@ -258,7 +258,8 @@ export function CheckoutPage({ onNavigate }) {
               customer: {
                 fullName: formData.fullName,
                 email: formData.email,
-                phone: cleanPhone
+                phone: cleanPhone,
+                pincode: cleanPin
               },
               shippingAddress: {
                 fullName: formData.fullName,
@@ -271,7 +272,8 @@ export function CheckoutPage({ onNavigate }) {
                 productId: it.productId || it.product?.id || 'ma-prod-001',
                 name: it.product?.name || it.name || 'Mirror Aqua 10-Inch 5-Micron PP Spun Filter',
                 quantity: it.quantity || 1,
-                total: (it.unitPrice || 199) * (it.quantity || 1)
+                price: it.unitPrice || it.price || 199,
+                total: (it.unitPrice || it.price || 199) * (it.quantity || 1)
               })),
               payment: {
                 transactionId: response.razorpay_payment_id,
@@ -279,7 +281,8 @@ export function CheckoutPage({ onNavigate }) {
                 shipment: {
                   shipmentId: shipmentId || `SR-${bookingId}`,
                   courierName: 'Shiprocket Express Pan-India Delivery',
-                  status: 'CONFIRMED_QUEUED_FOR_PICKUP'
+                  status: 'CONFIRMED_QUEUED_FOR_PICKUP',
+                  trackingUrl: shipmentId ? `https://shiprocket.co/tracking/${shipmentId}` : `https://shiprocket.co/tracking/${bookingId}`
                 }
               }
             };
@@ -820,6 +823,21 @@ export function CheckoutPage({ onNavigate }) {
           </div>
         </form>
       </div>
+
+      {/* Order Confirmation Popup Modal with Tracking & Order Details */}
+      <PaymentSuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={() => {
+          setIsSuccessModalOpen(false);
+          if (typeof onNavigate === 'function') {
+            onNavigate('/track');
+          } else {
+            window.location.hash = '#orders';
+          }
+        }}
+        orderData={completedOrder}
+        onNavigate={onNavigate}
+      />
     </div>
   );
 }
