@@ -89,13 +89,49 @@ class AnalyticsService {
       window.gtag('event', eventName, enrichedPayload);
     }
 
-    // Meta Pixel Bridge (window.fbq)
+    // Meta Pixel Bridge (window.fbq) with Deduplication EventID
     if (typeof window !== 'undefined' && window.fbq) {
-      if (eventName === 'view_item') window.fbq('track', 'ViewContent', enrichedPayload);
-      if (eventName === 'add_to_cart') window.fbq('track', 'AddToCart', enrichedPayload);
-      if (eventName === 'begin_checkout') window.fbq('track', 'InitiateCheckout', enrichedPayload);
-      if (eventName === 'purchase') window.fbq('track', 'Purchase', enrichedPayload);
-      if (eventName === 'bulk_enquiry' || eventName === 'dealer_enquiry') window.fbq('track', 'Lead', enrichedPayload);
+      const eventId = payload.event_id || payload.order_id || payload.transaction_id || `evt_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+      const metaOpts = { eventID: eventId };
+
+      if (eventName === 'view_item') {
+        window.fbq('track', 'ViewContent', {
+          content_type: 'product',
+          content_ids: (payload.items || []).map(i => i.item_id),
+          content_name: payload.items?.[0]?.item_name,
+          value: payload.value,
+          currency: payload.currency || 'INR'
+        }, metaOpts);
+      } else if (eventName === 'add_to_cart') {
+        window.fbq('track', 'AddToCart', {
+          content_type: 'product',
+          content_ids: (payload.items || []).map(i => i.item_id),
+          value: payload.value,
+          currency: payload.currency || 'INR'
+        }, metaOpts);
+      } else if (eventName === 'begin_checkout') {
+        window.fbq('track', 'InitiateCheckout', {
+          content_type: 'product',
+          content_ids: (payload.items || []).map(i => i.item_id),
+          value: payload.value,
+          currency: payload.currency || 'INR',
+          num_items: (payload.items || []).length
+        }, metaOpts);
+      } else if (eventName === 'purchase') {
+        window.fbq('track', 'Purchase', {
+          content_type: 'product',
+          content_ids: (payload.items || []).map(i => i.productId || i.item_id || i.sku),
+          value: payload.value,
+          currency: payload.currency || 'INR',
+          num_items: (payload.items || []).length
+        }, { eventID: payload.transaction_id || payload.orderId || eventId });
+      } else if (eventName === 'bulk_enquiry' || eventName === 'dealer_enquiry') {
+        window.fbq('track', 'Lead', {
+          content_name: payload.business_name || payload.businessName || 'Mirror Aqua Inquiry',
+          value: payload.quantity ? Number(payload.quantity) * 180 : 1000,
+          currency: 'INR'
+        }, metaOpts);
+      }
     }
   }
 

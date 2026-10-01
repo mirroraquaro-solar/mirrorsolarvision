@@ -35,6 +35,69 @@ async function getShiprocketToken() {
   return data.token;
 }
 
+// Meta Conversions API (CAPI) Server-Side Event Dispatcher with SHA256 Normalization & Deduplication
+async function sendMetaConversionsApiEvent({
+  eventName,
+  eventId,
+  eventSourceUrl,
+  userData = {},
+  customData = {}
+}) {
+  const pixelId = process.env.META_PIXEL_ID || '1133118705927784';
+  const metaAccessToken = process.env.META_CAPI_ACCESS_TOKEN || process.env.FB_ACCESS_TOKEN;
+
+  if (!metaAccessToken) {
+    console.log("Meta Conversions API: META_CAPI_ACCESS_TOKEN not set in environment, skipping server-side CAPI event.");
+    return null;
+  }
+
+  const hashString = (str) => {
+    if (!str) return undefined;
+    return crypto.createHash('sha256').update(String(str).trim().toLowerCase()).digest('hex');
+  };
+
+  const userPayload = {
+    em: userData.email ? [hashString(userData.email)] : undefined,
+    ph: userData.phone ? [hashString(userData.phone.replace(/[^0-9]/g, ''))] : undefined,
+    fn: userData.firstName ? [hashString(userData.firstName)] : undefined,
+    ln: userData.lastName ? [hashString(userData.lastName)] : undefined,
+    ct: userData.city ? [hashString(userData.city)] : undefined,
+    st: userData.state ? [hashString(userData.state)] : undefined,
+    zp: userData.pincode || userData.zip ? [hashString(userData.pincode || userData.zip)] : undefined,
+    country: [hashString('in')]
+  };
+
+  Object.keys(userPayload).forEach(k => userPayload[k] === undefined && delete userPayload[k]);
+
+  const payload = {
+    data: [
+      {
+        event_name: eventName,
+        event_time: Math.floor(Date.now() / 1000),
+        event_id: eventId,
+        event_source_url: eventSourceUrl || 'https://mirrorsolarvision.com/',
+        action_source: 'website',
+        user_data: userPayload,
+        custom_data: customData
+      }
+    ]
+  };
+
+  try {
+    const res = await fetch(`https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${metaAccessToken}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    console.log(`Meta CAPI [${eventName}] response:`, JSON.stringify(data));
+    return data;
+  } catch (err) {
+    console.error(`Meta CAPI error on ${eventName}:`, err);
+    return null;
+  }
+}
+
 async function createShiprocketOrderForRecord(orderData, razorpay_payment_id) {
   const orderBookingId = orderData.bookingId || orderData.firestoreOrderId;
   const address = orderData.address || {};
@@ -308,6 +371,35 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
         };
         dispatchBookingNotifications('order', fullOrderRecord).catch((notifErr) => {
           console.error("Order notification dispatch error:", notifErr);
+        });
+
+        // 6. Dispatch Server-Side Meta Conversions API (CAPI) Purchase Event with deduplication
+        sendMetaConversionsApiEvent({
+          eventName: 'Purchase',
+          eventId: orderBookingId,
+          eventSourceUrl: 'https://mirrorsolarvision.com/',
+          userData: {
+            email: fullOrderRecord.customerEmail || address.email,
+            phone: fullOrderRecord.customerPhone || address.phone,
+            firstName: (address.fullName || fullOrderRecord.customerName || '').split(' ')[0],
+            lastName: (address.fullName || fullOrderRecord.customerName || '').split(' ').slice(1).join(' '),
+            city: address.city,
+            state: address.state,
+            pincode: address.pincode
+          },
+          customData: {
+            currency: 'INR',
+            value: Number(fullOrderRecord.amount || 0),
+            order_id: orderBookingId,
+            content_type: 'product',
+            contents: (fullOrderRecord.items || []).map(i => ({
+              id: i.productId || i.sku || i.id,
+              quantity: i.quantity || 1,
+              item_price: i.price || i.unitPrice || 0
+            }))
+          }
+        }).catch((capiErr) => {
+          console.error("Meta CAPI dispatch error:", capiErr);
         });
 
         return res.status(200).send({ 
