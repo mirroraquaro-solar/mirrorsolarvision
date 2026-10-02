@@ -18,107 +18,143 @@ const MirrorAquaStore = lazy(() => import('./components/sections/MirrorAquaStore
 const MyOrders = lazy(() => import('./components/checkout/MyOrders'));
 const PartnerRegistration = lazy(() => import('./pages/PartnerRegistration'));
 
-const isOrderHash = (hash) => {
-  const h = (hash || '').toLowerCase();
-  return h === '#orders' || h === '#my-orders' || h === '#myorders' || h === '#track' || h === '#track-order' || h === '#tracking';
-};
+const resolveRoute = () => {
+  if (typeof window === 'undefined') return { view: 'home', action: null };
+  const pathname = (window.location.pathname || '').toLowerCase().replace(/\/$/, '');
+  const hash = (window.location.hash || '').toLowerCase();
 
-const isAquaHash = (hash) => {
-  const h = (hash || '').toLowerCase();
-  return h === '#aqua' || h === '#aqua-store' || h === '#mirror-aqua' || h === '#aqua-shop' || h === '#aqua-cart' || h === '#aqua-checkout' || h === '#aqua-track' || h === '#spun-filter' || h === '#pp-filter';
-};
+  // 1. Order Tracking
+  if (
+    pathname === '/orders' || pathname === '/my-orders' || pathname === '/track' || pathname === '/track-order' ||
+    hash === '#orders' || hash === '#my-orders' || hash === '#myorders' || hash === '#track' || hash === '#track-order' || hash === '#tracking'
+  ) {
+    return { view: 'orders', action: null };
+  }
 
-const isStoreHash = (hash) => {
-  const h = (hash || '').toLowerCase();
-  return h === '#store' || h === '#solar-store' || h === '#bulk-combos' || h === '#bulk-combo' || h === '#bulk-combo-buy' || h === '#drain-clips' || h === '#drain-clips-buy' || h === '#shop';
+  // 2. Solar Drain Clips Product Page (Canonical Meta URL)
+  if (
+    pathname === '/drain-clips' || pathname === '/products/drain-clips' || pathname === '/products/solar-drain-clips' || pathname === '/products/msv-drain-clips' ||
+    hash === '#drain-clips'
+  ) {
+    return { view: 'store', action: 'drain-clips' };
+  }
+  if (
+    pathname === '/drain-clips/buy' || pathname === '/products/drain-clips/buy' ||
+    hash === '#drain-clips-buy'
+  ) {
+    return { view: 'store', action: 'drain-clips-buy' };
+  }
+
+  // 3. Bulk Combo Product Page
+  if (
+    pathname === '/bulk-combo' || pathname === '/bulk-combos' || pathname === '/products/bulk-combo' || pathname === '/products/solar-hardware-combo' ||
+    hash === '#bulk-combo' || hash === '#bulk-combos'
+  ) {
+    return { view: 'store', action: 'bulk-combo' };
+  }
+  if (
+    pathname === '/bulk-combo/buy' || pathname === '/products/bulk-combo/buy' ||
+    hash === '#bulk-combo-buy'
+  ) {
+    return { view: 'store', action: 'bulk-combo-buy' };
+  }
+
+  // 4. Solar Store
+  if (
+    pathname === '/store' || pathname === '/solar-store' || pathname === '/shop' ||
+    hash === '#store' || hash === '#solar-store' || hash === '#shop'
+  ) {
+    return { view: 'store', action: null };
+  }
+
+  // 5. Mirror Aqua Store & Spun Filter Products
+  if (
+    pathname === '/aqua' || pathname === '/aqua-store' || pathname === '/mirror-aqua' || 
+    pathname.startsWith('/products/10-inch') || pathname.startsWith('/products/5-spun') || pathname === '/spun-filter' || pathname === '/pp-filter' ||
+    hash === '#aqua' || hash === '#aqua-store' || hash === '#mirror-aqua' || hash === '#aqua-shop' || hash === '#aqua-cart' || hash === '#aqua-checkout' || hash === '#spun-filter' || hash === '#pp-filter'
+  ) {
+    return { view: 'aqua-store', action: null };
+  }
+
+  // 6. Partner Registration
+  if (pathname === '/partner-registration' || hash === '#partner-registration') {
+    return { view: 'partner-registration', action: null };
+  }
+
+  return { view: 'home', action: null };
 };
 
 function App() {
-  const [storeAction, setStoreAction] = useState(() => {
-    const hash = window.location.hash;
-    if (hash === '#bulk-combo' || hash === '#bulk-combos') return 'bulk-combo';
-    if (hash === '#bulk-combo-buy') return 'bulk-combo-buy';
-    if (hash === '#drain-clips-buy') return 'drain-clips-buy';
-    if (hash === '#drain-clips') return 'drain-clips';
-    return null;
-  });
-  const [currentView, setCurrentView] = useState(() => {
-    const hash = window.location.hash;
-    if (isOrderHash(hash)) return 'orders';
-    if (isAquaHash(hash)) return 'aqua-store';
-    if (isStoreHash(hash)) return 'store';
-    if (hash === '#partner-registration') return 'partner-registration';
-    return 'home';
-  });
+  const initialRoute = resolveRoute();
+  const [storeAction, setStoreAction] = useState(initialRoute.action);
+  const [currentView, setCurrentView] = useState(initialRoute.view);
 
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash;
-      if (isOrderHash(hash)) {
-        setCurrentView('orders');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (isAquaHash(hash)) {
-        setCurrentView('aqua-store');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (isStoreHash(hash)) {
-        setCurrentView('store');
-        setStoreAction(
-          hash === '#bulk-combo' || hash === '#bulk-combos' 
-            ? 'bulk-combo' 
-            : hash === '#bulk-combo-buy'
-            ? 'bulk-combo-buy'
-            : hash === '#drain-clips-buy'
-            ? 'drain-clips-buy'
-            : hash === '#drain-clips' 
-            ? 'drain-clips' 
-            : null
-        );
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (hash === '#partner-registration') {
-        setCurrentView('partner-registration');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (hash === '#home' || hash === '') {
-        setCurrentView('home');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    const handleLocationChange = () => {
+      const route = resolveRoute();
+      setCurrentView(route.view);
+      setStoreAction(route.action);
+
+      // Dynamic SEO Title and Metadata updates for Meta / Google scrapers
+      if (route.action === 'drain-clips' || route.action === 'drain-clips-buy') {
+        document.title = 'MSV Heavy-Duty Solar Panel Drain Clips | Buy Online ₹499 | Mirror Solar Vision';
+      } else if (route.action === 'bulk-combo' || route.action === 'bulk-combo-buy') {
+        document.title = '₹15,000 Bulk Solar Installation Combo | Mirror Solar Vision';
+      } else if (route.view === 'aqua-store') {
+        document.title = 'Mirror Aqua 10" PP Spun Filters & Combos | Buy Online ₹199 | Mirror Life';
+      } else if (route.view === 'orders') {
+        document.title = 'Track Solar Order & Live Logistics | Mirror Solar Vision';
+      } else {
+        document.title = 'Mirror Solar Vision | Rooftop Solar Installation, PM Surya Ghar Subsidy & Solar Hardware Andhra Pradesh';
       }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    window.addEventListener('popstate', handleLocationChange);
+
+    // Run on initial load
+    handleLocationChange();
+
+    return () => {
+      window.removeEventListener('hashchange', handleLocationChange);
+      window.removeEventListener('popstate', handleLocationChange);
+    };
   }, []);
 
   const handleNavigate = (view, action = null) => {
     if (view === 'orders' || view === 'my-orders' || view === 'track' || view === 'track-order') {
       setCurrentView('orders');
-      if (window.location.hash !== '#orders') {
-        window.location.hash = '#orders';
+      if (window.location.pathname !== '/orders') {
+        window.history.pushState({}, '', '/orders');
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (view === 'aqua' || view === 'aqua-store' || view === 'mirror-aqua') {
       setCurrentView('aqua-store');
-      if (window.location.hash !== '#aqua-store') {
-        window.location.hash = '#aqua-store';
+      if (window.location.pathname !== '/aqua-store') {
+        window.history.pushState({}, '', '/aqua-store');
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (view === 'store' || view === 'solar-store' || view === 'bulk-combos' || view === 'bulk-combo' || view === 'bulk-combo-buy' || view === 'drain-clips' || view === 'drain-clips-buy') {
       setCurrentView('store');
       const finalAction = action || (view !== 'store' && view !== 'solar-store' ? view : null);
       setStoreAction(finalAction);
-      const targetHash = finalAction ? `#${finalAction}` : '#store';
-      if (window.location.hash !== targetHash) {
-        window.location.hash = targetHash;
+      const targetPath = finalAction === 'drain-clips' ? '/drain-clips' : finalAction === 'bulk-combo' ? '/bulk-combo' : '/store';
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState({}, '', targetPath);
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (view === 'partner-registration') {
       setCurrentView('partner-registration');
-      if (window.location.hash !== '#partner-registration') {
-        window.location.hash = '#partner-registration';
+      if (window.location.pathname !== '/partner-registration') {
+        window.history.pushState({}, '', '/partner-registration');
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       setCurrentView('home');
-      if (window.location.hash !== '#home' && window.location.hash !== '') {
-        window.location.hash = '#home';
+      if (window.location.pathname !== '/') {
+        window.history.pushState({}, '', '/');
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
