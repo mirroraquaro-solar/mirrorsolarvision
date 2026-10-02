@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Check, Lock, AlertCircle, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { loadRazorpay } from '../../services/razorpayLoader';
+import { analytics } from '../../aqua/services/analytics';
 
 const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
   const [loading, setLoading] = useState(false);
@@ -160,6 +161,22 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
                 localStorage.setItem('msv_recent_orders', JSON.stringify(updatedList));
               } catch (localErr) {
                 console.warn("Could not save recent order to localStorage:", localErr);
+              }
+
+              // Track Purchase event in Meta Pixel with matching eventID (purchase_MSV-XXXXXX)
+              try {
+                analytics.trackPurchase({
+                  orderId: data.bookingId || data.firestoreOrderId,
+                  bookingId: data.bookingId || data.firestoreOrderId,
+                  id: data.firestoreOrderId,
+                  total: totalAmount,
+                  amount: totalAmount,
+                  items: cartItems,
+                  customer: address,
+                  shippingAddress: address
+                });
+              } catch (trackErr) {
+                console.warn("Analytics purchase tracking:", trackErr);
               }
 
               onPaymentSuccess({

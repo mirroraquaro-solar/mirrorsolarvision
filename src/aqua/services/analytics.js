@@ -118,13 +118,15 @@ class AnalyticsService {
           num_items: (payload.items || []).length
         }, metaOpts);
       } else if (eventName === 'purchase') {
+        const rawOrderId = payload.order_id || payload.orderId || payload.bookingId || payload.transaction_id || 'MSV-ORDER';
+        const purchaseEventId = payload.event_id || (String(rawOrderId).startsWith('purchase_') ? rawOrderId : `purchase_${rawOrderId}`);
         window.fbq('track', 'Purchase', {
           content_type: 'product',
-          content_ids: (payload.items || []).map(i => i.productId || i.item_id || i.sku),
+          content_ids: (payload.items || []).map(i => i.productId || i.item_id || i.sku || i.id),
           value: payload.value,
           currency: payload.currency || 'INR',
           num_items: (payload.items || []).length
-        }, { eventID: payload.transaction_id || payload.orderId || eventId });
+        }, { eventID: purchaseEventId });
       } else if (eventName === 'bulk_enquiry' || eventName === 'dealer_enquiry') {
         window.fbq('track', 'Lead', {
           content_name: payload.business_name || payload.businessName || 'Mirror Aqua Inquiry',
@@ -216,12 +218,17 @@ class AnalyticsService {
   }
 
   trackPurchase(orderData) {
+    const orderId = orderData.orderId || orderData.bookingId || orderData.id || 'MSV-ORDER';
+    const eventId = String(orderId).startsWith('purchase_') ? orderId : `purchase_${orderId}`;
     this.trackEvent('purchase', {
-      transaction_id: orderData.orderId,
-      value: orderData.total,
+      event_id: eventId,
+      order_id: orderId,
+      booking_id: orderData.bookingId || orderId,
+      transaction_id: orderData.payment?.transactionId || orderId,
+      value: orderData.total || orderData.amount || 0,
       currency: 'INR',
-      shipping: orderData.shippingFee,
-      items: orderData.items,
+      shipping: orderData.shippingFee || 0,
+      items: orderData.items || [],
       attribution: this.utmParams
     });
   }

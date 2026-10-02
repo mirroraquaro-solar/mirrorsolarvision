@@ -373,10 +373,11 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
           console.error("Order notification dispatch error:", notifErr);
         });
 
-        // 6. Dispatch Server-Side Meta Conversions API (CAPI) Purchase Event with deduplication
+        // 6. Dispatch Server-Side Meta Conversions API (CAPI) Purchase Event with exact deduplication event_id
+        const purchaseEventId = `purchase_${orderBookingId}`;
         sendMetaConversionsApiEvent({
           eventName: 'Purchase',
-          eventId: orderBookingId,
+          eventId: purchaseEventId,
           eventSourceUrl: 'https://mirrorsolarvision.com/',
           userData: {
             email: fullOrderRecord.customerEmail || address.email,
