@@ -35,6 +35,13 @@ async function getShiprocketToken() {
   return data.token;
 }
 
+// Meta Conversions API (CAPI) Configuration & Secret Manager Binding
+let metaCapiSecret;
+try {
+  const { defineSecret } = require('firebase-functions/params');
+  metaCapiSecret = defineSecret('META_CAPI_ACCESS_TOKEN');
+} catch (e) {}
+
 // Meta Conversions API (CAPI) Server-Side Event Dispatcher with SHA256 Normalization & Deduplication
 async function sendMetaConversionsApiEvent({
   eventName,
@@ -49,12 +56,20 @@ async function sendMetaConversionsApiEvent({
   customData = {}
 }) {
   const pixelId = process.env.META_PIXEL_ID || '1133118705927784';
-  const metaAccessToken = process.env.META_CAPI_ACCESS_TOKEN || process.env.FB_ACCESS_TOKEN;
+  let metaAccessToken = null;
+  try {
+    if (metaCapiSecret && typeof metaCapiSecret.value === 'function') {
+      metaAccessToken = metaCapiSecret.value();
+    }
+  } catch (secErr) {}
+  if (!metaAccessToken) {
+    metaAccessToken = process.env.META_CAPI_ACCESS_TOKEN || process.env.FB_ACCESS_TOKEN;
+  }
   const envTestCode = process.env.META_TEST_EVENT_CODE;
   const activeTestCode = testEventCode || envTestCode;
 
   if (!metaAccessToken) {
-    console.log(`[Meta CAPI] META_CAPI_ACCESS_TOKEN not configured in environment, skipping server dispatch for ${eventName} (${eventId}).`);
+    console.log(`[Meta CAPI] META_CAPI_ACCESS_TOKEN not configured in environment or Secret Manager, skipping server dispatch for ${eventName} (${eventId}).`);
     return null;
   }
 
