@@ -47,6 +47,9 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
     e.preventDefault();
     setStep(2);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      analytics.trackBeginCheckout(cartItems, totalAmount, address);
+    } catch (err) {}
   };
 
   const handlePincodeChange = async (e) => {
@@ -77,6 +80,8 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
     setError(null);
     try {
       const effectiveUserId = user?.uid || `guest_${address.phone ? address.phone.replace(/[^0-9]/g, '') : Date.now()}`;
+      const fbp = analytics.getFbp();
+      const fbc = analytics.getFbc();
       
       // 1. Call Backend to create Razorpay Order & Save Address
       const createOrderURL = 'https://us-central1-mirror-solar-vision.cloudfunctions.net/createRazorpayOrder';
@@ -89,12 +94,16 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
             amount: totalAmount,
             items: cartItems,
             userId: effectiveUserId,
-            address: address
+            address: address,
+            fbp,
+            fbc
           },
           amount: totalAmount,
           items: cartItems,
           userId: effectiveUserId,
-          address: address
+          address: address,
+          fbp,
+          fbc
         })
       });
 
@@ -127,13 +136,19 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_signature: response.razorpay_signature,
                   firestoreOrderId: data.firestoreOrderId,
-                  userId: effectiveUserId
+                  userId: effectiveUserId,
+                  fbp,
+                  fbc,
+                  eventSourceUrl: window.location.href
                 },
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_signature: response.razorpay_signature,
                 firestoreOrderId: data.firestoreOrderId,
-                userId: effectiveUserId
+                userId: effectiveUserId,
+                fbp,
+                fbc,
+                eventSourceUrl: window.location.href
               })
             });
 

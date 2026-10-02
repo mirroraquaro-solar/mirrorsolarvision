@@ -169,6 +169,12 @@ export function CheckoutPage({ onNavigate }) {
 
       const grandTotal = cartState.grandTotal || currentItems.reduce((acc, it) => acc + (it.unitPrice * it.quantity), 0);
       const effectiveUserId = `guest_${cleanPhone}`;
+      const fbp = analytics.getFbp();
+      const fbc = analytics.getFbc();
+
+      try {
+        analytics.trackBeginCheckout(currentItems, grandTotal, formData);
+      } catch (e) {}
 
       // 1. Call Main Firebase Cloud Function to create Razorpay Order & register in Firestore
       const createOrderURL = 'https://us-central1-mirror-solar-vision.cloudfunctions.net/createRazorpayOrder';
@@ -196,7 +202,9 @@ export function CheckoutPage({ onNavigate }) {
               area: formData.address,
               city: formData.city,
               state: formData.state
-            }
+            },
+            fbp,
+            fbc
           }
         })
       });
@@ -240,7 +248,10 @@ export function CheckoutPage({ onNavigate }) {
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_signature: response.razorpay_signature,
                   firestoreOrderId: data.firestoreOrderId,
-                  userId: effectiveUserId
+                  userId: effectiveUserId,
+                  fbp,
+                  fbc,
+                  eventSourceUrl: window.location.href
                 }
               })
             });

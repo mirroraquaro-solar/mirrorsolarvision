@@ -1,6 +1,12 @@
 /**
- * MIRROR AQUA ANALYTICS & UTM ATTRIBUTION PIPELINE
- * Preserves UTM campaign parameters across the entire funnel and dispatches standard GA4 / Meta Pixel e-commerce events.
+ * MIRROR SOLAR VISION & MIRROR AQUA ANALYTICS PIPELINE
+ * Hybrid Meta Pixel + Meta Conversions API (CAPI) Integration with Server-Side Deduplication
+ * Preserves UTM campaign parameters, captures _fbp/_fbc cookies, and dispatches real website events:
+ * 1. ViewContent
+ * 2. AddToCart
+ * 3. InitiateCheckout
+ * 4. Purchase
+ * 5. Contact (Leads, Site Surveys, Quotes, WhatsApp Chats)
  */
 
 class AnalyticsService {
@@ -72,6 +78,91 @@ class AnalyticsService {
     return this.utmParams;
   }
 
+  /**
+   * Helper to retrieve cookie value by name
+   */
+  getCookie(name) {
+    if (typeof document === 'undefined') return null;
+    const match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
+    return match ? decodeURIComponent(match[3]) : null;
+  }
+
+  /**
+   * Captures the Meta _fbp cookie (Browser Pixel Cookie)
+   */
+  getFbp() {
+    return this.getCookie('_fbp');
+  }
+
+  /**
+   * Captures the Meta _fbc cookie or generates from URL fbclid parameter
+   */
+  getFbc() {
+    const cookieFbc = this.getCookie('_fbc');
+    if (cookieFbc) return cookieFbc;
+
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const fbclid = urlParams.get('fbclid');
+      if (fbclid) {
+        return `fb.1.${Date.now()}.${fbclid}`;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Asynchronous dispatch to Cloud Function trackMetaServerEvent for Server-Side CAPI
+   */
+  async sendServerCAPI(eventName, eventId, customData = {}, userData = {}) {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const fbp = this.getFbp();
+      const fbc = this.getFbc();
+
+      // Attempt to retrieve stored customer info if not explicitly passed
+      let storedCustomer = {};
+      try {
+        storedCustomer = JSON.parse(localStorage.getItem('kc_customer_info') || '{}');
+      } catch (e) {}
+
+      const mergedUserData = {
+        email: userData.email || storedCustomer.email || undefined,
+        phone: userData.phone || storedCustomer.phone || undefined,
+        firstName: userData.firstName || userData.fullName?.split(' ')[0] || storedCustomer.fullName?.split(' ')[0] || undefined,
+        lastName: userData.lastName || userData.fullName?.split(' ').slice(1).join(' ') || storedCustomer.fullName?.split(' ').slice(1).join(' ') || undefined,
+        city: userData.city || storedCustomer.city || undefined,
+        state: userData.state || storedCustomer.state || undefined,
+        pincode: userData.pincode || userData.zip || storedCustomer.pincode || undefined,
+        fbp: fbp || userData.fbp || undefined,
+        fbc: fbc || userData.fbc || undefined,
+        clientUserAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined
+      };
+
+      const endpoint = 'https://us-central1-mirror-solar-vision.cloudfunctions.net/trackMetaServerEvent';
+
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({
+          eventName,
+          eventId,
+          eventSourceUrl: window.location.href,
+          userData: mergedUserData,
+          customData
+        })
+      }).catch(err => {
+        if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
+          console.warn('[Analytics] Meta CAPI server ping notice:', err);
+        }
+      });
+    } catch (e) {
+      // Non-blocking fail-safe
+    }
+  }
+
   trackEvent(eventName, payload = {}) {
     const enrichedPayload = {
       ...payload,
@@ -81,7 +172,7 @@ class AnalyticsService {
 
     // Console debug for local verification
     if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
-      console.log(`📊 [Mirror Aqua Analytics] ${eventName}:`, enrichedPayload);
+      console.log(`📊 [Mirror Analytics] ${eventName}:`, enrichedPayload);
     }
 
     // GA4 Integration Bridge (window.gtag)
@@ -89,50 +180,121 @@ class AnalyticsService {
       window.gtag('event', eventName, enrichedPayload);
     }
 
-    // Meta Pixel Bridge (window.fbq) with Deduplication EventID
-    if (typeof window !== 'undefined' && window.fbq) {
-      const eventId = payload.event_id || payload.order_id || payload.transaction_id || `evt_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-      const metaOpts = { eventID: eventId };
+    // Meta Pixel & CAPI Hybrid Integration with exact deduplication eventID
+    if (typeof window !== 'undefined') {
+      // 1. ViewContent
+      if (eventName === 'view_item' || eventName === 'ViewContent') {
+        const firstItem = payload.items?.[0] || {};
+        const eventId = payload.event_id || `vc_${firstItem.item_id || firstItem.productId || 'item'}_${Date.now()}`;
+        const customData = {
+          content_type: 'product',
+          content_ids: (payload.items || []).map(i => i.item_id || i.productId || i.sku || i.id),
+          contents: (payload.items || []).map(i => ({
+            id: i.item_id || i.productId || i.sku || i.id,
+            quantity: Number(i.quantity) || 1,
+            item_price: Number(i.price || i.unitPrice || payload.value || 0)
+          })),
+          content_name: firstItem.item_name || payload.content_name || 'Product Detail',
+          content_category: firstItem.item_category || payload.category || 'Solar & Water Purification',
+          value: Number(payload.value || firstItem.price || 0),
+          currency: payload.currency || 'INR'
+        };
 
-      if (eventName === 'view_item') {
-        window.fbq('track', 'ViewContent', {
+        if (window.fbq) {
+          window.fbq('track', 'ViewContent', customData, { eventID: eventId });
+        }
+        this.sendServerCAPI('ViewContent', eventId, customData, payload.customer || payload.userData);
+      } 
+      // 2. AddToCart
+      else if (eventName === 'add_to_cart' || eventName === 'AddToCart') {
+        const firstItem = payload.items?.[0] || {};
+        const eventId = payload.event_id || `atc_${firstItem.item_id || firstItem.productId || 'item'}_${Date.now()}`;
+        const customData = {
           content_type: 'product',
-          content_ids: (payload.items || []).map(i => i.item_id),
-          content_name: payload.items?.[0]?.item_name,
-          value: payload.value,
+          content_ids: (payload.items || []).map(i => i.item_id || i.productId || i.sku || i.id),
+          contents: (payload.items || []).map(i => ({
+            id: i.item_id || i.productId || i.sku || i.id,
+            quantity: Number(i.quantity) || 1,
+            item_price: Number(i.price || i.unitPrice || 0)
+          })),
+          content_name: firstItem.item_name || payload.content_name,
+          value: Number(payload.value || 0),
           currency: payload.currency || 'INR'
-        }, metaOpts);
-      } else if (eventName === 'add_to_cart') {
-        window.fbq('track', 'AddToCart', {
+        };
+
+        if (window.fbq) {
+          window.fbq('track', 'AddToCart', customData, { eventID: eventId });
+        }
+        this.sendServerCAPI('AddToCart', eventId, customData, payload.customer || payload.userData);
+      } 
+      // 3. InitiateCheckout
+      else if (eventName === 'begin_checkout' || eventName === 'InitiateCheckout') {
+        const eventId = payload.event_id || `ic_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+        const customData = {
           content_type: 'product',
-          content_ids: (payload.items || []).map(i => i.item_id),
-          value: payload.value,
-          currency: payload.currency || 'INR'
-        }, metaOpts);
-      } else if (eventName === 'begin_checkout') {
-        window.fbq('track', 'InitiateCheckout', {
-          content_type: 'product',
-          content_ids: (payload.items || []).map(i => i.item_id),
-          value: payload.value,
+          content_ids: (payload.items || []).map(i => i.item_id || i.productId || i.sku || i.id),
+          contents: (payload.items || []).map(i => ({
+            id: i.item_id || i.productId || i.sku || i.id,
+            quantity: Number(i.quantity) || 1,
+            item_price: Number(i.price || i.unitPrice || 0)
+          })),
+          value: Number(payload.value || 0),
           currency: payload.currency || 'INR',
-          num_items: (payload.items || []).length
-        }, metaOpts);
-      } else if (eventName === 'purchase') {
+          num_items: (payload.items || []).reduce((acc, i) => acc + (Number(i.quantity) || 1), 0)
+        };
+
+        if (window.fbq) {
+          window.fbq('track', 'InitiateCheckout', customData, { eventID: eventId });
+        }
+        this.sendServerCAPI('InitiateCheckout', eventId, customData, payload.customer || payload.userData);
+      } 
+      // 4. Purchase
+      else if (eventName === 'purchase' || eventName === 'Purchase') {
         const rawOrderId = payload.order_id || payload.orderId || payload.bookingId || payload.transaction_id || 'MSV-ORDER';
         const purchaseEventId = payload.event_id || (String(rawOrderId).startsWith('purchase_') ? rawOrderId : `purchase_${rawOrderId}`);
-        window.fbq('track', 'Purchase', {
+        const customData = {
           content_type: 'product',
           content_ids: (payload.items || []).map(i => i.productId || i.item_id || i.sku || i.id),
-          value: payload.value,
+          contents: (payload.items || []).map(i => ({
+            id: i.productId || i.item_id || i.sku || i.id,
+            quantity: Number(i.quantity) || 1,
+            item_price: Number(i.price || i.unitPrice || 0)
+          })),
+          value: Number(payload.value || payload.total || payload.amount || 0),
           currency: payload.currency || 'INR',
-          num_items: (payload.items || []).length
-        }, { eventID: purchaseEventId });
-      } else if (eventName === 'bulk_enquiry' || eventName === 'dealer_enquiry') {
-        window.fbq('track', 'Lead', {
-          content_name: payload.business_name || payload.businessName || 'Mirror Aqua Inquiry',
-          value: payload.quantity ? Number(payload.quantity) * 180 : 1000,
+          num_items: (payload.items || []).reduce((acc, i) => acc + (Number(i.quantity) || 1), 0),
+          order_id: rawOrderId
+        };
+
+        if (window.fbq) {
+          window.fbq('track', 'Purchase', customData, { eventID: purchaseEventId });
+        }
+        // Note: The Firebase backend verifyRazorpayPayment function also triggers server CAPI Purchase with the identical purchaseEventId for 100% deduplication.
+      } 
+      // 5. Contact (Leads, Site Surveys, Quotes, Inquiries, WhatsApp)
+      else if (
+        eventName === 'contact' || 
+        eventName === 'Contact' || 
+        eventName === 'bulk_enquiry' || 
+        eventName === 'dealer_enquiry' || 
+        eventName === 'site_survey' || 
+        eventName === 'quote_request' || 
+        eventName === 'compatibility_enquiry' || 
+        eventName === 'whatsapp_click'
+      ) {
+        const bookingId = payload.bookingId || payload.booking_id;
+        const contactEventId = payload.event_id || (bookingId ? `contact_${bookingId}` : `contact_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`);
+        const customData = {
+          content_name: payload.business_name || payload.businessName || payload.productName || payload.name || 'Mirror Solar / Aqua Lead',
+          content_category: eventName,
+          value: Number(payload.value || (payload.quantity ? Number(payload.quantity) * 180 : 0)),
           currency: 'INR'
-        }, metaOpts);
+        };
+
+        if (window.fbq) {
+          window.fbq('track', 'Contact', customData, { eventID: contactEventId });
+        }
+        this.sendServerCAPI('Contact', contactEventId, customData, payload.customer || payload.leadData || payload);
       }
     }
   }
@@ -169,11 +331,11 @@ class AnalyticsService {
   trackAddToCart(product, quantity = 1) {
     this.trackEvent('add_to_cart', {
       currency: 'INR',
-      value: product.price * quantity,
+      value: (product.price || product.unitPrice || 199) * quantity,
       items: [{
         item_id: product.sku || product.id,
         item_name: product.name,
-        price: product.price,
+        price: product.price || product.unitPrice || 199,
         quantity: quantity
       }]
     });
@@ -182,21 +344,22 @@ class AnalyticsService {
   trackBuyNow(product, quantity = 1) {
     this.trackEvent('buy_now', {
       currency: 'INR',
-      value: product.price * quantity,
+      value: (product.price || product.unitPrice || 199) * quantity,
       product_id: product.sku || product.id,
       quantity
     });
   }
 
-  trackBeginCheckout(cartItems, totalValue) {
+  trackBeginCheckout(cartItems, totalValue, customerInfo = {}) {
     this.trackEvent('begin_checkout', {
       currency: 'INR',
       value: totalValue,
+      customer: customerInfo,
       items: cartItems.map(item => ({
-        item_id: item.product.sku || item.product.id,
-        item_name: item.product.name,
-        price: item.product.price,
-        quantity: item.quantity
+        item_id: item.product?.sku || item.product?.id || item.productId || item.sku || item.id,
+        item_name: item.product?.name || item.name || 'Product',
+        price: item.product?.price || item.unitPrice || item.price || 0,
+        quantity: item.quantity || 1
       }))
     });
   }
@@ -228,8 +391,28 @@ class AnalyticsService {
       value: orderData.total || orderData.amount || 0,
       currency: 'INR',
       shipping: orderData.shippingFee || 0,
-      items: orderData.items || [],
+      items: (orderData.items || []).map(i => ({
+        productId: i.productId || i.product?.id || i.sku || i.id,
+        name: i.product?.name || i.name || 'Product',
+        price: i.unitPrice || i.price || 0,
+        quantity: i.quantity || 1
+      })),
+      customer: orderData.customer || orderData.address || {},
       attribution: this.utmParams
+    });
+  }
+
+  trackContact(contactData) {
+    this.trackEvent('contact', {
+      bookingId: contactData.bookingId,
+      name: contactData.name || contactData.fullName,
+      phone: contactData.phone,
+      email: contactData.email,
+      district: contactData.district,
+      city: contactData.city,
+      value: contactData.totalPrice || contactData.amount || 0,
+      productName: contactData.productName || contactData.type,
+      customer: contactData
     });
   }
 
@@ -259,18 +442,22 @@ class AnalyticsService {
 
   trackBulkEnquiry(leadData) {
     this.trackEvent('bulk_enquiry', {
+      bookingId: leadData.bookingId,
       product_id: leadData.productId,
       quantity: leadData.requiredQuantity,
       city: leadData.city,
-      business_name: leadData.businessName
+      business_name: leadData.businessName,
+      customer: leadData
     });
   }
 
   trackDealerEnquiry(leadData) {
     this.trackEvent('dealer_enquiry', {
+      bookingId: leadData.bookingId,
       city: leadData.city,
       district: leadData.district,
-      business_name: leadData.businessName
+      business_name: leadData.businessName,
+      customer: leadData
     });
   }
 }

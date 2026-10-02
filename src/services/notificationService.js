@@ -1,5 +1,6 @@
 import { collection, addDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { analytics } from '../aqua/services/analytics';
 
 export const ADMIN_WHATSAPP = '919182612420';
 export const ADMIN_EMAIL = 'balajiperuri09@mail.com';
@@ -539,7 +540,24 @@ export const submitBookingWithNotification = async (type, data) => {
     console.warn("Cloud function trigger error (falling back to direct client notifications):", fnErr);
   }
 
-  // 3. Build WhatsApp redirect link for instant user action
+  // 3. Trigger Client Meta Pixel & CAPI Contact Event
+  try {
+    analytics.trackContact({
+      bookingId,
+      name: data.name || data.fullName,
+      phone: data.phone,
+      email: data.email,
+      district: data.district,
+      city: data.city,
+      totalPrice: data.totalPrice || data.amount || 0,
+      productName: data.productName || type,
+      type
+    });
+  } catch (trackErr) {
+    console.warn("Analytics contact track error:", trackErr);
+  }
+
+  // 4. Build WhatsApp redirect link for instant user action
   let waInfo = { text: '', waUrl: '' };
   if (type === 'site_survey') {
     waInfo = getWhatsAppSiteSurveyText({ ...data, bookingId });

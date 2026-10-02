@@ -40,60 +40,91 @@ async function sendMetaConversionsApiEvent({
   eventName,
   eventId,
   eventSourceUrl,
+  clientIp,
+  clientUserAgent,
+  fbp,
+  fbc,
+  testEventCode,
   userData = {},
   customData = {}
 }) {
   const pixelId = process.env.META_PIXEL_ID || '1133118705927784';
   const metaAccessToken = process.env.META_CAPI_ACCESS_TOKEN || process.env.FB_ACCESS_TOKEN;
+  const envTestCode = process.env.META_TEST_EVENT_CODE;
+  const activeTestCode = testEventCode || envTestCode;
 
   if (!metaAccessToken) {
-    console.log("Meta Conversions API: META_CAPI_ACCESS_TOKEN not set in environment, skipping server-side CAPI event.");
+    console.log(`[Meta CAPI] META_CAPI_ACCESS_TOKEN not configured in environment, skipping server dispatch for ${eventName} (${eventId}).`);
     return null;
   }
 
   const hashString = (str) => {
-    if (!str) return undefined;
-    return crypto.createHash('sha256').update(String(str).trim().toLowerCase()).digest('hex');
+    if (!str || (typeof str !== 'string' && typeof str !== 'number')) return undefined;
+    const clean = String(str).trim().toLowerCase();
+    if (!clean) return undefined;
+    return crypto.createHash('sha256').update(clean).digest('hex');
+  };
+
+  const normalizePhone = (phoneStr) => {
+    if (!phoneStr) return undefined;
+    let digits = String(phoneStr).replace(/[^0-9]/g, '');
+    if (!digits) return undefined;
+    if (digits.length === 10) digits = '91' + digits; // Standardize 10-digit Indian numbers with country code
+    return hashString(digits);
   };
 
   const userPayload = {
     em: userData.email ? [hashString(userData.email)] : undefined,
-    ph: userData.phone ? [hashString(userData.phone.replace(/[^0-9]/g, ''))] : undefined,
+    ph: userData.phone ? [normalizePhone(userData.phone)] : undefined,
     fn: userData.firstName ? [hashString(userData.firstName)] : undefined,
     ln: userData.lastName ? [hashString(userData.lastName)] : undefined,
     ct: userData.city ? [hashString(userData.city)] : undefined,
     st: userData.state ? [hashString(userData.state)] : undefined,
     zp: userData.pincode || userData.zip ? [hashString(userData.pincode || userData.zip)] : undefined,
-    country: [hashString('in')]
+    country: [hashString('in')],
+    external_id: userData.externalId || userData.userId ? [hashString(userData.externalId || userData.userId)] : undefined,
+    client_ip_address: clientIp || userData.clientIp || undefined,
+    client_user_agent: clientUserAgent || userData.clientUserAgent || undefined,
+    fbp: fbp || userData.fbp || undefined,
+    fbc: fbc || userData.fbc || undefined
   };
 
+  // Strip undefined keys from user_data (Meta requires non-empty or omitted keys)
   Object.keys(userPayload).forEach(k => userPayload[k] === undefined && delete userPayload[k]);
 
-  const payload = {
-    data: [
-      {
-        event_name: eventName,
-        event_time: Math.floor(Date.now() / 1000),
-        event_id: eventId,
-        event_source_url: eventSourceUrl || 'https://mirrorsolarvision.com/',
-        action_source: 'website',
-        user_data: userPayload,
-        custom_data: customData
-      }
-    ]
+  const eventItem = {
+    event_name: eventName,
+    event_time: Math.floor(Date.now() / 1000),
+    event_id: eventId,
+    event_source_url: eventSourceUrl || 'https://mirrorsolarvision.com/',
+    action_source: 'website',
+    user_data: userPayload,
+    custom_data: customData
   };
 
+  const payload = {
+    data: [eventItem]
+  };
+
+  if (activeTestCode) {
+    payload.test_event_code = activeTestCode;
+  }
+
   try {
-    const res = await fetch(`https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${metaAccessToken}`, {
+    const res = await fetch(`https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${encodeURIComponent(metaAccessToken)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
     const data = await res.json();
-    console.log(`Meta CAPI [${eventName}] response:`, JSON.stringify(data));
+    if (res.ok) {
+      console.log(`[Meta CAPI] Event [${eventName}] (ID: ${eventId}) dispatched successfully:`, JSON.stringify({ events_received: data.events_received, fbtrace_id: data.fbtrace_id }));
+    } else {
+      console.warn(`[Meta CAPI] API returned error for [${eventName}] (ID: ${eventId}):`, JSON.stringify(data.error || data));
+    }
     return data;
   } catch (err) {
-    console.error(`Meta CAPI error on ${eventName}:`, err);
+    console.error(`[Meta CAPI] Network dispatch error on ${eventName} (${eventId}):`, err.message || err);
     return null;
   }
 }
@@ -273,7 +304,8 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
     }
 
     try {
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature, firestoreOrderId, userId } = req.body.data || req.body;
+      const requestPayload = req.body.data || req.body || {};
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature, firestoreOrderId, userId } = requestPayload;
 
       const uid = userId || 'anonymous';
       const userOrderDocRef = admin.firestore().collection('users').doc(uid).collection('orders').doc(firestoreOrderId);
@@ -375,10 +407,30 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
 
         // 6. Dispatch Server-Side Meta Conversions API (CAPI) Purchase Event with exact deduplication event_id
         const purchaseEventId = `purchase_${orderBookingId}`;
+        const rawIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || req.ip || '';
+        const clientIp = typeof rawIp === 'string' ? rawIp.split(',')[0].trim() : '';
+        const clientUserAgent = req.headers['user-agent'] || '';
+        const passedFbp = requestPayload.fbp || orderData.fbp;
+        const passedFbc = requestPayload.fbc || orderData.fbc;
+        const passedSourceUrl = requestPayload.eventSourceUrl || 'https://mirrorsolarvision.com/';
+
+        const orderItems = fullOrderRecord.items || [];
+        const contentIds = orderItems.map(i => i.productId || i.sku || i.id || 'solar-product');
+        const contentsArray = orderItems.map(i => ({
+          id: i.productId || i.sku || i.id || 'solar-product',
+          quantity: Math.max(1, Number(i.quantity) || 1),
+          item_price: Number(i.price || i.unitPrice || (fullOrderRecord.amount / (orderItems.length || 1)))
+        }));
+        const totalItemsCount = orderItems.reduce((acc, i) => acc + (Number(i.quantity) || 1), 0);
+
         sendMetaConversionsApiEvent({
           eventName: 'Purchase',
           eventId: purchaseEventId,
-          eventSourceUrl: 'https://mirrorsolarvision.com/',
+          eventSourceUrl: passedSourceUrl,
+          clientIp,
+          clientUserAgent,
+          fbp: passedFbp,
+          fbc: passedFbc,
           userData: {
             email: fullOrderRecord.customerEmail || address.email,
             phone: fullOrderRecord.customerPhone || address.phone,
@@ -386,21 +438,22 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
             lastName: (address.fullName || fullOrderRecord.customerName || '').split(' ').slice(1).join(' '),
             city: address.city,
             state: address.state,
-            pincode: address.pincode
+            pincode: address.pincode,
+            externalId: fullOrderRecord.userId || uid,
+            fbp: passedFbp,
+            fbc: passedFbc
           },
           customData: {
             currency: 'INR',
             value: Number(fullOrderRecord.amount || 0),
             order_id: orderBookingId,
             content_type: 'product',
-            contents: (fullOrderRecord.items || []).map(i => ({
-              id: i.productId || i.sku || i.id,
-              quantity: i.quantity || 1,
-              item_price: i.price || i.unitPrice || 0
-            }))
+            content_ids: contentIds,
+            contents: contentsArray,
+            num_items: totalItemsCount
           }
         }).catch((capiErr) => {
-          console.error("Meta CAPI dispatch error:", capiErr);
+          console.error("Meta CAPI purchase dispatch error:", capiErr);
         });
 
         return res.status(200).send({ 
@@ -847,6 +900,46 @@ exports.createBookingNotification = functions.https.onRequest((req, res) => {
       // Dispatch automated WhatsApp & Email
       const notifResults = await dispatchBookingNotifications(type, bookingRecord);
 
+      // Dispatch Server-Side Meta Conversions API (CAPI) Contact Event
+      const contactEventId = `contact_${bookingId}`;
+      const rawIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || req.ip || '';
+      const clientIp = typeof rawIp === 'string' ? rawIp.split(',')[0].trim() : '';
+      const clientUserAgent = req.headers['user-agent'] || '';
+
+      const custName = (data.name || data.fullName || '').trim();
+      const nameParts = custName.split(' ');
+      const firstName = nameParts[0] || 'Customer';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      sendMetaConversionsApiEvent({
+        eventName: 'Contact',
+        eventId: contactEventId,
+        eventSourceUrl: payload.eventSourceUrl || 'https://mirrorsolarvision.com/',
+        clientIp,
+        clientUserAgent,
+        fbp: payload.fbp || data.fbp,
+        fbc: payload.fbc || data.fbc,
+        userData: {
+          email: data.email,
+          phone: data.phone,
+          firstName: firstName,
+          lastName: lastName,
+          city: data.city || data.district,
+          state: data.state || 'Andhra Pradesh',
+          pincode: data.pincode,
+          fbp: payload.fbp || data.fbp,
+          fbc: payload.fbc || data.fbc
+        },
+        customData: {
+          currency: 'INR',
+          value: Number(data.totalPrice || data.amount || 0),
+          content_name: data.productName || `Mirror Solar Inquiry: ${type}`,
+          content_category: type
+        }
+      }).catch((capiErr) => {
+        console.error("Meta CAPI contact dispatch error:", capiErr);
+      });
+
       return res.status(200).send({
         data: {
           success: true,
@@ -861,4 +954,59 @@ exports.createBookingNotification = functions.https.onRequest((req, res) => {
     }
   });
 });
+
+/**
+ * Universal Server-Side Meta Conversions API Event Dispatcher Endpoint
+ * Handles ViewContent, AddToCart, InitiateCheckout, Purchase, and Contact events
+ * Automatically extracts and enriches Client IP and Client User-Agent
+ */
+exports.trackMetaServerEvent = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    if (req.method !== 'POST') {
+      return res.status(405).send('Method Not Allowed');
+    }
+
+    try {
+      const payload = req.body.data || req.body || {};
+      const { eventName, eventId, eventSourceUrl, userData = {}, customData = {}, testEventCode } = payload;
+
+      if (!eventName || !eventId) {
+        return res.status(400).send({ data: { error: 'eventName and eventId are required.' } });
+      }
+
+      // Safe client IP extraction (handles proxies / Cloudflare / Firebase CDN headers)
+      const rawIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || req.ip || '';
+      const clientIp = typeof rawIp === 'string' ? rawIp.split(',')[0].trim() : '';
+
+      // Client User Agent extraction
+      const clientUserAgent = req.headers['user-agent'] || '';
+
+      const capiResult = await sendMetaConversionsApiEvent({
+        eventName,
+        eventId,
+        eventSourceUrl: eventSourceUrl || 'https://mirrorsolarvision.com/',
+        clientIp,
+        clientUserAgent,
+        fbp: userData.fbp,
+        fbc: userData.fbc,
+        testEventCode,
+        userData,
+        customData
+      });
+
+      return res.status(200).send({
+        data: {
+          success: true,
+          eventId,
+          eventName,
+          capiResult: capiResult ? { events_received: capiResult.events_received } : null
+        }
+      });
+    } catch (error) {
+      console.error("[Meta CAPI] trackMetaServerEvent endpoint error:", error.message || error);
+      return res.status(500).send({ data: { error: 'Failed to process Meta CAPI server event' } });
+    }
+  });
+});
+
 
