@@ -4,12 +4,69 @@
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
   
-  <!-- Homepage & Core Public Sections (Canonical Production Domain) -->
+  <!-- Homepage -->
   <url>
     <loc>https://mirrorsolarvision.com/</loc>
-    <lastmod>2026-09-28</lastmod>
+    <lastmod>2026-10-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
+  <!-- Product 1: MSV Drain Clips -->
+  <url>
+    <loc>https://mirrorsolarvision.com/drain-clips</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Product 2: ₹15,000 Bulk Solar Installation Combo -->
+  <url>
+    <loc>https://mirrorsolarvision.com/bulk-combo</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Product 3: Mirror Aqua 10-Inch PP Spun Filter -->
+  <url>
+    <loc>https://mirrorsolarvision.com/products/10-inch-pp-spun-filter</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Product 4: Mirror Aqua 5-Spun + Free Wrench Combo -->
+  <url>
+    <loc>https://mirrorsolarvision.com/products/5-spun-filter-pack-with-free-wrench</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Stores -->
+  <url>
+    <loc>https://mirrorsolarvision.com/store</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mirrorsolarvision.com/aqua-store</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mirrorsolarvision.com/orders</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://mirrorsolarvision.com/partner-registration</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
 </urlset>

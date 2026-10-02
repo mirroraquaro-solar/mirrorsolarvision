@@ -42,6 +42,76 @@ try {
   metaCapiSecret = defineSecret('META_CAPI_ACCESS_TOKEN');
 } catch (e) {}
 
+// Catalog ID Expansion Map for 100% Meta Catalog Match Rate
+const CATALOG_ID_MAP = {
+  // 1. MSV Heavy-Duty Drain Clips
+  'msv-drain-clips': ['msv-drain-clips', 'MSV-DRAIN-35MM', 'MSV-DRAIN-CLIPS', 'drain-clips', 'solar-drain-clips', 'msv-drain-clip-35mm', 'msv-drain-clips-35mm', 'msv-drain-clips-30mm', 'msv-drain-clips-40mm'],
+  'MSV-DRAIN-35MM': ['msv-drain-clips', 'MSV-DRAIN-35MM', 'MSV-DRAIN-CLIPS', 'drain-clips', 'solar-drain-clips', 'msv-drain-clip-35mm', 'msv-drain-clips-35mm'],
+  'drain-clips': ['msv-drain-clips', 'MSV-DRAIN-35MM', 'MSV-DRAIN-CLIPS', 'drain-clips', 'solar-drain-clips', 'msv-drain-clip-35mm', 'msv-drain-clips-35mm'],
+
+  // 2. ₹15,000 Bulk Combo
+  'bulk-combo-15000': ['bulk-combo-15000', 'installer-bulk-combo', 'msv-bulk-combo', 'MSV-COMBO-15K', 'bulk-combo', 'solar-hardware-combo', 'bulk-combos', 'MSV-BULK-COMBO'],
+  'installer-bulk-combo': ['bulk-combo-15000', 'installer-bulk-combo', 'msv-bulk-combo', 'MSV-COMBO-15K', 'bulk-combo', 'solar-hardware-combo', 'MSV-BULK-COMBO'],
+  'msv-bulk-combo': ['bulk-combo-15000', 'installer-bulk-combo', 'msv-bulk-combo', 'MSV-COMBO-15K', 'bulk-combo', 'solar-hardware-combo', 'MSV-BULK-COMBO'],
+  'MSV-COMBO-15K': ['bulk-combo-15000', 'installer-bulk-combo', 'msv-bulk-combo', 'MSV-COMBO-15K', 'bulk-combo', 'solar-hardware-combo', 'MSV-BULK-COMBO'],
+  'bulk-combo': ['bulk-combo-15000', 'installer-bulk-combo', 'msv-bulk-combo', 'MSV-COMBO-15K', 'bulk-combo', 'solar-hardware-combo', 'MSV-BULK-COMBO'],
+
+  // 3. Mirror Aqua 10" PP Spun Filter (120g)
+  'ma-prod-001': ['ma-prod-001', 'MA-PP-10-05M', '10-inch-5-micron-pp-spun-filter', '10-inch-pp-spun-filter', 'ma-pp-spun-filter-120g', 'spun-filter', 'pp-filter'],
+  'MA-PP-10-05M': ['ma-prod-001', 'MA-PP-10-05M', '10-inch-5-micron-pp-spun-filter', '10-inch-pp-spun-filter', 'ma-pp-spun-filter-120g', 'spun-filter', 'pp-filter'],
+  '10-inch-5-micron-pp-spun-filter': ['ma-prod-001', 'MA-PP-10-05M', '10-inch-5-micron-pp-spun-filter', '10-inch-pp-spun-filter', 'ma-pp-spun-filter-120g', 'spun-filter', 'pp-filter'],
+  '10-inch-pp-spun-filter': ['ma-prod-001', 'MA-PP-10-05M', '10-inch-5-micron-pp-spun-filter', '10-inch-pp-spun-filter', 'ma-pp-spun-filter-120g', 'spun-filter', 'pp-filter'],
+  'ma-pp-spun-filter-120g': ['ma-prod-001', 'MA-PP-10-05M', '10-inch-5-micron-pp-spun-filter', '10-inch-pp-spun-filter', 'ma-pp-spun-filter-120g', 'spun-filter', 'pp-filter'],
+
+  // 4. Mirror Aqua 5-Spun + Wrench Combo
+  'ma-prod-002': ['ma-prod-002', 'MA-PP-5PK-WR', '5-spun-filter-pack-with-free-wrench', 'ma-5-spun-free-wrench-combo'],
+  'MA-PP-5PK-WR': ['ma-prod-002', 'MA-PP-5PK-WR', '5-spun-filter-pack-with-free-wrench', 'ma-5-spun-free-wrench-combo'],
+  '5-spun-filter-pack-with-free-wrench': ['ma-prod-002', 'MA-PP-5PK-WR', '5-spun-filter-pack-with-free-wrench', 'ma-5-spun-free-wrench-combo'],
+  'ma-5-spun-free-wrench-combo': ['ma-prod-002', 'MA-PP-5PK-WR', '5-spun-filter-pack-with-free-wrench', 'ma-5-spun-free-wrench-combo']
+};
+
+function getCanonicalCatalogId(rawId) {
+  if (!rawId) return 'msv-drain-clips';
+  const str = String(rawId).toLowerCase().trim();
+  if (str.includes('drain') || str.includes('clip') || str.includes('35mm')) return 'msv-drain-clips';
+  if (str.includes('bulk') || str.includes('combo-15') || str.includes('installer')) return 'bulk-combo-15000';
+  if (str.includes('ma-prod-001') || str.includes('10-inch') || str.includes('ma-pp-10') || str.includes('spun-filter')) return 'ma-prod-001';
+  if (str.includes('ma-prod-002') || str.includes('5-spun') || str.includes('5pk') || str.includes('wrench')) return 'ma-prod-002';
+  return rawId;
+}
+
+function expandCatalogContentIds(itemsOrIds) {
+  if (!itemsOrIds) return ['msv-drain-clips', 'MSV-DRAIN-35MM', 'drain-clips'];
+  const list = Array.isArray(itemsOrIds) ? itemsOrIds : [itemsOrIds];
+  const ids = new Set();
+  
+  for (const item of list) {
+    if (!item) continue;
+    const rawId = typeof item === 'string' ? item : (item.item_id || item.productId || item.product?.id || item.sku || item.id || '');
+    if (!rawId) continue;
+    ids.add(rawId);
+    
+    if (CATALOG_ID_MAP[rawId]) {
+      CATALOG_ID_MAP[rawId].forEach(id => ids.add(id));
+      continue;
+    }
+    
+    const lower = rawId.toLowerCase();
+    if (lower.includes('drain') || lower.includes('clip') || lower.includes('35mm') || lower.includes('30mm') || lower.includes('40mm')) {
+      CATALOG_ID_MAP['msv-drain-clips'].forEach(id => ids.add(id));
+    } else if (lower.includes('bulk') || lower.includes('combo-15') || lower.includes('installer') || lower.includes('15000')) {
+      CATALOG_ID_MAP['bulk-combo-15000'].forEach(id => ids.add(id));
+    } else if (lower.includes('ma-prod-001') || lower.includes('10-inch') || lower.includes('ma-pp-10') || lower.includes('120g') || lower.includes('spun-filter')) {
+      CATALOG_ID_MAP['ma-prod-001'].forEach(id => ids.add(id));
+    } else if (lower.includes('ma-prod-002') || lower.includes('5-spun') || lower.includes('5pk') || lower.includes('wrench') || lower.includes('spanner')) {
+      CATALOG_ID_MAP['ma-prod-002'].forEach(id => ids.add(id));
+    }
+  }
+  
+  const result = Array.from(ids);
+  return result.length > 0 ? result : ['msv-drain-clips', 'MSV-DRAIN-35MM', 'drain-clips'];
+}
+
 // Meta Conversions API (CAPI) Server-Side Event Dispatcher with SHA256 Normalization & Deduplication
 async function sendMetaConversionsApiEvent({
   eventName,
@@ -107,6 +177,25 @@ async function sendMetaConversionsApiEvent({
   // Strip undefined keys from user_data (Meta requires non-empty or omitted keys)
   Object.keys(userPayload).forEach(k => userPayload[k] === undefined && delete userPayload[k]);
 
+  const enrichedCustomData = { ...customData };
+  if (
+    enrichedCustomData.content_ids || 
+    enrichedCustomData.contents || 
+    eventName === 'Purchase' || 
+    eventName === 'ViewContent' || 
+    eventName === 'AddToCart' || 
+    eventName === 'InitiateCheckout'
+  ) {
+    enrichedCustomData.content_type = enrichedCustomData.content_type || 'product';
+    enrichedCustomData.content_ids = expandCatalogContentIds(enrichedCustomData.content_ids || enrichedCustomData.contents || []);
+    if (Array.isArray(enrichedCustomData.contents)) {
+      enrichedCustomData.contents = enrichedCustomData.contents.map(c => ({
+        ...c,
+        id: getCanonicalCatalogId(c.id)
+      }));
+    }
+  }
+
   const eventItem = {
     event_name: eventName,
     event_time: Math.floor(Date.now() / 1000),
@@ -114,7 +203,7 @@ async function sendMetaConversionsApiEvent({
     event_source_url: eventSourceUrl || 'https://mirrorsolarvision.com/',
     action_source: 'website',
     user_data: userPayload,
-    custom_data: customData
+    custom_data: enrichedCustomData
   };
 
   const payload = {

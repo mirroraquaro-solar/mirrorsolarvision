@@ -31,6 +31,7 @@ import { db } from '../../config/firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { submitBookingWithNotification, ADMIN_WHATSAPP, printConfirmationDocument, getCustomerWhatsAppUrl } from '../../services/notificationService';
 import { useCart } from '../../context/CartContext';
+import { analytics } from '../../aqua/services/analytics';
 import CheckoutPage from '../checkout/CheckoutPage';
 import OrderSuccess from '../checkout/OrderSuccess';
 import MyOrders from '../checkout/MyOrders';
@@ -179,6 +180,26 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
       quantity: 1
     };
 
+    try {
+      if (buyNow) {
+        analytics.trackBuyNow({
+          id: 'msv-drain-clips',
+          sku: 'MSV-DRAIN-35MM',
+          name: drainClipsProduct.name,
+          category: 'Solar Accessories',
+          price: config.price
+        }, 1);
+      } else {
+        analytics.trackAddToCart({
+          id: 'msv-drain-clips',
+          sku: 'MSV-DRAIN-35MM',
+          name: drainClipsProduct.name,
+          category: 'Solar Accessories',
+          price: config.price
+        }, 1);
+      }
+    } catch (e) {}
+
     if (buyNow) {
       setCheckoutData({
         items: [newItem],
@@ -200,7 +221,8 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
     const itemTotal = comboUnitPrice * validQty;
     const newItem = {
       cartItemId: `msv-bulk-combo-${Date.now()}`,
-      productId: combo.id || 'msv-bulk-combo',
+      productId: combo.id || 'bulk-combo-15000',
+      sku: 'MSV-COMBO-15K',
       name: combo.title || combo.name || 'Bulk Solar Installation Combo',
       variantLabel: `${validQty} Complete Combo Kit(s) (₹15,000/kit)`,
       price: comboUnitPrice,
@@ -208,6 +230,16 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
       image: combo.image,
       category: 'Bulk Installation Combos'
     };
+
+    try {
+      analytics.trackBuyNow({
+        id: 'bulk-combo-15000',
+        sku: 'MSV-COMBO-15K',
+        name: combo.name || 'Bulk Solar Installation Combo',
+        category: 'Bulk Installation Combos',
+        price: comboUnitPrice
+      }, validQty);
+    } catch (e) {}
 
     setCheckoutData({
       items: [newItem],
@@ -221,6 +253,30 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
 
   useEffect(() => {
     const act = initialAction || window.location.hash.replace('#', '');
+    
+    // Track product views for Meta Catalog matching
+    if (act === 'bulk-combo' || act === 'bulk-combo-buy') {
+      try {
+        analytics.trackViewItem({
+          id: 'bulk-combo-15000',
+          sku: 'MSV-COMBO-15K',
+          name: combo.name || '₹15,000 Bulk Solar Installation Combo',
+          category: 'Solar Installation Hardware',
+          price: 15000
+        });
+      } catch (e) {}
+    } else {
+      try {
+        analytics.trackViewItem({
+          id: 'msv-drain-clips',
+          sku: 'MSV-DRAIN-35MM',
+          name: drainClipsProduct.name || 'MSV Heavy-Duty Solar Panel Drain Clips',
+          category: 'Maintenance Accessories',
+          price: activeDrainClipConfig.price || 499
+        });
+      } catch (e) {}
+    }
+
     if (act === 'checkout') {
       if (contextCheckoutData) {
         setCheckoutData(contextCheckoutData);

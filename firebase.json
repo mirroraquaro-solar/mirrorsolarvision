@@ -51,11 +51,15 @@
         ]
       },
       {
-        "source": "/(llms.txt|ai-catalog.json|robots.txt|sitemap.xml)",
+        "source": "/(llms.txt|ai-catalog.json|robots.txt|sitemap.xml|meta-catalog-feed.xml|meta-catalog-feed.csv|facebook-catalog.csv)",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "public, max-age=86400"
+            "value": "public, max-age=3600"
+          },
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "*"
           }
         ]
       },

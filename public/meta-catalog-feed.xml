@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
+  <channel>
+    <title>Mirror Solar Vision &amp; Mirror Aqua Official Product Catalog</title>
+    <link>https://mirrorsolarvision.com/</link>
+    <description>Official dynamic product feed for Meta Ads, Instagram Shopping, and Google Merchant Center.</description>
+    
+    <!-- 1. MSV Heavy-Duty Solar Drain Clips -->
+    <item>
+      <g:id>msv-drain-clips</g:id>
+      <g:title>MSV Heavy-Duty Solar Panel Drain Clips (UV-Stabilized 35mm)</g:title>
+      <g:description>Engineered for Indian climate, MSV Heavy-Duty Drain Clips eliminate water pooling and mud band formation along the bottom edge of PV panels, preventing hot-spot degradation and restoring up to 10-15% lost solar generation. Sized per kW (4 clips per kW @ ₹25/clip).</g:description>
+      <g:link>https://mirrorsolarvision.com/drain-clips</g:link>
+      <g:image_link>https://mirrorsolarvision.com/assets/images/001.webp</g:image_link>
+      <g:additional_image_link>https://mirrorsolarvision.com/assets/images/products/drain-clip-35mm-1.webp</g:additional_image_link>
+      <g:additional_image_link>https://mirrorsolarvision.com/assets/images/products/clip-green-1.webp</g:additional_image_link>
+      <g:brand>Mirror Solar Vision</g:brand>
+      <g:condition>new</g:condition>
+      <g:availability>in stock</g:availability>
+      <g:price>499.00 INR</g:price>
+      <g:sale_price>499.00 INR</g:sale_price>
+      <g:mpn>MSV-DRAIN-35MM</g:mpn>
+      <g:sku>MSV-DRAIN-35MM</g:sku>
+      <g:item_group_id>msv-drain-clips-group</g:item_group_id>
+      <g:google_product_category>505766</g:google_product_category>
+      <g:fb_product_category>Home &amp; Garden &gt; Solar Energy &gt; Solar Panel Parts &amp; Accessories</g:fb_product_category>
+      <g:custom_label_0>Bestseller</g:custom_label_0>
+      <g:custom_label_1>Solar Hardware</g:custom_label_1>
+    </item>
+
+    <!-- 2. ₹15,000 Bulk Solar Installation Combo -->
+    <item>
+      <g:id>bulk-combo-15000</g:id>
+      <g:title>₹15,000 Bulk Solar Installation Combo (Complete Installer Hardware Kit)</g:title>
+      <g:description>Standardized all-in-one solar rooftop hardware and accessory bundle for EPC solar installers: 100 MC4 pairs, 100 anchor fasteners, 200 structure bolts, 200 panel clamps, 200 UV drain clips, and 11 automated sprinkler cleaning sets.</g:description>
+      <g:link>https://mirrorsolarvision.com/bulk-combo</g:link>
+      <g:image_link>https://mirrorsolarvision.com/assets/images/001.png</g:image_link>
+      <g:brand>Mirror Solar Vision</g:brand>
+      <g:condition>new</g:condition>
+      <g:availability>in stock</g:availability>
+      <g:price>15000.00 INR</g:price>
+      <g:sale_price>15000.00 INR</g:sale_price>
+      <g:mpn>MSV-COMBO-15K</g:mpn>
+      <g:sku>MSV-COMBO-15K</g:sku>
+      <g:item_group_id>msv-solar-combos</g:item_group_id>
+      <g:google_product_category>505766</g:google_product_category>
+      <g:fb_product_category>Home &amp; Garden &gt; Solar Energy &gt; Solar Panel Parts &amp; Accessories</g:fb_product_category>
+      <g:custom_label_0>Bulk Combo</g:custom_label_0>
+      <g:custom_label_1>EPC Hardware</g:custom_label_1>
+    </item>
+
+    <!-- 3. Mirror Aqua 10-Inch 5-Micron PP Spun Filter (120 Grams) -->
+    <item>
+      <g:id>ma-prod-001</g:id>
+      <g:title>Mirror Aqua 10-Inch 5-Micron PP Spun Filter (120 Grams)</g:title>
+      <g:description>Heavy 120-gram precision-engineered 5-micron depth pre-filter for standard 10-inch filter bowls. 100% pure virgin polypropylene. Protects RO membrane and booster pumps from sand, silt, and pipe rust.</g:description>
+      <g:link>https://mirrorsolarvision.com/products/10-inch-pp-spun-filter</g:link>
+      <g:image_link>https://mirrorsolarvision.com/images/product/008.jpeg</g:image_link>
+      <g:additional_image_link>https://mirrorsolarvision.com/images/product/004.jpeg</g:additional_image_link>
+      <g:additional_image_link>https://mirrorsolarvision.com/images/product/005.jpeg</g:additional_image_link>
+      <g:brand>Mirror Aqua</g:brand>
+      <g:condition>new</g:condition>
+      <g:availability>in stock</g:availability>
+      <g:price>549.00 INR</g:price>
+      <g:sale_price>199.00 INR</g:sale_price>
+      <g:mpn>MA-PP-10-05M</g:mpn>
+      <g:sku>MA-PP-10-05M</g:sku>
+      <g:item_group_id>ma-spun-filters</g:item_group_id>
+      <g:google_product_category>2811</g:google_product_category>
+      <g:fb_product_category>Home &amp; Garden &gt; Kitchen &amp; Dining &gt; Water Filtration &gt; Water Filter Cartridges</g:fb_product_category>
+      <g:custom_label_0>120g Heavy Spun</g:custom_label_0>
+      <g:custom_label_1>Water Purification</g:custom_label_1>
+    </item>
+
+    <!-- 4. Mirror Aqua 5 Micron 120g Spun Filter – Pack of 5 + Free Filter Spanner -->
+    <item>
+      <g:id>ma-prod-002</g:id>
+      <g:title>Mirror Aqua 5 Micron 120g Spun Filter – Pack of 5 + Free Filter Spanner</g:title>
+      <g:description>Get 5 Mirror Aqua 10-Inch 5-Micron 120g PP Spun Filters + 1 FREE Heavy-Duty Filter Spanner Wrench. Universal fit for all domestic 10-inch RO water purifiers. Made in India.</g:description>
+      <g:link>https://mirrorsolarvision.com/products/5-spun-filter-pack-with-free-wrench</g:link>
+      <g:image_link>https://mirrorsolarvision.com/images/product/5-spun-with-wrench-combo.jpg</g:image_link>
+      <g:additional_image_link>https://mirrorsolarvision.com/images/product/003.jpeg</g:additional_image_link>
+      <g:additional_image_link>https://mirrorsolarvision.com/images/product/008.jpeg</g:additional_image_link>
+      <g:brand>Mirror Aqua</g:brand>
+      <g:condition>new</g:condition>
+      <g:availability>in stock</g:availability>
+      <g:price>2899.00 INR</g:price>
+      <g:sale_price>995.00 INR</g:sale_price>
+      <g:mpn>MA-PP-5PK-WR</g:mpn>
+      <g:sku>MA-PP-5PK-WR</g:sku>
+      <g:item_group_id>ma-value-combos</g:item_group_id>
+      <g:google_product_category>2811</g:google_product_category>
+      <g:fb_product_category>Home &amp; Garden &gt; Kitchen &amp; Dining &gt; Water Filtration &gt; Water Filter Cartridges</g:fb_product_category>
+      <g:custom_label_0>Value Combo</g:custom_label_0>
+      <g:custom_label_1>Free Spanner Offer</g:custom_label_1>
+    </item>
+  </channel>
+</rss>
