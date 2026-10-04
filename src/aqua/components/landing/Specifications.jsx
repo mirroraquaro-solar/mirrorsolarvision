@@ -45,11 +45,13 @@ export function Specifications({ specifications = {} }) {
             <tbody>
               {specList.map((spec, idx) => (
                 <tr key={idx} className={spec.highlight ? 'bg-cyan-950/20' : ''}>
-                  <td className="spec-label-col flex items-center gap-1.5 font-bold">
-                    {spec.highlight && <Gift size={14} className="text-amber-400" />}
-                    <span>{spec.label}</span>
+                  <td className="spec-label-col font-bold">
+                    <div className="flex items-center gap-1.5">
+                      {spec.highlight && <Gift size={14} className="text-amber-500 shrink-0" />}
+                      <span>{spec.label}</span>
+                    </div>
                   </td>
-                  <td className={`spec-value-col ${spec.highlight ? 'text-cyan-300 font-extrabold' : ''}`}>
+                  <td className={`spec-value-col ${spec.highlight ? 'text-cyan-700 font-extrabold' : ''}`}>
                     {spec.value}
                   </td>
                 </tr>

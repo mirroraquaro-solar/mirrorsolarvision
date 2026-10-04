@@ -109,115 +109,142 @@ function AquaStoreContent({ onBackToHome, onNavigate, initialPath = '/' }) {
     <div className="bg-slate-50 min-h-screen text-slate-900 pb-20 relative" id="aqua-store">
       {/* Top Sticky Header with Store Switcher Bar */}
       <div className="bg-[#07172A] text-white border-b border-cyan-900/50 sticky top-[72px] sm:top-[78px] z-30 shadow-lg">
-        <div className="max-w-[1400px] mx-auto px-3.5 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-2.5 sm:py-3">
           
-          {/* Left: Home & Brand Title */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                if (onBackToHome) {
-                  onBackToHome();
-                } else if (onNavigate) {
-                  onNavigate('home');
-                } else {
-                  window.location.hash = '#home';
-                }
-              }}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white transition-colors cursor-pointer mr-1"
-            >
-              <ArrowLeft size={16} />
-              <span>Home</span>
-            </button>
-
-            <div 
-              onClick={() => handleNavigatePath('/')}
-              className="flex items-center gap-2 font-heading font-black text-lg sm:text-xl tracking-tight text-white cursor-pointer"
-            >
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-md">
-                <Droplets size={16} className="text-white fill-white/30" />
-              </div>
-              <div className="flex items-center gap-1">
-                <span>Mirror Aqua</span>
-                <span className="text-cyan-400">Products</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Center: Dual Store Quick Switcher */}
-          <div className="flex items-center bg-slate-900/80 p-1 rounded-full border border-slate-700/60 shadow-inner">
-            <button
-              onClick={() => {
-                if (onNavigate) onNavigate('store');
-                else window.location.hash = '#store';
-              }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition-all cursor-pointer"
-              title="Switch to Solar Products"
-            >
-              <Sun size={13} className="text-amber-400" />
-              <span>Solar Products</span>
-            </button>
+          {/* Main Top Bar: Left Logo & Right Actions */}
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
             
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-sm">
-              <Droplets size={13} className="text-cyan-200 fill-cyan-200/30" />
-              <span>Mirror Aqua (120g)</span>
+            {/* Left: Home & Brand Title */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <button
+                onClick={() => {
+                  if (onBackToHome) {
+                    onBackToHome();
+                  } else if (onNavigate) {
+                    onNavigate('home');
+                  } else {
+                    window.location.hash = '#home';
+                  }
+                }}
+                className="inline-flex items-center gap-1 text-xs font-bold text-slate-300 hover:text-white transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-slate-800/60"
+                title="Back to Home"
+              >
+                <ArrowLeft size={16} />
+                <span className="hidden xs:inline">Home</span>
+              </button>
+
+              <div 
+                onClick={() => handleNavigatePath('/')}
+                className="flex items-center gap-1.5 sm:gap-2 font-heading font-black text-base sm:text-xl tracking-tight text-white cursor-pointer select-none"
+              >
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-md shrink-0">
+                  <Droplets size={16} className="text-white fill-white/30" />
+                </div>
+                <div className="flex items-center gap-1 leading-tight">
+                  <span className="font-extrabold">Mirror Aqua</span>
+                  <span className="text-cyan-400 font-bold hidden sm:inline">Store</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Center: Dual Store Quick Switcher (Desktop / Tablet view) */}
+            <div className="hidden md:flex items-center bg-slate-900/90 p-1 rounded-full border border-slate-700/70 shadow-inner">
+              <button
+                onClick={() => {
+                  if (onNavigate) onNavigate('store');
+                  else window.location.hash = '#store';
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition-all cursor-pointer"
+                title="Switch to Solar Products"
+              >
+                <Sun size={13} className="text-amber-400" />
+                <span>Solar Products</span>
+              </button>
+              
+              <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-sm">
+                <Droplets size={13} className="text-cyan-200 fill-cyan-200/30" />
+                <span>Mirror Aqua (120g)</span>
+              </div>
+            </div>
+
+            {/* Right: Quick Actions */}
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+              {/* Search */}
+              <button
+                onClick={() => setIsSearchOpen(true)}
+                className="p-2 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-xl transition-all cursor-pointer"
+                title="Search Aqua Products"
+                aria-label="Search Aqua Products"
+              >
+                <Search size={16} />
+              </button>
+
+              {/* Wishlist */}
+              <button
+                onClick={() => setIsWishlistOpen(true)}
+                className="p-2 text-slate-300 hover:text-rose-400 hover:bg-slate-800/80 rounded-xl transition-all relative cursor-pointer"
+                title="View Wishlist"
+                aria-label="View Wishlist"
+              >
+                <Heart size={16} />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                    {wishlistCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Track Orders */}
+              <button
+                onClick={() => {
+                  if (onNavigate) onNavigate('orders');
+                  else window.location.hash = '#orders';
+                }}
+                className="inline-flex items-center gap-1 bg-[#122842] hover:bg-[#1A385C] border border-cyan-800/40 text-cyan-200 hover:text-white text-xs font-bold px-2.5 py-1.5 rounded-xl shadow-sm transition-all cursor-pointer"
+                title="Track My Orders"
+              >
+                <Truck size={14} className="text-cyan-400" />
+                <span className="hidden sm:inline">Track</span>
+              </button>
+
+              {/* Master Cart Drawer Button */}
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="inline-flex items-center gap-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs sm:text-sm font-bold px-3 py-1.5 rounded-xl shadow-md transition-all relative cursor-pointer"
+                title="Open Cart"
+              >
+                <ShoppingBag size={15} />
+                <span className="hidden sm:inline">Cart</span>
+                {totalItemsCount > 0 && (
+                  <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-1.5 py-0.2 rounded-full min-w-[17px] text-center">
+                    {totalItemsCount}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
 
-          {/* Right: Quick Actions */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
-            {/* Search */}
-            <button
-              onClick={() => setIsSearchOpen(true)}
-              className="p-2 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-xl transition-all cursor-pointer"
-              title="Search Aqua Products"
-              aria-label="Search Aqua Products"
-            >
-              <Search size={16} />
-            </button>
-
-            {/* Wishlist */}
-            <button
-              onClick={() => setIsWishlistOpen(true)}
-              className="p-2 text-slate-300 hover:text-rose-400 hover:bg-slate-800/80 rounded-xl transition-all relative cursor-pointer"
-              title="View Wishlist"
-              aria-label="View Wishlist"
-            >
-              <Heart size={16} />
-              {wishlistCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">
-                  {wishlistCount}
-                </span>
-              )}
-            </button>
-
-            {/* Track Orders */}
-            <button
-              onClick={() => {
-                if (onNavigate) onNavigate('orders');
-                else window.location.hash = '#orders';
-              }}
-              className="inline-flex items-center gap-1.5 bg-[#122842] hover:bg-[#1A385C] border border-cyan-800/40 text-cyan-200 hover:text-white text-xs sm:text-sm font-bold px-3 py-1.5 rounded-xl shadow-sm transition-all cursor-pointer"
-            >
-              <Truck size={14} className="text-cyan-400" />
-              <span className="hidden md:inline">Track Order</span>
-              <span className="md:hidden">Track</span>
-            </button>
-
-            {/* Master Cart Drawer Button */}
-            <button
-              onClick={() => setIsCartOpen(true)}
-              className="inline-flex items-center gap-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs sm:text-sm font-bold px-3.5 py-1.5 rounded-xl shadow-md transition-all relative cursor-pointer"
-              title="Open Master Cart"
-            >
-              <ShoppingBag size={15} />
-              <span className="hidden sm:inline">Cart</span>
-              {totalItemsCount > 0 && (
-                <span className="bg-amber-400 text-slate-950 text-[11px] font-black px-1.5 py-0.2 rounded-full min-w-[18px] text-center">
-                  {totalItemsCount}
-                </span>
-              )}
-            </button>
+          {/* Mobile Dual Store Segment Switcher (Compact Bar) */}
+          <div className="flex md:hidden items-center justify-center mt-2 pt-2 border-t border-slate-800/80">
+            <div className="grid grid-cols-2 gap-1.5 w-full bg-slate-900/95 p-1 rounded-xl border border-slate-700/80">
+              <button
+                onClick={() => {
+                  if (onNavigate) onNavigate('store');
+                  else window.location.hash = '#store';
+                }}
+                className="inline-flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition-all cursor-pointer"
+              >
+                <Sun size={12} className="text-amber-400 shrink-0" />
+                <span className="truncate">Solar Store</span>
+              </button>
+              
+              <div className="inline-flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-extrabold bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-sm">
+                <Droplets size={12} className="text-cyan-200 fill-cyan-200/30 shrink-0" />
+                <span className="truncate">Aqua Store</span>
+              </div>
+            </div>
           </div>
+
         </div>
       </div>
 

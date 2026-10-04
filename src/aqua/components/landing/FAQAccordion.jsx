@@ -72,6 +72,8 @@ export function FAQAccordion({ faqs = [] }) {
         <div className="faq-accordion-container">
           {faqList.map((item, idx) => {
             const isOpen = openIndex === idx;
+            const questionText = item.q || item.question;
+            const answerText = item.a || item.answer;
             return (
               <div key={idx} className={`faq-item-card ${isOpen ? 'open' : ''}`}>
                 <button
@@ -82,7 +84,7 @@ export function FAQAccordion({ faqs = [] }) {
                   id={`faq-btn-${idx}`}
                   aria-controls={`faq-panel-${idx}`}
                 >
-                  <span className="faq-question-text">{item.q}</span>
+                  <span className="faq-question-text">{questionText}</span>
                   <ChevronDown size={20} className={`faq-chevron ${isOpen ? 'rotate' : ''}`} />
                 </button>
                 {isOpen && (
@@ -92,7 +94,7 @@ export function FAQAccordion({ faqs = [] }) {
                     aria-labelledby={`faq-btn-${idx}`}
                     className="faq-answer-panel"
                   >
-                    <p>{item.a}</p>
+                    <p>{answerText}</p>
                   </div>
                 )}
               </div>

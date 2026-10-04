@@ -689,59 +689,95 @@ async function sendWhatsAppAlert({ phone, message }) {
 }
 
 /**
- * Universal Dispatcher: Sends Email + WhatsApp for any order or booking
+ * Universal Dispatcher: Sends targeted Emails + WhatsApp to both Customer and Admin
  */
 async function dispatchBookingNotifications(type, data) {
   let waText = '';
-  let emailHtml = '';
-  let emailSubject = '';
   const customerEmail = data.email || data.customerEmail || data.address?.email || data.billing_email || data.userEmail || null;
   const customerPhone = data.phone || data.customerPhone || data.address?.phone || data.billing_phone || null;
+  const custName = (data.address?.fullName || data.customerName || data.name || 'Valued Customer').trim();
+  const totalAmount = data.amount || data.totalPrice || 0;
+
+  const emailPromises = [];
 
   if (type === 'order') {
     const bookingId = data.bookingId || data.firestoreOrderId || 'MSV-ORD';
     waText = renderOrderWhatsAppText(data);
-    emailHtml = renderOrderEmailHtml(data);
-    const storeBranding = (bookingId.startsWith('MA') || (data.items && data.items.some(it => (it.productId || '').startsWith('ma-')))) ? 'Mirror Aqua' : BUSINESS_NAME;
-    emailSubject = `Order Confirmed: ${bookingId} — ${storeBranding} (₹${Number(data.amount || 0).toLocaleString('en-IN')})`;
-  } else if (type === 'site_survey') {
-    waText = renderSurveyWhatsAppText(data);
-    emailHtml = renderLeadEmailHtml(type, data);
-    emailSubject = `☀️ New Rooftop Site Survey Booking: ${data.name || 'Customer'} (${data.district || 'AP'})`;
-  } else if (type === 'quote_request') {
-    waText = renderQuoteWhatsAppText(data);
-    emailHtml = renderLeadEmailHtml(type, data);
-    emailSubject = `⚡ New Free Solar Quote Request: ${data.name || 'Customer'} (${data.district || 'AP'})`;
-  } else if (type === 'bulk_combo') {
-    waText = renderBulkWhatsAppText(data);
-    emailHtml = renderLeadEmailHtml(type, data);
-    emailSubject = `📦 New Bulk Combo Order: ${data.name || 'Customer'} (${data.quantity || 1} Sets - ₹${Number(data.totalPrice || 0).toLocaleString('en-IN')})`;
+    const emailHtml = renderOrderEmailHtml(data);
+    const isAquaOrder = bookingId.startsWith('MA') || (data.items && data.items.some(it => (it.productId || '').startsWith('ma-')));
+    const storeBranding = isAquaOrder ? 'Mirror Aqua' : BUSINESS_NAME;
+
+    // 1. Dedicated Customer Email
+    if (customerEmail && customerEmail.trim()) {
+      emailPromises.push(
+        sendEmailNotification({
+          to: [customerEmail.trim()],
+          subject: `✅ Order Confirmed: ${bookingId} — ${storeBranding} (₹${formatINR(totalAmount)})`,
+          html: emailHtml,
+          text: waText
+        })
+      );
+    }
+
+    // 2. Dedicated Admin & Warehouse Email to balajiperuri09@mail.com, mirrorsolarvision@gmail.com, etc.
+    emailPromises.push(
+      sendEmailNotification({
+        to: ADMIN_EMAILS,
+        subject: `🚨 [NEW ORDER] ${bookingId} - ₹${formatINR(totalAmount)} by ${custName} (+91 ${customerPhone || 'N/A'})`,
+        html: emailHtml,
+        text: waText
+      })
+    );
+
   } else {
-    waText = `📋 *New Booking on ${BUSINESS_NAME}*\n\n${JSON.stringify(data, null, 2)}`;
-    emailHtml = renderLeadEmailHtml('inquiry', data);
-    emailSubject = `New Notification from ${BUSINESS_NAME}`;
+    // Leads (site_survey, quote_request, bulk_combo, etc.)
+    let emailSubject = '';
+    if (type === 'site_survey') {
+      waText = renderSurveyWhatsAppText(data);
+      emailSubject = `☀️ New Rooftop Site Survey Booking: ${custName} (${data.district || 'AP'})`;
+    } else if (type === 'quote_request') {
+      waText = renderQuoteWhatsAppText(data);
+      emailSubject = `⚡ New Free Solar Quote Request: ${custName} (${data.district || 'AP'})`;
+    } else if (type === 'bulk_combo') {
+      waText = renderBulkWhatsAppText(data);
+      emailSubject = `📦 New Bulk Combo Order: ${custName} (${data.quantity || 1} Sets - ₹${formatINR(data.totalPrice || 15000)})`;
+    } else {
+      waText = `📋 *New Request on ${BUSINESS_NAME}*\n\n${JSON.stringify(data, null, 2)}`;
+      emailSubject = `New Notification from ${BUSINESS_NAME}`;
+    }
+
+    const leadHtml = renderLeadEmailHtml(type, data);
+
+    // 1. Admin Lead Alert
+    emailPromises.push(
+      sendEmailNotification({
+        to: ADMIN_EMAILS,
+        subject: emailSubject,
+        html: leadHtml,
+        text: waText
+      })
+    );
+
+    // 2. Customer Acknowledgment Email
+    if (customerEmail && customerEmail.trim()) {
+      emailPromises.push(
+        sendEmailNotification({
+          to: [customerEmail.trim()],
+          subject: `☀️ We received your inquiry — Mirror Solar Vision (Ref: ${data.bookingId || 'Inquiry'})`,
+          html: leadHtml,
+          text: waText
+        })
+      );
+    }
   }
 
-  // 1. Send Email: to Admin recipients (balajiperuri09@mail.com, balajiperuri09@gmail.com, mirrorsolarvision@gmail.com, mirroraquaro@gmail.com) AND Customer
-  const recipients = [...ADMIN_EMAILS];
-  if (customerEmail && customerEmail.trim() && !recipients.some(r => r.toLowerCase() === customerEmail.trim().toLowerCase())) {
-    recipients.push(customerEmail.trim());
-  }
-
-  const emailPromise = sendEmailNotification({
-    to: recipients,
-    subject: emailSubject,
-    html: emailHtml,
-    text: waText
-  });
-
-  // 2. Send WhatsApp alert to Admin Number (+91 8639103947)
+  // 3. Send WhatsApp alert to Admin Number (+91 91826 12420)
   const waAdminPromise = sendWhatsAppAlert({
     phone: ADMIN_WHATSAPP,
     message: `📢 *NEW WEBSITE NOTIFICATION*\n\n${waText}`
   });
 
-  // 3. Send WhatsApp alert to Customer Number (if customer provided phone)
+  // 4. Send WhatsApp alert to Customer Number (if customer provided phone)
   let waCustPromise = Promise.resolve(null);
   if (customerPhone && customerPhone.replace(/[^0-9]/g, '') !== ADMIN_WHATSAPP) {
     waCustPromise = sendWhatsAppAlert({
@@ -750,12 +786,11 @@ async function dispatchBookingNotifications(type, data) {
     });
   }
 
-  const [emailRes, waAdminRes, waCustRes] = await Promise.allSettled([emailPromise, waAdminPromise, waCustPromise]);
+  const results = await Promise.allSettled([...emailPromises, waAdminPromise, waCustPromise]);
 
   return {
-    email: emailRes.status === 'fulfilled' ? emailRes.value : { error: emailRes.reason },
-    waAdmin: waAdminRes.status === 'fulfilled' ? waAdminRes.value : { error: waAdminRes.reason },
-    waCustomer: waCustRes.status === 'fulfilled' ? waCustRes.value : null,
+    success: true,
+    results: results.map(r => r.status === 'fulfilled' ? r.value : { error: r.reason }),
     renderedWhatsAppText: waText
   };
 }

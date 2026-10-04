@@ -230,33 +230,28 @@ export const PRODUCTS = [
       {
         id: 'img-combo-1',
         url: '/images/product/5-spun-with-wrench-combo.jpg',
-        altText: 'Mirror Aqua 5 Micron 120g Spun Filter – Pack of 5 + Free Filter Spanner',
+        altText: 'Mirror Aqua 5 Micron 120g Spun Filter – Pack of 5 + Free Filter Spanner Combo Offer (5 ఫిల్టర్లు + 1 స్పానర్)',
         isPrimary: true
       },
       {
         id: 'img-combo-2',
-        url: '/images/product/003.jpeg',
-        altText: 'PP Spun Filter with Filter Spanner Wrench Tool'
-      },
-      {
-        id: 'img-combo-3',
         url: '/images/product/008.jpeg',
         altText: 'Mirror Aqua 120g PP Spun 5-Micron Cartridges'
       },
       {
+        id: 'img-combo-3',
+        url: '/images/product/007.jpeg',
+        altText: 'Mirror Aqua Embossed Brand Logo on 120g Polypropylene'
+      },
+      {
         id: 'img-combo-4',
         url: '/images/product/0010.jpeg',
-        altText: '100% Pure Polypropylene Sealed Pack'
+        altText: '100% Pure Virgin Polypropylene Sealed Pack'
       },
       {
         id: 'img-combo-5',
         url: '/images/product/004.jpeg',
         altText: 'Virgin Polypropylene Microfiber Depth Matrix'
-      },
-      {
-        id: 'img-combo-6',
-        url: '/images/product/002.jpeg',
-        altText: '10-Inch Housing Bowl Installation'
       }
     ],
 

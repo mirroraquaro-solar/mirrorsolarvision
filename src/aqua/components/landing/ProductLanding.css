@@ -2676,6 +2676,125 @@
   margin: 0 auto var(--space-3xl);
 }
 
+.video-frame-wrapper {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+  height: 0;
+  background: #000000;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(10, 17, 40, 0.12);
+  border: 1px solid rgba(2, 132, 199, 0.2);
+}
+
+.youtube-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* YouTube Subscribe Card */
+.yt-subscribe-card {
+  margin-top: var(--space-md);
+  background: #ffffff;
+  border: 1.5px solid #ef4444;
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.08);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.yt-subscribe-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.16);
+}
+
+.yt-card-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.yt-logo-emblem {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fee2e2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.yt-logo-icon {
+  color: #ef4444;
+}
+
+.yt-card-title {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 800;
+  color: #07111e;
+  margin-bottom: 2px;
+}
+
+.yt-card-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.yt-subscribe-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-heading);
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+.yt-subscribe-btn:hover {
+  background: #dc2626;
+  transform: scale(1.02);
+}
+
+@media (max-width: 640px) {
+  .yt-subscribe-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 14px;
+  }
+  .yt-card-left {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .yt-subscribe-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 .installation-steps-grid-4 {
   display: grid;
   grid-template-columns: 1fr;

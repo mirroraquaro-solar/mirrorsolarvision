@@ -213,7 +213,7 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
         },
         prefill: {
           name: address.fullName,
-          email: user?.email || '',
+          email: address.email || user?.email || '',
           contact: address.phone
         },
         theme: {

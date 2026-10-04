@@ -95,12 +95,12 @@ export function BenefitsSection({ benefits = [] }) {
           onTouchEnd={() => setIsPaused(false)}
         >
           {/* Vertical Slider Card Container */}
-          <div className="relative h-[220px] overflow-hidden rounded-2xl bg-white border border-slate-200/90 p-5 shadow-md flex flex-col justify-between">
+          <div className="relative min-h-[220px] rounded-2xl bg-white border border-slate-200/90 p-5 shadow-md flex flex-col justify-between">
             
             {/* Animated Bottom-to-Top Slide Content */}
             <div 
               key={activeMobileIdx} 
-              className="animate-in slide-in-from-bottom duration-500 fill-mode-forwards space-y-3"
+              className="animate-in slide-in-from-bottom duration-500 fill-mode-forwards space-y-3 flex-1"
             >
               <div className="flex items-center justify-between">
                 <div className="w-10 h-10 rounded-xl bg-cyan-50 border border-cyan-200 text-cyan-700 flex items-center justify-center">

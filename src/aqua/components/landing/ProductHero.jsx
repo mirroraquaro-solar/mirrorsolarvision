@@ -145,48 +145,7 @@ export function ProductHero({ product, onNavigate }) {
 
   return (
     <section className="product-hero-section" aria-label="Mirror Aqua Product Overview">
-      {/* Top Product Switcher Navigation Banner */}
-      <div className="max-w-[1400px] mx-auto px-4 pt-4 pb-2">
-        <div className="bg-gradient-to-r from-slate-900 via-[#0B2545] to-slate-900 p-2 rounded-2xl border border-cyan-500/30 shadow-md flex flex-col sm:flex-row items-center justify-between gap-2.5">
-          <div className="flex items-center gap-2 pl-2">
-            <Sparkles size={16} className="text-amber-400 animate-pulse shrink-0" />
-            <span className="text-xs sm:text-sm font-extrabold text-white tracking-wide">
-              Select Mirror Aqua Option:
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            {PRODUCTS.map((prod) => {
-              const isActive = prod.id === currentProd.id;
-              const isCombo = prod.id === 'ma-prod-002';
-              return (
-                <button
-                  key={prod.id}
-                  type="button"
-                  onClick={() => handleSwitchOption(prod)}
-                  className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                    isActive
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20 scale-[1.02] border border-cyan-300'
-                      : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700'
-                  }`}
-                >
-                  {isCombo ? <Gift size={13} className="text-amber-300 shrink-0" /> : <Droplets size={13} className="text-cyan-300 shrink-0" />}
-                  <span className="truncate">
-                    {isCombo ? '5 Spun + 1 Free Spanner (₹995)' : '10" 120g Spun Filter (₹199)'}
-                  </span>
-                  {isCombo && (
-                    <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase tracking-tighter shrink-0">
-                      FREE TOOL
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      <div className="container product-hero-container">
+      <div className="container product-hero-container pt-2">
         {/* Left / Top Column: High-Res Interactive Gallery */}
         <div className="hero-gallery-col">
           <ProductGallery
@@ -211,17 +170,17 @@ export function ProductHero({ product, onNavigate }) {
             </div>
           </div>
 
-          {/* In-Hero Option Selector Tabs */}
-          <div className="mb-3 p-2.5 bg-slate-900/90 rounded-2xl border border-cyan-500/30">
-            <div className="flex items-center justify-between mb-2 px-1">
-              <span className="text-[11px] font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <Layers size={13} className="text-cyan-400" /> Choose Option / Package:
+          {/* Clean Unified Option Selector Tabs */}
+          <div className="mb-4 p-3 bg-gradient-to-br from-slate-900 via-[#0B2545] to-slate-900 rounded-2xl border border-cyan-500/30 shadow-md">
+            <div className="flex items-center justify-between mb-2.5 px-0.5">
+              <span className="text-[11px] font-extrabold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles size={13} className="text-amber-400" /> Choose Product / Offer:
               </span>
-              <span className="text-[10px] text-cyan-400 font-bold bg-cyan-950/80 px-2 py-0.5 rounded-full border border-cyan-800/50">
-                2 Available Options
+              <span className="text-[10px] text-cyan-300 font-bold bg-cyan-950/90 px-2 py-0.5 rounded-full border border-cyan-700/60">
+                2 Options Available
               </span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {PRODUCTS.map((prod) => {
                 const isSelected = prod.id === currentProd.id;
                 const isCombo = prod.id === 'ma-prod-002';
@@ -230,35 +189,35 @@ export function ProductHero({ product, onNavigate }) {
                     key={prod.id}
                     type="button"
                     onClick={() => handleSwitchOption(prod)}
-                    className={`text-left p-2.5 rounded-xl border transition-all relative flex flex-col justify-between cursor-pointer ${
+                    className={`text-left p-3 rounded-xl border transition-all relative flex flex-col justify-between cursor-pointer ${
                       isSelected
-                        ? 'bg-gradient-to-br from-cyan-950 via-[#0B2545] to-blue-950 border-cyan-400 shadow-md shadow-cyan-500/20 ring-1 ring-cyan-400'
-                        : 'bg-slate-800/70 hover:bg-slate-800 border-slate-700/80 text-slate-300'
+                        ? 'bg-gradient-to-br from-cyan-950 via-[#0E3560] to-blue-950 border-cyan-400 shadow-lg shadow-cyan-500/20 ring-1 ring-cyan-400'
+                        : 'bg-slate-800/80 hover:bg-slate-800 border-slate-700/90 text-slate-300 hover:text-white'
                     }`}
                   >
                     {isCombo ? (
-                      <span className="absolute -top-2 right-2 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tight shadow">
+                      <span className="absolute -top-2.5 right-2 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tight shadow">
                         🎁 FREE SPANNER OFFER
                       </span>
                     ) : (
-                      <span className="absolute -top-2 right-2 bg-slate-700 text-cyan-300 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tight">
+                      <span className="absolute -top-2.5 right-2 bg-slate-700 text-cyan-300 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tight">
                         STANDARD PACK
                       </span>
                     )}
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? 'border-cyan-400 bg-cyan-400' : 'border-slate-500'}`}>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? 'border-cyan-400 bg-cyan-400' : 'border-slate-500'}`}>
                         {isSelected && <div className="w-1.5 h-1.5 bg-slate-950 rounded-full" />}
                       </div>
-                      <span className={`text-xs font-black line-clamp-1 ${isSelected ? 'text-white' : 'text-slate-200'}`}>
-                        {isCombo ? '5 Spun + Free Wrench' : '10" 120g Spun Filter'}
+                      <span className={`text-xs sm:text-sm font-black line-clamp-1 ${isSelected ? 'text-white' : 'text-slate-200'}`}>
+                        {isCombo ? '5 Spun + 1 Free Spanner' : '10" 120g Spun Filter'}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between mt-1.5 pl-5.5 text-[11px]">
+                    <div className="flex items-center justify-between mt-2 pl-6 text-xs">
                       <span className="font-extrabold text-cyan-400">
-                        {isCombo ? '₹995 combo' : 'From ₹199 (Save ₹350)'}
+                        {isCombo ? '₹995 Combo Pack' : 'From ₹199 / piece'}
                       </span>
-                      <span className="text-slate-400 text-[10px]">
-                        {isCombo ? '66% OFF' : '64% - 67% OFF'}
+                      <span className="text-emerald-400 font-bold text-[10px] bg-emerald-950/60 px-1.5 py-0.2 rounded border border-emerald-800/40">
+                        {isCombo ? '66% OFF' : '64% OFF'}
                       </span>
                     </div>
                   </button>
