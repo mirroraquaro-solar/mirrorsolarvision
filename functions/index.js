@@ -357,6 +357,10 @@ function normalizeCustomerAddress(orderData = {}) {
   if (state && !flat.toLowerCase().includes(state.toLowerCase())) addressParts.push(state);
   if (pincode && !flat.includes(pincode)) addressParts.push(`PIN: ${pincode}`);
 
+  const latitude = addrObj.latitude || orderData.latitude || null;
+  const longitude = addrObj.longitude || orderData.longitude || null;
+  const googleMapsLink = addrObj.googleMapsLink || orderData.googleMapsLink || (latitude && longitude ? `https://maps.google.com/?q=${latitude},${longitude}` : '');
+
   const fullAddress = addressParts.join(', ') || (typeof rawAddr === 'string' ? rawAddr : 'Address on file');
 
   return {
@@ -369,6 +373,9 @@ function normalizeCustomerAddress(orderData = {}) {
     district,
     state: state || 'Andhra Pradesh',
     pincode: pincode || '520001',
+    latitude,
+    longitude,
+    googleMapsLink,
     fullAddress
   };
 }

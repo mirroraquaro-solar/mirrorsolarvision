@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ShoppingCart, ShieldCheck, RefreshCw, Truck, X, Plus, Minus, MessageSquare, Loader2, Printer, Copy, FileText, Check } from 'lucide-react';
-import { submitBookingWithNotification, ADMIN_WHATSAPP, printConfirmationDocument, getCustomerWhatsAppUrl } from '../../services/notificationService';
+import { ShoppingCart, ShieldCheck, RefreshCw, Truck, X, Plus, Minus, MessageSquare, Loader2, Printer, Copy, FileText, Check, MapPin, Navigation, ExternalLink, AlertCircle } from 'lucide-react';
+import { submitBookingWithNotification, ADMIN_WHATSAPP, printConfirmationDocument, getCustomerWhatsAppUrl, detectCurrentLocation } from '../../services/notificationService';
 
 export default function DrainClips() {
   const images = [
@@ -21,14 +21,64 @@ export default function DrainClips() {
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [submittedResult, setSubmittedResult] = useState(null);
   const [copiedNote, setCopiedNote] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationSuccess, setLocationSuccess] = useState(null);
+  const [locationError, setLocationError] = useState(null);
   const [checkoutForm, setCheckoutForm] = useState({
     name: '',
     phone: '',
     email: '',
     address: '',
     district: '',
-    mandal: ''
+    mandal: '',
+    pincode: '',
+    state: 'Andhra Pradesh',
+    googleMapsLink: '',
+    latitude: null,
+    longitude: null
   });
+
+  const handleAutoLocate = async () => {
+    setIsLocating(true);
+    setLocationError(null);
+    setLocationSuccess(null);
+
+    try {
+      const loc = await detectCurrentLocation();
+      setCheckoutForm(prev => ({
+        ...prev,
+        pincode: loc.pincode || prev.pincode,
+        address: loc.flat ? (prev.address ? `${prev.address}, ${loc.flat}` : loc.flat) : (loc.formattedAddress || prev.address),
+        mandal: loc.city || loc.area || prev.mandal,
+        district: loc.district || loc.city || prev.district,
+        state: loc.state || prev.state || 'Andhra Pradesh',
+        googleMapsLink: loc.googleMapsLink,
+        latitude: loc.latitude,
+        longitude: loc.longitude
+      }));
+
+      if (loc.pincode && (!loc.city || !loc.state)) {
+        try {
+          const res = await fetch(`https://api.postalpincode.in/pincode/${loc.pincode}`);
+          const pdata = await res.json();
+          if (pdata?.[0]?.Status === 'Success' && pdata[0].PostOffice?.length > 0) {
+            const po = pdata[0].PostOffice[0];
+            setCheckoutForm(prev => ({
+              ...prev,
+              district: prev.district || po.District,
+              state: prev.state || po.State
+            }));
+          }
+        } catch (e) {}
+      }
+
+      setLocationSuccess(`GPS Pin Detected (${loc.latitude}°, ${loc.longitude}°). Address auto-filled.`);
+    } catch (err) {
+      setLocationError(err.message || 'Could not fetch GPS location.');
+    } finally {
+      setIsLocating(false);
+    }
+  };
 
   // Price configuration
   const prices = {
@@ -66,8 +116,11 @@ export default function DrainClips() {
       area: checkoutForm.mandal,
       city: checkoutForm.mandal || checkoutForm.district || 'Andhra Pradesh',
       district: checkoutForm.district,
-      state: 'Andhra Pradesh',
-      pincode: checkoutForm.pincode || ''
+      state: checkoutForm.state || 'Andhra Pradesh',
+      pincode: checkoutForm.pincode || '',
+      googleMapsLink: checkoutForm.googleMapsLink || '',
+      latitude: checkoutForm.latitude,
+      longitude: checkoutForm.longitude
     };
 
     try {
@@ -77,6 +130,9 @@ export default function DrainClips() {
         customerPhone: checkoutForm.phone,
         customerEmail: checkoutForm.email,
         address: addressObj,
+        googleMapsLink: checkoutForm.googleMapsLink,
+        latitude: checkoutForm.latitude,
+        longitude: checkoutForm.longitude,
         selectedSize,
         size: selectedSize,
         selectedPack,
@@ -94,7 +150,7 @@ export default function DrainClips() {
       console.error("Drain clips booking error:", err);
       setSubmittedResult({
         bookingId: `MSV-DRN-${Date.now().toString().slice(-6)}`,
-        waUrl: `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(`📦 *DRAIN CLIPS ORDER*\nName: ${checkoutForm.name}\nPhone: ${checkoutForm.phone}\n${checkoutForm.email ? `Email: ${checkoutForm.email}\n` : ''}Item: MSV Drain Clips\nFrame Size: ${selectedSize}\nPlant Capacity: ${kwEquivalent} kW\nTotal Clips: ${totalClips} Units\nTotal: ₹${totalPrice}\nAddress: ${checkoutForm.address}, ${checkoutForm.mandal}, ${checkoutForm.district}`)}`
+        waUrl: `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(`📦 *DRAIN CLIPS ORDER*\nName: ${checkoutForm.name}\nPhone: ${checkoutForm.phone}\n${checkoutForm.email ? `Email: ${checkoutForm.email}\n` : ''}Item: MSV Drain Clips\nFrame Size: ${selectedSize}\nPlant Capacity: ${kwEquivalent} kW\nTotal Clips: ${totalClips} Units\nTotal: ₹${totalPrice}\nAddress: ${checkoutForm.address}, ${checkoutForm.mandal}, ${checkoutForm.district}${checkoutForm.pincode ? ` - ${checkoutForm.pincode}` : ''}${checkoutForm.googleMapsLink ? `\nMap Pin: ${checkoutForm.googleMapsLink}` : ''}`)}`
       });
       setOrderSubmitted(true);
     } finally {
@@ -383,6 +439,72 @@ export default function DrainClips() {
                   <strong className="text-primary-500 font-extrabold text-sm">₹{totalPrice.toLocaleString('en-IN')}</strong>
                 </div>
 
+                {/* Google Maps / GPS Auto-Fill Card */}
+                <div className="p-3 bg-gradient-to-r from-blue-50/90 to-sky-50/90 rounded-xl border border-blue-200/80">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div className="flex items-start gap-2">
+                      <div className="p-1.5 bg-blue-600 text-white rounded-lg shadow-xs shrink-0 mt-0.5">
+                        <MapPin size={16} />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                          <span>Auto-Fill from Google Maps / GPS</span>
+                          <span className="bg-blue-100 text-blue-800 text-[9px] font-black px-1.5 py-0.2 rounded uppercase">1-Tap</span>
+                        </h4>
+                        <p className="text-[11px] text-slate-600 mt-0.5 leading-tight">
+                          Auto-detects PIN, town, district & attaches exact map pin.
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAutoLocate}
+                      disabled={isLocating}
+                      className="inline-flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 active:scale-98 disabled:opacity-50 text-white font-bold text-xs py-2 px-3 rounded-lg shadow-xs transition-all cursor-pointer shrink-0"
+                    >
+                      {isLocating ? (
+                        <>
+                          <Loader2 size={13} className="animate-spin" />
+                          <span>Detecting GPS...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Navigation size={13} />
+                          <span>Detect Location</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {locationSuccess && (
+                    <div className="mt-2 pt-2 border-t border-blue-200/60 flex flex-wrap items-center justify-between gap-2 text-[11px] text-emerald-800 font-semibold bg-emerald-50/80 px-2 py-1 rounded">
+                      <span className="flex items-center gap-1">
+                        <Check size={12} className="text-emerald-600" />
+                        <span>{locationSuccess}</span>
+                      </span>
+                      {checkoutForm.googleMapsLink && (
+                        <a
+                          href={checkoutForm.googleMapsLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-700 hover:text-blue-900 font-bold underline inline-flex items-center gap-0.5"
+                        >
+                          <span>View Map Pin</span>
+                          <ExternalLink size={10} />
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {locationError && (
+                    <div className="mt-2 text-[11px] text-amber-800 bg-amber-50 px-2 py-1 rounded border border-amber-200/80 flex items-center gap-1">
+                      <AlertCircle size={12} className="text-amber-600 shrink-0" />
+                      <span>{locationError}</span>
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Full Name *</label>
                   <input 
@@ -421,25 +543,37 @@ export default function DrainClips() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">District (AP) *</label>
+                    <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">PIN Code *</label>
                     <input 
                       type="text" 
                       required 
-                      className="w-full bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20"
-                      placeholder="e.g. East Godavari"
+                      maxLength={6}
+                      className="w-full bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-xl text-sm font-mono focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20"
+                      placeholder="6 Digits"
+                      value={checkoutForm.pincode}
+                      onChange={(e) => setCheckoutForm({...checkoutForm, pincode: e.target.value.replace(/\D/g, '')})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">District (AP) *</label>
+                    <input 
+                      type="text" 
+                      required 
+                      className="w-full bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20"
+                      placeholder="District"
                       value={checkoutForm.district}
                       onChange={(e) => setCheckoutForm({...checkoutForm, district: e.target.value})}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Mandal / Town *</label>
+                    <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">Mandal / Town *</label>
                     <input 
                       type="text" 
                       required 
-                      className="w-full bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20"
-                      placeholder="e.g. Rajahmundry"
+                      className="w-full bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20"
+                      placeholder="Mandal / City"
                       value={checkoutForm.mandal}
                       onChange={(e) => setCheckoutForm({...checkoutForm, mandal: e.target.value})}
                     />
@@ -447,7 +581,7 @@ export default function DrainClips() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Delivery Address *</label>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Delivery Address (House / Street / Landmark) *</label>
                   <textarea 
                     required 
                     rows="2"

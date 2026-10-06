@@ -11,7 +11,12 @@ import {
   Tag,
   Trash2,
   Plus,
-  Minus
+  Minus,
+  MapPin,
+  Navigation,
+  ExternalLink,
+  Loader2,
+  Check
 } from 'lucide-react';
 import { useCart } from '../context/CartContext.jsx';
 import { Button, Price } from '../components/ui/Primitives.jsx';
@@ -19,6 +24,7 @@ import { isFreeShippingRegion, shippingService } from '../services/shipping.js';
 import { analytics } from '../services/analytics.js';
 import { PaymentSuccessModal } from '../components/modals/PaymentSuccessModal.jsx';
 import { loadRazorpay } from '../../services/razorpayLoader.js';
+import { detectCurrentLocation } from '../../services/notificationService.js';
 import './CheckoutPage.css';
 
 export function CheckoutPage({ onNavigate }) {
@@ -48,6 +54,9 @@ export function CheckoutPage({ onNavigate }) {
     city: '',
     state: deliveryRegion?.state || '',
     pincode: deliveryRegion?.pincode || '',
+    googleMapsLink: '',
+    latitude: null,
+    longitude: null,
     notes: ''
   });
 
@@ -56,6 +65,41 @@ export function CheckoutPage({ onNavigate }) {
   const [checkoutError, setCheckoutError] = useState('');
   const [completedOrder, setCompletedOrder] = useState(null);
   const [inputCoupon, setInputCoupon] = useState('');
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationSuccess, setLocationSuccess] = useState(null);
+  const [locationError, setLocationError] = useState(null);
+
+  const handleAutoLocate = async () => {
+    setIsLocating(true);
+    setLocationError(null);
+    setLocationSuccess(null);
+
+    try {
+      const loc = await detectCurrentLocation();
+      setFormData(prev => ({
+        ...prev,
+        pincode: loc.pincode || prev.pincode,
+        address: loc.flat ? (prev.address ? `${prev.address}, ${loc.flat}` : loc.flat) : (loc.formattedAddress || prev.address),
+        apartment: loc.area || prev.apartment,
+        city: loc.city || prev.city,
+        state: loc.state || prev.state,
+        googleMapsLink: loc.googleMapsLink,
+        latitude: loc.latitude,
+        longitude: loc.longitude
+      }));
+
+      if (loc.pincode && typeof shippingService.checkPincode === 'function') {
+        const check = shippingService.checkPincode(loc.pincode);
+        setPincodeCheckResult(check);
+      }
+
+      setLocationSuccess(`GPS Location Detected (${loc.latitude}°, ${loc.longitude}°). Address auto-filled.`);
+    } catch (err) {
+      setLocationError(err.message || 'Could not fetch GPS location.');
+    } finally {
+      setIsLocating(false);
+    }
+  };
 
   // Auto-populate default product if items is empty on direct checkout visit
   useEffect(() => {
@@ -201,7 +245,10 @@ export function CheckoutPage({ onNavigate }) {
               flat: formData.apartment || formData.address,
               area: formData.address,
               city: formData.city,
-              state: formData.state
+              state: formData.state,
+              googleMapsLink: formData.googleMapsLink,
+              latitude: formData.latitude,
+              longitude: formData.longitude
             },
             fbp,
             fbc
@@ -284,14 +331,18 @@ export function CheckoutPage({ onNavigate }) {
                 area: formData.address,
                 city: formData.city,
                 state: formData.state,
-                pincode: cleanPin
+                pincode: cleanPin,
+                googleMapsLink: formData.googleMapsLink,
+                latitude: formData.latitude,
+                longitude: formData.longitude
               },
               shippingAddress: {
                 fullName: formData.fullName,
                 address: formData.address,
                 city: formData.city,
                 state: formData.state,
-                pincode: cleanPin
+                pincode: cleanPin,
+                googleMapsLink: formData.googleMapsLink
               },
               items: currentItems.map(it => ({
                 productId: it.productId || it.product?.id || 'ma-prod-001',
@@ -512,6 +563,73 @@ export function CheckoutPage({ onNavigate }) {
             {/* Step 2: Shipping Address */}
             <div className="checkout-form-section">
               <h2 className="form-section-title">2. Delivery Address</h2>
+
+              {/* Google Maps / GPS Auto-Fill Card */}
+              <div className="checkout-gps-card">
+                <div className="checkout-gps-card-header">
+                  <div className="gps-info-left">
+                    <div className="gps-icon-bubble">
+                      <MapPin size={20} />
+                    </div>
+                    <div>
+                      <div className="gps-card-title">
+                        <span>Use Exact Location (Google Maps / GPS)</span>
+                        <span className="gps-card-badge">1-Tap Fill</span>
+                      </div>
+                      <p className="gps-card-sub">
+                        Auto-detects PIN code, street, town & attaches exact map pin for fast delivery.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAutoLocate}
+                    disabled={isLocating}
+                    className="gps-locate-btn"
+                  >
+                    {isLocating ? (
+                      <>
+                        <Loader2 size={15} className="animate-spin" />
+                        <span>Detecting GPS...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Navigation size={15} />
+                        <span>Detect My Location</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {locationSuccess && (
+                  <div className="gps-status-success">
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <Check size={14} color="#059669" />
+                      <span>{locationSuccess}</span>
+                    </span>
+                    {formData.googleMapsLink && (
+                      <a
+                        href={formData.googleMapsLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="gps-map-link"
+                      >
+                        <span>View Google Maps Pin</span>
+                        <ExternalLink size={12} />
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {locationError && (
+                  <div className="gps-status-error">
+                    <AlertCircle size={14} color="#d97706" />
+                    <span>{locationError}</span>
+                  </div>
+                )}
+              </div>
+
               <div className="form-field">
                 <label htmlFor="fullName">Full Name *</label>
                 <input
@@ -538,6 +656,34 @@ export function CheckoutPage({ onNavigate }) {
                   onChange={handleInputChange}
                   className="input-text"
                 />
+              </div>
+
+              <div className="form-grid-2" style={{ marginBottom: 'var(--space-sm)' }}>
+                <div className="form-field" style={{ marginBottom: 0 }}>
+                  <label htmlFor="apartment">Apartment / Landmark (Optional)</label>
+                  <input
+                    id="apartment"
+                    type="text"
+                    name="apartment"
+                    placeholder="Near landmark, colony, or floor"
+                    value={formData.apartment}
+                    onChange={handleInputChange}
+                    className="input-text"
+                  />
+                </div>
+
+                <div className="form-field" style={{ marginBottom: 0 }}>
+                  <label htmlFor="googleMapsLink">Google Maps Link / Pin (Auto-filled / Optional)</label>
+                  <input
+                    id="googleMapsLink"
+                    type="url"
+                    name="googleMapsLink"
+                    placeholder="https://maps.google.com/?q=..."
+                    value={formData.googleMapsLink}
+                    onChange={handleInputChange}
+                    className="input-text"
+                  />
+                </div>
               </div>
 
               <div className="form-grid-3">

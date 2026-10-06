@@ -77,6 +77,93 @@ export const extractProductSpecs = (item, orderData = {}) => {
 };
 
 /**
+ * Detects customer's current GPS location and performs reverse geocoding to auto-fill address & Google Maps pin
+ */
+export const detectCurrentLocation = async () => {
+  if (typeof window === 'undefined' || !navigator.geolocation) {
+    throw new Error('Geolocation is not supported on this device/browser.');
+  }
+
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = Number(pos.coords.latitude.toFixed(6));
+        const lng = Number(pos.coords.longitude.toFixed(6));
+        const accuracy = Math.round(pos.coords.accuracy || 0);
+        const googleMapsLink = `https://maps.google.com/?q=${lat},${lng}`;
+
+        let geocoded = {
+          latitude: lat,
+          longitude: lng,
+          accuracy,
+          googleMapsLink,
+          formattedAddress: '',
+          flat: '',
+          area: '',
+          city: '',
+          district: '',
+          state: '',
+          pincode: ''
+        };
+
+        try {
+          // OpenStreetMap Reverse Geocoding with fallback
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 6000);
+          
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+            signal: controller.signal,
+            headers: { 'Accept-Language': 'en' }
+          });
+          clearTimeout(timeoutId);
+
+          if (res.ok) {
+            const data = await res.json();
+            const a = data.address || {};
+
+            const road = a.road || a.street || a.neighbourhood || a.suburb || a.residential || '';
+            const houseNumber = a.house_number || a.building || '';
+            const locality = a.suburb || a.village || a.town || a.neighbourhood || a.county || '';
+            const city = a.city || a.town || a.county || a.state_district || a.district || '';
+            const district = a.state_district || a.district || city || '';
+            const state = a.state || 'Andhra Pradesh';
+            const rawPin = (a.postcode || '').toString().replace(/[^0-9]/g, '').slice(0, 6);
+
+            geocoded.flat = houseNumber && road ? `${houseNumber}, ${road}` : road;
+            geocoded.area = locality && locality !== road ? locality : (road || locality);
+            geocoded.city = city || district || 'Andhra Pradesh';
+            geocoded.district = district;
+            geocoded.state = state;
+            geocoded.pincode = rawPin;
+            geocoded.formattedAddress = data.display_name || '';
+          }
+        } catch (apiErr) {
+          console.warn('Reverse geocoding network fallback:', apiErr);
+        }
+
+        resolve(geocoded);
+      },
+      (err) => {
+        let msg = 'Unable to detect location.';
+        if (err.code === 1) {
+          msg = 'Location access was denied. Please allow location permissions in your browser settings.';
+        } else if (err.code === 2) {
+          msg = 'Location unavailable. Please enter your address details manually.';
+        } else if (err.code === 3) {
+          msg = 'Location request timed out. Please try again or type manually.';
+        }
+        reject(new Error(msg));
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 30000
+      }
+    );
+  });
+};
+
+/**
  * Normalizes customer contact and delivery address from various order payload structures
  */
 export const normalizeCustomerAddress = (orderData = {}) => {
@@ -159,6 +246,11 @@ export const normalizeCustomerAddress = (orderData = {}) => {
     }
   }
 
+  // Google Maps Coordinates & Link
+  const latitude = addrObj.latitude || orderData.latitude || null;
+  const longitude = addrObj.longitude || orderData.longitude || null;
+  const googleMapsLink = addrObj.googleMapsLink || orderData.googleMapsLink || (latitude && longitude ? `https://maps.google.com/?q=${latitude},${longitude}` : '');
+
   // Sensible defaults
   if (!state) {
     state = 'Andhra Pradesh';
@@ -191,6 +283,9 @@ export const normalizeCustomerAddress = (orderData = {}) => {
     district,
     state: state || 'Andhra Pradesh',
     pincode: pincode || '520001',
+    latitude,
+    longitude,
+    googleMapsLink,
     fullAddress
   };
 };
@@ -246,6 +341,7 @@ export const getWhatsAppOrderReceipt = (orderData) => {
 • *Phone / Mobile:* +91 ${custPhone}
 ${custEmail ? `• *Email:* ${custEmail}\n` : ''}📍 *Complete Delivery & Shipping Address:*
 ${fullAddress || 'Address on file'}
+${addr.googleMapsLink ? `🗺️ *Google Maps Pin:* ${addr.googleMapsLink}\n` : ''}
 
 🛒 *Ordered Products & Exact Specifications:*
 ${itemsList}

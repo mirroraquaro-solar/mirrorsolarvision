@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Check, Lock, AlertCircle, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Check, Lock, AlertCircle, ShoppingBag, MapPin, Navigation, ExternalLink, Loader2, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { loadRazorpay } from '../../services/razorpayLoader';
 import { analytics } from '../../aqua/services/analytics';
+import { detectCurrentLocation } from '../../services/notificationService';
 
 const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { currentUser: user, userProfile } = useAuth();
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationSuccess, setLocationSuccess] = useState(null);
+  const [locationError, setLocationError] = useState(null);
 
   const cartItems = checkoutData?.items 
     ? checkoutData.items 
@@ -25,7 +29,10 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
     flat: '',
     area: '',
     city: '',
-    state: ''
+    state: '',
+    googleMapsLink: '',
+    latitude: null,
+    longitude: null
   });
   const [step, setStep] = useState(1); // 1 = Address, 2 = Payment
 
@@ -50,6 +57,49 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
     try {
       analytics.trackBeginCheckout(cartItems, totalAmount, address);
     } catch (err) {}
+  };
+
+  const handleAutoLocate = async () => {
+    setIsLocating(true);
+    setLocationError(null);
+    setLocationSuccess(null);
+
+    try {
+      const loc = await detectCurrentLocation();
+      setAddress(prev => ({
+        ...prev,
+        pincode: loc.pincode || prev.pincode,
+        flat: loc.flat ? (prev.flat ? `${prev.flat}, ${loc.flat}` : loc.flat) : prev.flat,
+        area: loc.area || prev.area,
+        city: loc.city || prev.city,
+        state: loc.state || prev.state,
+        googleMapsLink: loc.googleMapsLink,
+        latitude: loc.latitude,
+        longitude: loc.longitude
+      }));
+
+      // If pincode was fetched, run postal API if city or state is missing
+      if (loc.pincode && (!loc.city || !loc.state)) {
+        try {
+          const res = await fetch(`https://api.postalpincode.in/pincode/${loc.pincode}`);
+          const pData = await res.json();
+          if (pData && pData[0].Status === 'Success') {
+            const po = pData[0].PostOffice[0];
+            setAddress(prev => ({
+              ...prev,
+              city: prev.city || po.District || po.Region || '',
+              state: prev.state || po.State || ''
+            }));
+          }
+        } catch (e) {}
+      }
+
+      setLocationSuccess(`GPS Location Detected (${loc.latitude}°, ${loc.longitude}°). Address auto-filled.`);
+    } catch (err) {
+      setLocationError(err.message || 'Could not fetch GPS location.');
+    } finally {
+      setIsLocating(false);
+    }
   };
 
   const handlePincodeChange = async (e) => {
@@ -335,6 +385,72 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
               
               {step === 1 && (
                 <div className="p-4 sm:p-6">
+                  {/* Google Maps / GPS Auto-Fill Card */}
+                  <div className="mb-4 p-3.5 bg-gradient-to-r from-blue-50/90 to-sky-50/90 rounded-2xl border border-blue-200/80 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-start gap-2.5">
+                        <div className="p-2 bg-blue-600 text-white rounded-xl shadow-xs shrink-0 mt-0.5 sm:mt-0">
+                          <MapPin size={18} />
+                        </div>
+                        <div>
+                          <h4 className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5">
+                            <span>Use Exact Location (Google Maps / GPS)</span>
+                            <span className="bg-blue-100 text-blue-800 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">1-Tap Fill</span>
+                          </h4>
+                          <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5 leading-snug">
+                            Auto-detects PIN code, street, town & attaches exact map pin for fast delivery.
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleAutoLocate}
+                        disabled={isLocating}
+                        className="inline-flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 active:scale-98 disabled:opacity-50 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-xs transition-all cursor-pointer shrink-0"
+                      >
+                        {isLocating ? (
+                          <>
+                            <Loader2 size={14} className="animate-spin" />
+                            <span>Detecting GPS...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Navigation size={14} />
+                            <span>Detect My Location</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {locationSuccess && (
+                      <div className="mt-2.5 pt-2.5 border-t border-blue-200/60 flex flex-wrap items-center justify-between gap-2 text-[11px] text-emerald-800 font-semibold bg-emerald-50/80 px-2.5 py-1.5 rounded-lg">
+                        <span className="flex items-center gap-1">
+                          <Check size={13} className="text-emerald-600" />
+                          <span>{locationSuccess}</span>
+                        </span>
+                        {address.googleMapsLink && (
+                          <a
+                            href={address.googleMapsLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-700 hover:text-blue-900 font-bold underline inline-flex items-center gap-0.5"
+                          >
+                            <span>View Google Maps Pin</span>
+                            <ExternalLink size={11} />
+                          </a>
+                        )}
+                      </div>
+                    )}
+
+                    {locationError && (
+                      <div className="mt-2 text-[11px] text-amber-800 bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-200/80 flex items-center gap-1">
+                        <AlertCircle size={13} className="text-amber-600 shrink-0" />
+                        <span>{locationError}</span>
+                      </div>
+                    )}
+                  </div>
+
                   <form onSubmit={handleAddressSubmit} className="space-y-3.5">
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">
