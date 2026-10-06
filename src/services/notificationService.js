@@ -144,20 +144,20 @@ export const detectCurrentLocation = async () => {
         resolve(geocoded);
       },
       (err) => {
-        let msg = 'Unable to detect location.';
+        let msg = 'Unable to detect GPS location.';
         if (err.code === 1) {
-          msg = 'Location access was denied. Please allow location permissions in your browser settings.';
+          msg = '📍 Location access was blocked. Please tap the lock/settings icon in your browser address bar to Allow location, make sure phone GPS is ON, and retry.';
         } else if (err.code === 2) {
-          msg = 'Location unavailable. Please enter your address details manually.';
+          msg = '📍 GPS signal unavailable. Please turn ON Location / GPS in your device settings and tap Detect Location again.';
         } else if (err.code === 3) {
-          msg = 'Location request timed out. Please try again or type manually.';
+          msg = '📍 Location request timed out. Please check your GPS signal and tap Detect Location again.';
         }
         reject(new Error(msg));
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 30000
+        timeout: 12000,
+        maximumAge: 10000
       }
     );
   });

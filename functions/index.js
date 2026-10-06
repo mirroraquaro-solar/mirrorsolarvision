@@ -411,16 +411,29 @@ async function createShiprocketOrderForRecord(orderData, razorpay_payment_id) {
   const min = String(now.getMinutes()).padStart(2, '0');
   const formattedOrderDate = `${yyyy}-${mm}-${dd} ${hh}:${min}`;
 
+  const mapInfo = addr.googleMapsLink ? `Map: ${addr.googleMapsLink}` : (addr.latitude && addr.longitude ? `GPS: ${addr.latitude},${addr.longitude}` : '');
+  const commentText = [
+    `Order ${orderBookingId}`,
+    `Customer: ${custName}`,
+    `Phone: ${cleanPhone}`,
+    mapInfo
+  ].filter(Boolean).join(' | ');
+
+  let addr2 = addr.area || '';
+  if (addr.googleMapsLink && !addr2.includes('maps.google')) {
+    addr2 = addr2 ? `${addr2} | ${addr.googleMapsLink}` : addr.googleMapsLink;
+  }
+
   const shiprocketPayload = {
     order_id: orderBookingId,
     order_date: formattedOrderDate,
     pickup_location: "work",
     channel_id: "",
-    comment: `Mirror Solar Store Booking ID: ${orderBookingId} - Customer: ${custName} - Phone: ${cleanPhone}`,
+    comment: commentText.substring(0, 240),
     billing_customer_name: firstName,
     billing_last_name: lastName,
     billing_address: (addr.flat || addr.fullAddress || 'Address on file').substring(0, 100),
-    billing_address_2: (addr.area || addr.city || '').substring(0, 100),
+    billing_address_2: (addr2 || addr.city || '').substring(0, 100),
     billing_city: addr.city,
     billing_pincode: addr.pincode,
     billing_state: addr.state,
@@ -428,6 +441,8 @@ async function createShiprocketOrderForRecord(orderData, razorpay_payment_id) {
     billing_email: custEmail,
     billing_phone: cleanPhone,
     shipping_is_billing: true,
+    latitude: addr.latitude || undefined,
+    longitude: addr.longitude || undefined,
     order_items: orderItems,
     payment_method: "Prepaid",
     sub_total: orderData.amount,
@@ -437,7 +452,7 @@ async function createShiprocketOrderForRecord(orderData, razorpay_payment_id) {
     weight: 0.5
   };
 
-  console.log("Sending Shiprocket Payload for Booking ID:", orderBookingId, "Customer Phone:", cleanPhone, "City:", addr.city);
+  console.log("Sending Shiprocket Payload with Exact Location for Booking ID:", orderBookingId, "Map:", addr.googleMapsLink || "N/A");
 
   const createOrderRes = await fetch('https://apiv2.shiprocket.in/v1/external/orders/create/adhoc', {
     method: 'POST',
