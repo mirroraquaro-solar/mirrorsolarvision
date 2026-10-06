@@ -21,7 +21,7 @@ export function PaymentSuccessModal({ isOpen, onClose, orderData, onNavigate }) 
   const shipment = payment.shipment || {};
   const customer = orderData.customer || {};
   const items = orderData.items || [];
-  const WHATSAPP_NUM = import.meta.env.VITE_WHATSAPP_BUSINESS_NUMBER || '919876543210';
+  const WHATSAPP_NUM = import.meta.env.VITE_WHATSAPP_BUSINESS_NUMBER || '919182612420';
 
   const handleCopyOrderId = () => {
     if (orderData.orderId) {

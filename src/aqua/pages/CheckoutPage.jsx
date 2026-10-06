@@ -266,10 +266,24 @@ export function CheckoutPage({ onNavigate }) {
               id: data.firestoreOrderId,
               total: grandTotal,
               amount: grandTotal,
+              customerName: formData.fullName,
+              customerPhone: cleanPhone,
+              customerEmail: formData.email,
               customer: {
                 fullName: formData.fullName,
                 email: formData.email,
                 phone: cleanPhone,
+                pincode: cleanPin
+              },
+              address: {
+                fullName: formData.fullName,
+                name: formData.fullName,
+                phone: cleanPhone,
+                email: formData.email,
+                flat: formData.apartment || formData.address,
+                area: formData.address,
+                city: formData.city,
+                state: formData.state,
                 pincode: cleanPin
               },
               shippingAddress: {

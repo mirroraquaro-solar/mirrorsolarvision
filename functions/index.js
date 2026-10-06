@@ -4,7 +4,9 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const cors = require('cors')({origin: true});
 const { 
-  dispatchBookingNotifications 
+  dispatchBookingNotifications,
+  dispatchTrackingNotification,
+  sendWhatsAppAlert
 } = require("./notifications");
 
 admin.initializeApp();
@@ -13,8 +15,8 @@ admin.initializeApp();
 const rzp_key_id = process.env.RAZORPAY_KEY_ID || "test_key_id";
 const rzp_key_secret = process.env.RAZORPAY_KEY_SECRET || "test_key_secret";
 
-const sr_email = process.env.SHIPROCKET_EMAIL || "test@example.com";
-const sr_password = process.env.SHIPROCKET_PASSWORD || "test_password";
+const sr_email = (process.env.SHIPROCKET_EMAIL || "api@mirrorsolarvision.com").replace(/^['"]|['"]$/g, '').trim();
+const sr_password = (process.env.SHIPROCKET_PASSWORD || "").replace(/^['"]|['"]$/g, '').trim();
 
 const razorpayInstance = new Razorpay({
   key_id: rzp_key_id,
@@ -23,13 +25,18 @@ const razorpayInstance = new Razorpay({
 
 // Helper to get Shiprocket Token
 async function getShiprocketToken() {
+  const cleanEmail = (process.env.SHIPROCKET_EMAIL || sr_email || "api@mirrorsolarvision.com").replace(/^['"]|['"]$/g, '').trim();
+  const cleanPassword = (process.env.SHIPROCKET_PASSWORD || sr_password || "").replace(/^['"]|['"]$/g, '').trim();
+
   const response = await fetch('https://apiv2.shiprocket.in/v1/external/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: sr_email, password: sr_password })
+    body: JSON.stringify({ email: cleanEmail, password: cleanPassword })
   });
   if (!response.ok) {
-    throw new Error('Failed to authenticate with Shiprocket');
+    const errText = await response.text();
+    console.error("Shiprocket auth error:", response.status, errText);
+    throw new Error('Failed to authenticate with Shiprocket: ' + errText);
   }
   const data = await response.json();
   return data.token;
@@ -247,16 +254,135 @@ async function sendMetaConversionsApiEvent({
   }
 }
 
+/**
+ * Normalizes customer contact and delivery address from various order payload structures
+ */
+function normalizeCustomerAddress(orderData = {}) {
+  const rawAddr = orderData.address || {};
+  let addrObj = {};
+
+  if (typeof rawAddr === 'string') {
+    addrObj.flat = rawAddr.trim();
+    addrObj.fullAddress = rawAddr.trim();
+  } else if (typeof rawAddr === 'object' && rawAddr !== null) {
+    addrObj = { ...rawAddr };
+  }
+
+  // 1. Full Name
+  const fullName = (
+    addrObj.fullName ||
+    addrObj.name ||
+    addrObj.customerName ||
+    orderData.customerName ||
+    orderData.name ||
+    orderData.fullName ||
+    'Valued Customer'
+  ).trim();
+  
+  // 2. Extract clean 10-digit mobile number
+  let rawPhone = (
+    addrObj.phone ||
+    addrObj.mobile ||
+    addrObj.contactNumber ||
+    addrObj.phoneNumber ||
+    orderData.customerPhone ||
+    orderData.phone ||
+    orderData.mobile ||
+    orderData.contactNumber ||
+    orderData.userPhone ||
+    orderData.billing_phone ||
+    ''
+  ).toString().replace(/[^0-9]/g, '');
+
+  // If no phone found in standard keys, search inside fullAddress or notes for 10-digit number
+  if (!rawPhone || rawPhone.length < 10) {
+    const textToSearch = `${typeof rawAddr === 'string' ? rawAddr : ''} ${addrObj.notes || ''} ${orderData.notes || ''}`;
+    const phoneMatch = textToSearch.match(/(?:\+?91|0)?([6-9]\d{9})/);
+    if (phoneMatch && phoneMatch[1]) {
+      rawPhone = phoneMatch[1];
+    }
+  }
+
+  if (rawPhone.length > 10 && rawPhone.startsWith('91')) {
+    rawPhone = rawPhone.slice(2);
+  } else if (rawPhone.length > 10 && rawPhone.startsWith('0')) {
+    rawPhone = rawPhone.slice(1);
+  }
+  const cleanPhone = rawPhone.slice(-10);
+
+  // 3. Email
+  const email = (
+    addrObj.email ||
+    addrObj.customerEmail ||
+    orderData.customerEmail ||
+    orderData.email ||
+    orderData.billing_email ||
+    ''
+  ).trim();
+  
+  // 4. Address Components
+  let flat = (addrObj.flat || addrObj.house || addrObj.doorNo || addrObj.street || orderData.flat || (typeof rawAddr === 'string' ? rawAddr : '')).trim();
+  let area = (addrObj.area || addrObj.street || addrObj.locality || addrObj.landmark || orderData.area || orderData.mandal || '').trim();
+  let city = (addrObj.city || addrObj.town || orderData.city || orderData.mandal || orderData.district || '').trim();
+  let district = (addrObj.district || orderData.district || '').trim();
+  let state = (addrObj.state || orderData.state || '').trim();
+  let pincode = (addrObj.pincode || addrObj.pin || addrObj.zip || addrObj.postalCode || orderData.pincode || '').toString().replace(/[^0-9]/g, '').trim();
+
+  // If pincode is missing, try to find a 6-digit Indian PIN code in the text
+  if (!pincode || pincode.length !== 6) {
+    const rawSearchStr = `${flat} ${area} ${typeof rawAddr === 'string' ? rawAddr : ''}`;
+    const pinMatch = rawSearchStr.match(/\b([1-9][0-9]{5})\b/);
+    if (pinMatch && pinMatch[1]) {
+      pincode = pinMatch[1];
+    }
+  }
+
+  // Sensible defaults
+  if (!state) {
+    state = 'Andhra Pradesh';
+  }
+  if (!city) {
+    city = district || 'Andhra Pradesh';
+  }
+  if (!pincode) {
+    pincode = '520001';
+  }
+
+  // Combine full address string cleanly without duplicates
+  const addressParts = [];
+  if (flat) addressParts.push(flat);
+  if (area && !flat.toLowerCase().includes(area.toLowerCase())) addressParts.push(area);
+  if (city && !flat.toLowerCase().includes(city.toLowerCase()) && !area.toLowerCase().includes(city.toLowerCase())) addressParts.push(city);
+  if (district && district !== city && !flat.toLowerCase().includes(district.toLowerCase())) addressParts.push(district);
+  if (state && !flat.toLowerCase().includes(state.toLowerCase())) addressParts.push(state);
+  if (pincode && !flat.includes(pincode)) addressParts.push(`PIN: ${pincode}`);
+
+  const fullAddress = addressParts.join(', ') || (typeof rawAddr === 'string' ? rawAddr : 'Address on file');
+
+  return {
+    fullName,
+    phone: cleanPhone,
+    email,
+    flat: flat || fullAddress,
+    area,
+    city: city || 'Andhra Pradesh',
+    district,
+    state: state || 'Andhra Pradesh',
+    pincode: pincode || '520001',
+    fullAddress
+  };
+}
+
 async function createShiprocketOrderForRecord(orderData, razorpay_payment_id) {
   const orderBookingId = orderData.bookingId || orderData.firestoreOrderId;
-  const address = orderData.address || {};
+  const addr = normalizeCustomerAddress(orderData);
   const items = orderData.items || [];
-  const cleanPhone = (address.phone || orderData.customerPhone || '9849810668').replace(/[^0-9]/g, '');
-  const custEmail = address.email || orderData.customerEmail || 'orders@mirrorsolarvision.com';
-  const custName = (address.fullName || orderData.customerName || 'Customer').trim();
+  const cleanPhone = addr.phone;
+  const custEmail = addr.email || 'orders@mirrorsolarvision.com';
+  const custName = addr.fullName;
   const nameParts = custName.split(' ');
   const firstName = nameParts[0] || 'Customer';
-  const lastName = nameParts.slice(1).join(' ') || '';
+  const lastName = nameParts.slice(1).join(' ') || 'Customer';
 
   const token = await getShiprocketToken();
   
@@ -283,17 +409,17 @@ async function createShiprocketOrderForRecord(orderData, razorpay_payment_id) {
     order_date: formattedOrderDate,
     pickup_location: "work",
     channel_id: "",
-    comment: `Mirror Solar Store Booking ID: ${orderBookingId} - Phone: ${cleanPhone}`,
+    comment: `Mirror Solar Store Booking ID: ${orderBookingId} - Customer: ${custName} - Phone: ${cleanPhone}`,
     billing_customer_name: firstName,
-    billing_last_name: lastName || "Customer",
-    billing_address: address.flat || address.area || "Main Road",
-    billing_address_2: address.area || address.city || "Area",
-    billing_city: address.city || "Eluru",
-    billing_pincode: address.pincode || "534001",
-    billing_state: address.state || "Andhra Pradesh",
+    billing_last_name: lastName,
+    billing_address: (addr.flat || addr.fullAddress || 'Address on file').substring(0, 100),
+    billing_address_2: (addr.area || addr.city || '').substring(0, 100),
+    billing_city: addr.city,
+    billing_pincode: addr.pincode,
+    billing_state: addr.state,
     billing_country: "India",
     billing_email: custEmail,
-    billing_phone: cleanPhone.length === 10 ? cleanPhone : "9849810668",
+    billing_phone: cleanPhone,
     shipping_is_billing: true,
     order_items: orderItems,
     payment_method: "Prepaid",
@@ -304,7 +430,7 @@ async function createShiprocketOrderForRecord(orderData, razorpay_payment_id) {
     weight: 0.5
   };
 
-  console.log("Sending Shiprocket Payload for Booking ID:", orderBookingId);
+  console.log("Sending Shiprocket Payload for Booking ID:", orderBookingId, "Customer Phone:", cleanPhone, "City:", addr.city);
 
   const createOrderRes = await fetch('https://apiv2.shiprocket.in/v1/external/orders/create/adhoc', {
     method: 'POST',
@@ -374,22 +500,26 @@ exports.createRazorpayOrder = functions.https.onRequest((req, res) => {
 
       const order = await razorpayInstance.orders.create(options);
 
-      // Save order and address to Firestore
-      const uid = userId || 'anonymous';
-      const cleanPhone = (address?.phone || '').replace(/[^0-9]/g, '');
-      const customerEmail = address?.email || 'info@mirrorsolarvision.com';
-      const customerName = address?.fullName || 'Customer';
+      // Normalize and extract customer details safely
+      const rawReq = req.body.data || req.body || {};
+      const addr = normalizeCustomerAddress({
+        address,
+        customerName: address?.fullName || address?.name || rawReq.customerName || rawReq.name,
+        customerPhone: address?.phone || address?.mobile || address?.contactNumber || rawReq.customerPhone || rawReq.phone,
+        customerEmail: address?.email || rawReq.customerEmail || rawReq.email
+      });
 
+      const uid = userId || 'anonymous';
       const orderDataToSave = {
         userId: uid,
         bookingId: bookingId,
         firestoreOrderId: bookingId,
-        customerName: customerName,
-        customerPhone: cleanPhone,
-        customerEmail: customerEmail,
+        customerName: addr.fullName,
+        customerPhone: addr.phone,
+        customerEmail: addr.email || 'orders@mirrorsolarvision.com',
         items: items || [],
         amount: finalAmount,
-        address: address || {}, // Store delivery address
+        address: typeof address === 'object' && address !== null ? { ...address, ...addr } : { fullAddress: addr.fullAddress, flat: addr.flat, area: addr.area, city: addr.city, state: addr.state, pincode: addr.pincode, phone: addr.phone, fullName: addr.fullName },
         razorpayOrderId: order.id,
         status: 'created',
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -488,6 +618,7 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
       
       const orderData = orderSnap.data();
       const orderBookingId = orderData.bookingId || firestoreOrderId;
+      const addr = normalizeCustomerAddress(orderData);
 
       // 3. Create Shiprocket Order
       try {
@@ -550,13 +681,13 @@ exports.verifyRazorpayPayment = functions.https.onRequest((req, res) => {
           fbp: passedFbp,
           fbc: passedFbc,
           userData: {
-            email: fullOrderRecord.customerEmail || address.email,
-            phone: fullOrderRecord.customerPhone || address.phone,
-            firstName: (address.fullName || fullOrderRecord.customerName || '').split(' ')[0],
-            lastName: (address.fullName || fullOrderRecord.customerName || '').split(' ').slice(1).join(' '),
-            city: address.city,
-            state: address.state,
-            pincode: address.pincode,
+            email: addr.email || fullOrderRecord.customerEmail,
+            phone: addr.phone || fullOrderRecord.customerPhone,
+            firstName: addr.fullName.split(' ')[0] || 'Customer',
+            lastName: addr.fullName.split(' ').slice(1).join(' ') || '',
+            city: addr.city,
+            state: addr.state,
+            pincode: addr.pincode,
             externalId: fullOrderRecord.userId || uid,
             fbp: passedFbp,
             fbc: passedFbc
@@ -753,6 +884,11 @@ exports.shiprocketWebhook = functions.https.onRequest(async (req, res) => {
 
     const normalizedStatus = normalizeShiprocketStatus(rawStatus, statusCode);
 
+    const currentLocation = data.current_location || data.location || data.city || (data.scans && data.scans.length ? (data.scans[data.scans.length - 1].location || data.scans[0].location) : null);
+    const activity = data.activity || (data.scans && data.scans.length ? (data.scans[data.scans.length - 1].activity || data.scans[0].activity) : null);
+    const origin = data.origin || data.pickup_location || 'Eluru Dispatch Warehouse, Andhra Pradesh';
+    const destination = data.destination || data.delivery_city || null;
+
     if (rawStatus || awb || shipmentId || orderId) {
       const updatePayload = {
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -767,6 +903,8 @@ exports.shiprocketWebhook = functions.https.onRequest(async (req, res) => {
       if (courierName) updatePayload.courierName = courierName;
       if (etd) updatePayload.estimatedDelivery = etd;
       if (deliveredDate) updatePayload.deliveredDate = deliveredDate;
+      if (currentLocation) updatePayload.currentLocation = currentLocation;
+      if (activity) updatePayload.lastActivity = activity;
       if (data.scans && Array.isArray(data.scans)) {
         updatePayload.shiprocketActivities = data.scans;
       }
@@ -806,12 +944,34 @@ exports.shiprocketWebhook = functions.https.onRequest(async (req, res) => {
         queryList.push(admin.firestore().collectionGroup('orders').where('shiprocketAwb', '==', awb).get());
       }
 
-      const results = await Promise.all(queryList);
+      let updatedOrderRecord = null;
       for (const snap of results) {
         for (const docSnap of snap.docs) {
+          const docData = docSnap.data() || {};
           await docSnap.ref.update(updatePayload).catch(() => {});
           const docId = docSnap.id;
           await admin.firestore().collection('orders').doc(docId).update(updatePayload).catch(() => {});
+          if (!updatedOrderRecord) {
+            updatedOrderRecord = { ...docData, ...updatePayload, id: docId };
+          }
+        }
+      }
+
+      // Automatically dispatch live WhatsApp tracking update to customer with city-to-city transit details
+      if (updatedOrderRecord && (awb || rawStatus)) {
+        try {
+          await dispatchTrackingNotification(updatedOrderRecord, {
+            status: normalizedStatus || rawStatus,
+            awb: awb || updatedOrderRecord.shiprocketAwb,
+            courierName: courierName || updatedOrderRecord.courierName,
+            estimatedDelivery: etd || updatedOrderRecord.estimatedDelivery,
+            currentLocation: currentLocation || updatedOrderRecord.currentLocation,
+            activity: activity || updatedOrderRecord.lastActivity,
+            origin: origin || 'Eluru Dispatch Warehouse, Andhra Pradesh',
+            destination: destination || (updatedOrderRecord.address ? `${updatedOrderRecord.address.city || ''}, ${updatedOrderRecord.address.state || 'AP'}` : null)
+          });
+        } catch (dispatchErr) {
+          console.error("Failed to dispatch tracking WhatsApp notification:", dispatchErr);
         }
       }
     }
@@ -1176,6 +1336,104 @@ exports.getMetaDatasetQualityMetrics = functions.https.onRequest((req, res) => {
     } catch (error) {
       console.error("[Meta Dataset Quality] Diagnostics error:", error.message || error);
       return res.status(500).send({ data: { error: error.message || 'Failed to check Dataset Quality status' } });
+    }
+  });
+});
+
+/**
+ * Meta WhatsApp Cloud API Webhook Handler
+ * Supports Meta webhook verification challenge and incoming delivery/status events
+ */
+exports.whatsappWebhook = functions.https.onRequest((req, res) => {
+  const verifyToken = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || 'mirrorsolar_wa_verify_2026';
+
+  // 1. Webhook Verification Handshake (GET)
+  if (req.method === 'GET') {
+    const mode = req.query['hub.mode'];
+    const token = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
+
+    if (mode === 'subscribe' && token === verifyToken) {
+      console.log('[Meta WhatsApp Webhook] Verified successfully!');
+      return res.status(200).send(challenge);
+    } else {
+      console.warn('[Meta WhatsApp Webhook] Verification failed. Token mismatch.');
+      return res.status(403).send('Forbidden');
+    }
+  }
+
+  // 2. Incoming Messages & Delivery Receipts (POST)
+  if (req.method === 'POST') {
+    try {
+      const body = req.body || {};
+      console.log('[Meta WhatsApp Webhook Event]:', JSON.stringify(body));
+
+      // Store incoming events or status ticks in Firestore
+      if (admin.apps && admin.apps.length) {
+        admin.firestore().collection('whatsapp_events').add({
+          payload: body,
+          receivedAt: admin.firestore.FieldValue.serverTimestamp()
+        }).catch(() => {});
+      }
+
+      return res.status(200).send('EVENT_RECEIVED');
+    } catch (e) {
+      console.error('[Meta WhatsApp Webhook] Error:', e);
+      return res.status(200).send('EVENT_PROCESSED');
+    }
+  }
+
+  return res.status(405).send('Method Not Allowed');
+});
+
+/**
+ * On-Demand Test Endpoint for WhatsApp Notifications
+ */
+exports.testWhatsAppNotification = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    try {
+      const phone = req.query.phone || req.body?.phone || '919182612420';
+      const customMsg = req.query.message || req.body?.message || `🚚 *MIRROR SOLAR VISION — LIVE COURIER TRACKING UPDATE*
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+Hello *Valued Customer*, here is the real-time shipping update for your order:
+
+📦 *Order / Booking ID:* MSV-2026-98124
+📍 *Courier Status:* *IN TRANSIT / DISPATCHED*
+💳 *Payment Status:* PAID & CONFIRMED (*₹14,999* Prepaid Online)
+
+🛒 *Order Items & Specifications:*
+  1. *Solar Panel Water Drain Clips (35mm)*
+     📏 Frame Size: *35mm* | ⚡ Capacity: *5 kW* | 🔢 Units: *20 Clips*
+     🏷️ Quantity: *1 Pack*
+
+🚚 *COURIER & TRACKING DETAILS:*
+• 🏷️ *AWB / Tracking Number:* *148291048291*
+• 🚛 *Courier Partner:* *Delhivery Express*
+• 📅 *Estimated Delivery Date:* *Thursday, 8th Oct*
+
+🔗 *Live Tracking Link (Click to Track):*
+https://shiprocket.co/tracking/148291048291
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+📞 *Mirror Solar Vision Support:* +91 91826 12420
+🏢 *Dispatch Hub:* Opposite Vmax Cinema Hall, GNT Road, Eluru, AP
+🌐 *Website:* https://mirrorsolarvision.com`;
+
+      const result = await sendWhatsAppAlert({
+        phone: phone,
+        message: customMsg
+      });
+
+      return res.status(200).send({
+        success: true,
+        targetPhone: phone,
+        result
+      });
+    } catch (err) {
+      return res.status(500).send({
+        success: false,
+        error: err.message || String(err)
+      });
     }
   });
 });

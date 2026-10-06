@@ -18,7 +18,7 @@ import './MobileNavDrawer.css';
 export function MobileNavDrawer({ currentPath = '/', onNavigate }) {
   const { isNavOpen, setIsNavOpen } = useUI();
   const { setIsCartOpen, totalItemCount } = useCart();
-  const WHATSAPP_NUM = import.meta.env.VITE_WHATSAPP_BUSINESS_NUMBER || '919876543210';
+  const WHATSAPP_NUM = import.meta.env.VITE_WHATSAPP_BUSINESS_NUMBER || '919182612420';
 
   if (!isNavOpen) return null;
 

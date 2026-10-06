@@ -21,22 +21,22 @@ import {
 // import { BUSINESS_CONTACT } from '../../data/bulkComboData';
 import { db } from '../../config/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ADMIN_WHATSAPP, BUSINESS_PHONE, printConfirmationDocument, getCustomerWhatsAppUrl } from '../../services/notificationService';
+import { ADMIN_WHATSAPP, BUSINESS_PHONE, printConfirmationDocument, getCustomerWhatsAppUrl, normalizeCustomerAddress } from '../../services/notificationService';
 
 const OrderSuccess = ({ orderData, onContinueShopping, onViewOrders }) => {
   const orderId = orderData?.orderId || orderData?.bookingId || (typeof orderData === 'string' ? orderData : orderData?.id || 'N/A');
   const shipmentId = orderData?.shiprocketShipmentId;
   const amount = orderData?.amount || 0;
   const items = orderData?.items || [];
-  const address = orderData?.address || {};
   const paymentId = orderData?.razorpayPaymentId || orderData?.paymentId || '';
   const [copiedNote, setCopiedNote] = useState(false);
   const [showConfirmPopup, setShowConfirmPopup] = useState(true);
 
-  const customerName = address.fullName || 'Valued Customer';
-  const customerPhone = address.phone || '';
-  const customerCity = address.city ? `${address.city}, ${address.state || 'AP'}` : 'Andhra Pradesh';
-  const fullAddressText = [address.flat, address.area, address.city, address.state, address.pincode].filter(Boolean).join(', ');
+  const addr = normalizeCustomerAddress(orderData);
+  const customerName = addr.fullName;
+  const customerPhone = addr.phone;
+  const customerCity = addr.city ? `${addr.city}, ${addr.state || 'AP'}` : 'Andhra Pradesh';
+  const fullAddressText = addr.fullAddress;
 
   // Optional Review State
   const [rating, setRating] = useState(5);
@@ -522,7 +522,7 @@ ${shipmentId ? `🚚 *Shiprocket Tracking ID:* ${shipmentId}\n🔗 *Live Courier
                     bookingId: orderId,
                     customerName,
                     customerPhone,
-                    customerEmail: address.email || '',
+                    customerEmail: addr.email || orderData?.customerEmail || orderData?.email || '',
                     address: fullAddressText,
                     items,
                     totalAmount: amount,

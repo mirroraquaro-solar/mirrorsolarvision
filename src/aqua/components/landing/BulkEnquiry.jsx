@@ -5,7 +5,7 @@ import './ProductLanding.css';
 
 export function BulkEnquiry() {
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
-  const WHATSAPP_NUM = import.meta.env.VITE_WHATSAPP_BUSINESS_NUMBER || '919876543210';
+  const WHATSAPP_NUM = import.meta.env.VITE_WHATSAPP_BUSINESS_NUMBER || '919182612420';
 
   const [leadType, setLeadType] = useState('BULK_ENQUIRY'); // 'BULK_ENQUIRY' | 'DEALER_ENQUIRY'
   const [formData, setFormData] = useState({

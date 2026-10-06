@@ -56,9 +56,27 @@ export default function DrainClips() {
       variantLabel: `${selectedSize} • ${totalClips} Clips (${kwEquivalent} kW)`
     }];
 
+    const addressObj = {
+      fullName: checkoutForm.name,
+      name: checkoutForm.name,
+      phone: checkoutForm.phone,
+      email: checkoutForm.email,
+      flat: checkoutForm.address,
+      mandal: checkoutForm.mandal,
+      area: checkoutForm.mandal,
+      city: checkoutForm.mandal || checkoutForm.district || 'Andhra Pradesh',
+      district: checkoutForm.district,
+      state: 'Andhra Pradesh',
+      pincode: checkoutForm.pincode || ''
+    };
+
     try {
       const res = await submitBookingWithNotification('drain_clips', {
         ...checkoutForm,
+        customerName: checkoutForm.name,
+        customerPhone: checkoutForm.phone,
+        customerEmail: checkoutForm.email,
+        address: addressObj,
         selectedSize,
         size: selectedSize,
         selectedPack,

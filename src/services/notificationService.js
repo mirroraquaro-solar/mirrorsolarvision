@@ -77,23 +77,135 @@ export const extractProductSpecs = (item, orderData = {}) => {
 };
 
 /**
+ * Normalizes customer contact and delivery address from various order payload structures
+ */
+export const normalizeCustomerAddress = (orderData = {}) => {
+  const rawAddr = orderData.address || {};
+  let addrObj = {};
+
+  if (typeof rawAddr === 'string') {
+    addrObj.flat = rawAddr.trim();
+    addrObj.fullAddress = rawAddr.trim();
+  } else if (typeof rawAddr === 'object' && rawAddr !== null) {
+    addrObj = { ...rawAddr };
+  }
+
+  // 1. Full Name
+  const fullName = (
+    addrObj.fullName ||
+    addrObj.name ||
+    addrObj.customerName ||
+    orderData.customerName ||
+    orderData.name ||
+    orderData.fullName ||
+    'Valued Customer'
+  ).trim();
+  
+  // 2. Extract clean 10-digit mobile number
+  let rawPhone = (
+    addrObj.phone ||
+    addrObj.mobile ||
+    addrObj.contactNumber ||
+    addrObj.phoneNumber ||
+    orderData.customerPhone ||
+    orderData.phone ||
+    orderData.mobile ||
+    orderData.contactNumber ||
+    orderData.userPhone ||
+    orderData.billing_phone ||
+    ''
+  ).toString().replace(/[^0-9]/g, '');
+
+  // If no phone found in standard keys, search inside fullAddress or notes for 10-digit number
+  if (!rawPhone || rawPhone.length < 10) {
+    const textToSearch = `${typeof rawAddr === 'string' ? rawAddr : ''} ${addrObj.notes || ''} ${orderData.notes || ''}`;
+    const phoneMatch = textToSearch.match(/(?:\+?91|0)?([6-9]\d{9})/);
+    if (phoneMatch && phoneMatch[1]) {
+      rawPhone = phoneMatch[1];
+    }
+  }
+
+  if (rawPhone.length > 10 && rawPhone.startsWith('91')) {
+    rawPhone = rawPhone.slice(2);
+  } else if (rawPhone.length > 10 && rawPhone.startsWith('0')) {
+    rawPhone = rawPhone.slice(1);
+  }
+  const cleanPhone = rawPhone.slice(-10);
+
+  // 3. Email
+  const email = (
+    addrObj.email ||
+    addrObj.customerEmail ||
+    orderData.customerEmail ||
+    orderData.email ||
+    orderData.billing_email ||
+    ''
+  ).trim();
+  
+  // 4. Address Components
+  let flat = (addrObj.flat || addrObj.house || addrObj.doorNo || addrObj.street || orderData.flat || (typeof rawAddr === 'string' ? rawAddr : '')).trim();
+  let area = (addrObj.area || addrObj.street || addrObj.locality || addrObj.landmark || orderData.area || orderData.mandal || '').trim();
+  let city = (addrObj.city || addrObj.town || orderData.city || orderData.mandal || orderData.district || '').trim();
+  let district = (addrObj.district || orderData.district || '').trim();
+  let state = (addrObj.state || orderData.state || '').trim();
+  let pincode = (addrObj.pincode || addrObj.pin || addrObj.zip || addrObj.postalCode || orderData.pincode || '').toString().replace(/[^0-9]/g, '').trim();
+
+  // If pincode is missing, try to find a 6-digit Indian PIN code in the text
+  if (!pincode || pincode.length !== 6) {
+    const rawSearchStr = `${flat} ${area} ${typeof rawAddr === 'string' ? rawAddr : ''}`;
+    const pinMatch = rawSearchStr.match(/\b([1-9][0-9]{5})\b/);
+    if (pinMatch && pinMatch[1]) {
+      pincode = pinMatch[1];
+    }
+  }
+
+  // Sensible defaults
+  if (!state) {
+    state = 'Andhra Pradesh';
+  }
+  if (!city) {
+    city = district || 'Andhra Pradesh';
+  }
+  if (!pincode) {
+    pincode = '520001';
+  }
+
+  // Combine full address string cleanly without duplicates
+  const addressParts = [];
+  if (flat) addressParts.push(flat);
+  if (area && !flat.toLowerCase().includes(area.toLowerCase())) addressParts.push(area);
+  if (city && !flat.toLowerCase().includes(city.toLowerCase()) && !area.toLowerCase().includes(city.toLowerCase())) addressParts.push(city);
+  if (district && district !== city && !flat.toLowerCase().includes(district.toLowerCase())) addressParts.push(district);
+  if (state && !flat.toLowerCase().includes(state.toLowerCase())) addressParts.push(state);
+  if (pincode && !flat.includes(pincode)) addressParts.push(`PIN: ${pincode}`);
+
+  const fullAddress = addressParts.join(', ') || (typeof rawAddr === 'string' ? rawAddr : 'Address on file');
+
+  return {
+    fullName,
+    phone: cleanPhone,
+    email,
+    flat: flat || fullAddress,
+    area,
+    city: city || 'Andhra Pradesh',
+    district,
+    state: state || 'Andhra Pradesh',
+    pincode: pincode || '520001',
+    fullAddress
+  };
+};
+
+/**
  * Generates formatted WhatsApp message and click URL for Solar Store Order
  */
 export const getWhatsAppOrderReceipt = (orderData) => {
   const bookingId = orderData.bookingId || orderData.firestoreOrderId || orderData.orderId || `MSV-${Date.now().toString().slice(-6)}`;
-  const address = orderData.address || {};
+  const addr = normalizeCustomerAddress(orderData);
   const rawItems = orderData.items || (orderData.productName ? [{ name: orderData.productName, price: orderData.totalPrice || orderData.amount, quantity: orderData.quantity || 1 }] : []);
-  const custName = (address.fullName || orderData.customerName || orderData.name || 'Valued Customer').trim();
-  const custPhone = (address.phone || orderData.customerPhone || orderData.phone || '').replace(/[^0-9]/g, '');
-  const custEmail = address.email || orderData.customerEmail || orderData.email || '';
-  const fullAddress = [
-    address.flat || orderData.flat || orderData.address,
-    address.area || orderData.area,
-    address.city || orderData.city || orderData.mandal,
-    address.district || orderData.district,
-    address.state || orderData.state || 'Andhra Pradesh',
-    (address.pincode || orderData.pincode) ? `PIN: ${address.pincode || orderData.pincode}` : ''
-  ].filter(Boolean).join(', ');
+  const custName = addr.fullName;
+  const custPhone = addr.phone;
+  const custEmail = addr.email;
+  const fullAddress = addr.fullAddress;
 
   const totalAmount = orderData.amount || orderData.totalPrice || 0;
   const dateStr = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' });

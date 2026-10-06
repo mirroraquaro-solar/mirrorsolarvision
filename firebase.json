@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "mirror-solar-vision",
     "public": "dist",
     "cleanUrls": true,
     "trailingSlash": false,

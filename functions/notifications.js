@@ -19,6 +19,9 @@ const SMTP_PASS = process.env.SMTP_PASS || "rxrdvcuobigttjve";
 const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || "Mirror Solar Vision";
 const SMTP_FROM_EMAIL = process.env.SMTP_FROM_EMAIL || "mirrorsolarvision@gmail.com";
 
+const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || "";
+const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_CAPI_ACCESS_TOKEN || "";
+const WHATSAPP_BUSINESS_ACCOUNT_ID = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || "";
 const WHATSAPP_GATEWAY_URL = process.env.WHATSAPP_GATEWAY_URL || "";
 const WHATSAPP_API_KEY = process.env.WHATSAPP_API_KEY || "";
 
@@ -121,23 +124,135 @@ function extractProductSpecs(item, orderData = {}) {
 }
 
 /**
+ * Normalizes customer contact and delivery address from various order payload structures
+ */
+function normalizeCustomerAddress(orderData = {}) {
+  const rawAddr = orderData.address || {};
+  let addrObj = {};
+
+  if (typeof rawAddr === 'string') {
+    addrObj.flat = rawAddr.trim();
+    addrObj.fullAddress = rawAddr.trim();
+  } else if (typeof rawAddr === 'object' && rawAddr !== null) {
+    addrObj = { ...rawAddr };
+  }
+
+  // 1. Full Name
+  const fullName = (
+    addrObj.fullName ||
+    addrObj.name ||
+    addrObj.customerName ||
+    orderData.customerName ||
+    orderData.name ||
+    orderData.fullName ||
+    'Valued Customer'
+  ).trim();
+  
+  // 2. Extract clean 10-digit mobile number
+  let rawPhone = (
+    addrObj.phone ||
+    addrObj.mobile ||
+    addrObj.contactNumber ||
+    addrObj.phoneNumber ||
+    orderData.customerPhone ||
+    orderData.phone ||
+    orderData.mobile ||
+    orderData.contactNumber ||
+    orderData.userPhone ||
+    orderData.billing_phone ||
+    ''
+  ).toString().replace(/[^0-9]/g, '');
+
+  // If no phone found in standard keys, search inside fullAddress or notes for 10-digit number
+  if (!rawPhone || rawPhone.length < 10) {
+    const textToSearch = `${typeof rawAddr === 'string' ? rawAddr : ''} ${addrObj.notes || ''} ${orderData.notes || ''}`;
+    const phoneMatch = textToSearch.match(/(?:\+?91|0)?([6-9]\d{9})/);
+    if (phoneMatch && phoneMatch[1]) {
+      rawPhone = phoneMatch[1];
+    }
+  }
+
+  if (rawPhone.length > 10 && rawPhone.startsWith('91')) {
+    rawPhone = rawPhone.slice(2);
+  } else if (rawPhone.length > 10 && rawPhone.startsWith('0')) {
+    rawPhone = rawPhone.slice(1);
+  }
+  const cleanPhone = rawPhone.slice(-10);
+
+  // 3. Email
+  const email = (
+    addrObj.email ||
+    addrObj.customerEmail ||
+    orderData.customerEmail ||
+    orderData.email ||
+    orderData.billing_email ||
+    ''
+  ).trim();
+  
+  // 4. Address Components
+  let flat = (addrObj.flat || addrObj.house || addrObj.doorNo || addrObj.street || orderData.flat || (typeof rawAddr === 'string' ? rawAddr : '')).trim();
+  let area = (addrObj.area || addrObj.street || addrObj.locality || addrObj.landmark || orderData.area || orderData.mandal || '').trim();
+  let city = (addrObj.city || addrObj.town || orderData.city || orderData.mandal || orderData.district || '').trim();
+  let district = (addrObj.district || orderData.district || '').trim();
+  let state = (addrObj.state || orderData.state || '').trim();
+  let pincode = (addrObj.pincode || addrObj.pin || addrObj.zip || addrObj.postalCode || orderData.pincode || '').toString().replace(/[^0-9]/g, '').trim();
+
+  // If pincode is missing, try to find a 6-digit Indian PIN code in the text
+  if (!pincode || pincode.length !== 6) {
+    const rawSearchStr = `${flat} ${area} ${typeof rawAddr === 'string' ? rawAddr : ''}`;
+    const pinMatch = rawSearchStr.match(/\b([1-9][0-9]{5})\b/);
+    if (pinMatch && pinMatch[1]) {
+      pincode = pinMatch[1];
+    }
+  }
+
+  // Sensible defaults
+  if (!state) {
+    state = 'Andhra Pradesh';
+  }
+  if (!city) {
+    city = district || 'Andhra Pradesh';
+  }
+  if (!pincode) {
+    pincode = '520001';
+  }
+
+  // Combine full address string cleanly without duplicates
+  const addressParts = [];
+  if (flat) addressParts.push(flat);
+  if (area && !flat.toLowerCase().includes(area.toLowerCase())) addressParts.push(area);
+  if (city && !flat.toLowerCase().includes(city.toLowerCase()) && !area.toLowerCase().includes(city.toLowerCase())) addressParts.push(city);
+  if (district && district !== city && !flat.toLowerCase().includes(district.toLowerCase())) addressParts.push(district);
+  if (state && !flat.toLowerCase().includes(state.toLowerCase())) addressParts.push(state);
+  if (pincode && !flat.includes(pincode)) addressParts.push(`PIN: ${pincode}`);
+
+  const fullAddress = addressParts.join(', ') || (typeof rawAddr === 'string' ? rawAddr : 'Address on file');
+
+  return {
+    fullName,
+    phone: cleanPhone,
+    email,
+    flat: flat || fullAddress,
+    area,
+    city: city || 'Andhra Pradesh',
+    district,
+    state: state || 'Andhra Pradesh',
+    pincode: pincode || '520001',
+    fullAddress
+  };
+}
+
+/**
  * Builds Plaintext & WhatsApp Formatted Text for Solar Store Orders
  */
 function renderOrderWhatsAppText(orderData) {
   const bookingId = orderData.bookingId || orderData.firestoreOrderId || `MSV-${Date.now().toString().slice(-6)}`;
-  const address = orderData.address || {};
+  const addr = normalizeCustomerAddress(orderData);
   const rawItems = orderData.items || (orderData.productName ? [{ name: orderData.productName, price: orderData.totalPrice || orderData.amount, quantity: orderData.quantity || 1 }] : []);
-  const custName = (address.fullName || orderData.customerName || orderData.name || 'Valued Customer').trim();
-  const custPhone = (address.phone || orderData.customerPhone || orderData.phone || '').replace(/[^0-9]/g, '');
-  const custEmail = address.email || orderData.customerEmail || orderData.email || '';
-  const fullAddress = [
-    address.flat || orderData.flat || orderData.address,
-    address.area || orderData.area,
-    address.city || orderData.city || orderData.mandal,
-    address.district || orderData.district,
-    address.state || orderData.state || 'Andhra Pradesh',
-    (address.pincode || orderData.pincode) ? `PIN: ${address.pincode || orderData.pincode}` : ''
-  ].filter(Boolean).join(', ');
+  const custName = addr.fullName;
+  const custPhone = addr.phone;
+  const custEmail = addr.email;
+  const fullAddress = addr.fullAddress;
 
   const totalAmount = orderData.amount || orderData.totalPrice || 0;
   const dateStr = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' });
@@ -286,19 +401,12 @@ function renderBulkWhatsAppText(data) {
  */
 function renderOrderEmailHtml(orderData) {
   const bookingId = orderData.bookingId || orderData.firestoreOrderId || `MSV-${Date.now().toString().slice(-6)}`;
-  const address = orderData.address || {};
+  const addr = normalizeCustomerAddress(orderData);
   const rawItems = orderData.items || (orderData.productName ? [{ name: orderData.productName, price: orderData.totalPrice || orderData.amount, quantity: orderData.quantity || 1 }] : []);
-  const custName = (address.fullName || orderData.customerName || orderData.name || 'Valued Customer').trim();
-  const custPhone = (address.phone || orderData.customerPhone || orderData.phone || '').replace(/[^0-9]/g, '');
-  const custEmail = address.email || orderData.customerEmail || orderData.email || '';
-  const fullAddress = [
-    address.flat || orderData.flat || orderData.address,
-    address.area || orderData.area,
-    address.city || orderData.city || orderData.mandal,
-    address.district || orderData.district,
-    address.state || orderData.state || 'Andhra Pradesh',
-    (address.pincode || orderData.pincode) ? `PIN: ${address.pincode || orderData.pincode}` : ''
-  ].filter(Boolean).join(', ');
+  const custName = addr.fullName;
+  const custPhone = addr.phone;
+  const custEmail = addr.email;
+  const fullAddress = addr.fullAddress;
 
   const totalAmount = orderData.amount || orderData.totalPrice || 0;
   const dateStr = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' });
@@ -649,12 +757,69 @@ async function sendEmailNotification({ to, subject, html, text, cc }) {
 }
 
 /**
- * Sends WhatsApp notification to Gateway if configured, logs message
+ * Sends WhatsApp notification via Official Meta WhatsApp Cloud API or configured Gateway
  */
 async function sendWhatsAppAlert({ phone, message }) {
-  const targetPhone = (phone || ADMIN_WHATSAPP).replace(/[^0-9]/g, '');
+  let rawPhone = (phone || ADMIN_WHATSAPP).replace(/[^0-9]/g, '');
+  if (rawPhone.length === 10) {
+    rawPhone = `91${rawPhone}`;
+  } else if (rawPhone.length === 11 && rawPhone.startsWith('0')) {
+    rawPhone = `91${rawPhone.slice(1)}`;
+  }
+  const targetPhone = rawPhone;
   console.log(`[WhatsApp Alert Prepared for +${targetPhone}]:\n${message}`);
 
+  // 1. Official Meta WhatsApp Cloud API (Direct)
+  const metaToken = WHATSAPP_ACCESS_TOKEN || process.env.META_CAPI_ACCESS_TOKEN;
+  const phoneNumberId = WHATSAPP_PHONE_NUMBER_ID;
+
+  if (phoneNumberId && metaToken) {
+    try {
+      const metaUrl = `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
+      const metaPayload = {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: targetPhone,
+        type: "text",
+        text: {
+          preview_url: true,
+          body: message
+        }
+      };
+
+      const response = await fetch(metaUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${metaToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(metaPayload)
+      });
+
+      const metaData = await response.json().catch(() => ({}));
+
+      if (response.ok) {
+        console.log(`[Meta WhatsApp Cloud API] Message sent successfully to +${targetPhone}:`, JSON.stringify(metaData));
+        if (admin.apps && admin.apps.length) {
+          await admin.firestore().collection('notifications_log').add({
+            channel: 'whatsapp_meta_cloud',
+            targetPhone: targetPhone,
+            status: 'sent',
+            metaMessageId: metaData.messages?.[0]?.id || null,
+            messageSnippet: message.substring(0, 300),
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+          }).catch(() => {});
+        }
+        return { success: true, provider: 'meta_cloud_api', data: metaData };
+      } else {
+        console.warn(`[Meta WhatsApp Cloud API] Warning (${response.status}):`, JSON.stringify(metaData));
+      }
+    } catch (metaErr) {
+      console.error("[Meta WhatsApp Cloud API] Request error:", metaErr);
+    }
+  }
+
+  // 2. Fallback to custom WhatsApp Gateway if provided
   if (WHATSAPP_GATEWAY_URL) {
     try {
       const response = await fetch(WHATSAPP_GATEWAY_URL, {
@@ -667,7 +832,7 @@ async function sendWhatsAppAlert({ phone, message }) {
         })
       });
       const data = await response.json().catch(() => ({}));
-      return { success: response.ok, data };
+      return { success: response.ok, provider: 'custom_gateway', data };
     } catch (err) {
       console.error("WhatsApp Gateway call failed:", err);
       return { success: false, error: err.message };
@@ -689,13 +854,132 @@ async function sendWhatsAppAlert({ phone, message }) {
 }
 
 /**
+ * Builds Plaintext & WhatsApp Formatted Text for Shipping & Tracking Updates
+ */
+function renderTrackingUpdateWhatsAppText(orderData = {}, trackingInfo = {}) {
+  const bookingId = orderData.bookingId || orderData.firestoreOrderId || trackingInfo.bookingId || 'Order';
+  const address = orderData.address || {};
+  const custName = (address.fullName || orderData.customerName || orderData.name || trackingInfo.customerName || 'Valued Customer').trim();
+  const rawStatus = (trackingInfo.status || orderData.shiprocketStatus || 'IN_TRANSIT').toString().toUpperCase().replace(/_/g, ' ');
+  const awb = trackingInfo.awb || orderData.shiprocketAwb || trackingInfo.awb_code || 'N/A';
+  const courier = trackingInfo.courierName || orderData.courierName || 'Shiprocket Express';
+  const etd = trackingInfo.estimatedDelivery || orderData.estimatedDelivery || '';
+  const totalAmount = orderData.amount || orderData.totalPrice || 0;
+
+  // Transit Route & City Info
+  const originCity = trackingInfo.origin || 'Eluru Dispatch Warehouse, Andhra Pradesh';
+  const destCity = trackingInfo.destination || [
+    address.city || orderData.city,
+    address.district || orderData.district,
+    address.state || orderData.state || 'AP',
+    address.pincode || orderData.pincode ? `PIN: ${address.pincode || orderData.pincode}` : ''
+  ].filter(Boolean).join(', ') || 'Customer Delivery Address';
+  
+  const currentLocation = trackingInfo.currentLocation || trackingInfo.location || trackingInfo.city || (rawStatus.includes('DELIVERED') ? destCity : 'In Transit via Logistics Sorting Hub');
+  const activity = trackingInfo.activity || 'Parcel in transit towards destination';
+
+  // Product specs & itemized summary
+  const rawItems = orderData.items || (orderData.productName ? [{ name: orderData.productName, price: orderData.totalPrice || orderData.amount, quantity: orderData.quantity || 1 }] : []);
+  const itemsList = rawItems.map((item, idx) => {
+    const specs = extractProductSpecs(item, orderData);
+    const qty = Number(item.quantity) || 1;
+    let details = [];
+    if (specs.size) details.push(`📏 Frame Size: *${specs.size}*`);
+    if (specs.kw) details.push(`⚡ Capacity: *${specs.kw}*`);
+    if (specs.clipsCount) details.push(`🔢 Units/Clips: *${specs.clipsCount}*`);
+
+    return `  ${idx + 1}. *${specs.name}*
+     ${details.length ? details.join(' | ') + '\n     ' : ''}🏷️ Quantity: *${qty}*`;
+  }).join('\n') || `  • Solar Equipment (${rawItems.length || 1} Item(s))`;
+
+  const trackUrl = (awb && awb !== 'N/A')
+    ? `https://shiprocket.co/tracking/${awb}`
+    : (orderData.shiprocketShipmentId ? `https://shiprocket.co/tracking/${orderData.shiprocketShipmentId}` : `https://mirrorsolarvision.com/track-order?bookingId=${bookingId}`);
+
+  return `🚚 *${BUSINESS_NAME.toUpperCase()} — LIVE COURIER TRACKING UPDATE*
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+Hello *${custName}*, here is the real-time shipping update for your order:
+
+📦 *Order / Booking ID:* ${bookingId}
+📍 *Courier Status:* *${rawStatus}*
+💳 *Payment Status:* PAID & CONFIRMED (*${formatINR(totalAmount)}* Prepaid Online)
+
+🛒 *Order Items & Specifications:*
+${itemsList}
+
+🚚 *COURIER & TRACKING DETAILS:*
+• 🏷️ *AWB / Tracking Number:* *${awb}*
+• 🚛 *Courier Partner:* *${courier}*
+${etd ? `• 📅 *Estimated Delivery Date:* *${etd}*\n` : ''}
+🔗 *Live Tracking Link (Click to Track):*
+${trackUrl}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+📞 *Mirror Solar Vision Support:* ${BUSINESS_PHONE}
+🏢 *Dispatch Hub:* ${BUSINESS_ADDRESS}
+🌐 *Website:* ${WEBSITE_URL}`;
+}
+
+/**
+ * Dispatches live tracking notification to Customer over WhatsApp & Email
+ */
+async function dispatchTrackingNotification(orderData, trackingInfo) {
+  const addr = normalizeCustomerAddress(orderData);
+  const customerPhone = addr.phone;
+  const customerEmail = addr.email;
+  const custName = addr.fullName;
+  const bookingId = orderData.bookingId || orderData.firestoreOrderId || 'Order';
+
+  const waText = renderTrackingUpdateWhatsAppText(orderData, trackingInfo);
+  const promises = [];
+
+  // Send WhatsApp to Customer
+  if (customerPhone) {
+    promises.push(sendWhatsAppAlert({
+      phone: customerPhone,
+      message: waText
+    }));
+  }
+
+  // Send Email to Customer if available
+  if (customerEmail && customerEmail.trim()) {
+    promises.push(sendEmailNotification({
+      to: [customerEmail.trim()],
+      subject: `🚚 Shipping Update for Order ${bookingId}: ${trackingInfo.status || 'In Transit'}`,
+      text: waText,
+      html: `<div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background: #f8fafc;">
+        <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 24px; border: 1px solid #e2e8f0;">
+          <h2 style="color: #0f172a; margin-top: 0;">🚚 Shipping Update for ${bookingId}</h2>
+          <p>Hello <strong>${custName}</strong>,</p>
+          <p>Your package status is updated to <strong>${(trackingInfo.status || 'In Transit').replace(/_/g, ' ')}</strong>.</p>
+          <p><strong>AWB / Tracking No:</strong> ${trackingInfo.awb || orderData.shiprocketAwb || 'N/A'}<br>
+             <strong>Courier:</strong> ${trackingInfo.courierName || orderData.courierName || 'Shiprocket'}</p>
+          <div style="margin: 24px 0;">
+            <a href="${trackingInfo.awb ? `https://shiprocket.co/tracking/${trackingInfo.awb}` : `https://mirrorsolarvision.com/track-order?bookingId=${bookingId}`}" style="background: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Track Package Live &rarr;</a>
+          </div>
+          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+          <p style="font-size: 12px; color: #64748b;">${BUSINESS_NAME} &bull; ${BUSINESS_PHONE} &bull; ${BUSINESS_ADDRESS}</p>
+        </div>
+      </div>`
+    }));
+  }
+
+  const results = await Promise.allSettled(promises);
+  return {
+    success: true,
+    results: results.map(r => r.status === 'fulfilled' ? r.value : { error: r.reason })
+  };
+}
+
+/**
  * Universal Dispatcher: Sends targeted Emails + WhatsApp to both Customer and Admin
  */
 async function dispatchBookingNotifications(type, data) {
   let waText = '';
-  const customerEmail = data.email || data.customerEmail || data.address?.email || data.billing_email || data.userEmail || null;
-  const customerPhone = data.phone || data.customerPhone || data.address?.phone || data.billing_phone || null;
-  const custName = (data.address?.fullName || data.customerName || data.name || 'Valued Customer').trim();
+  const addr = normalizeCustomerAddress(data);
+  const customerEmail = addr.email || data.email || data.customerEmail || data.billing_email || data.userEmail || null;
+  const customerPhone = addr.phone || data.phone || data.customerPhone || data.billing_phone || null;
+  const custName = addr.fullName || (data.customerName || data.name || 'Valued Customer').trim();
   const totalAmount = data.amount || data.totalPrice || 0;
 
   const emailPromises = [];
@@ -797,7 +1081,9 @@ async function dispatchBookingNotifications(type, data) {
 
 module.exports = {
   dispatchBookingNotifications,
+  dispatchTrackingNotification,
   renderOrderWhatsAppText,
+  renderTrackingUpdateWhatsAppText,
   renderSurveyWhatsAppText,
   renderQuoteWhatsAppText,
   renderBulkWhatsAppText,
@@ -808,3 +1094,4 @@ module.exports = {
   ADMIN_EMAIL,
   ADMIN_WHATSAPP
 };
+

@@ -48,8 +48,8 @@ export function ProductDetailPage({ slug, onNavigate }) {
     onNavigate('/checkout');
   };
 
-  const whatsappInquiryUrl = `https://wa.me/${import.meta.env.VITE_WHATSAPP_BUSINESS_NUMBER || '919876543210'}?text=${encodeURIComponent(
-    `Hello Mirror Craft! I am inquiring about "${product.name}" (SKU: ${product.sku}). Is this piece in stock? ${window.location.href}`
+  const whatsappInquiryUrl = `https://wa.me/${import.meta.env.VITE_WHATSAPP_BUSINESS_NUMBER || '919182612420'}?text=${encodeURIComponent(
+    `Hello Mirror Aqua! I am inquiring about "${product.name}" (SKU: ${product.sku}). Is this piece in stock? ${window.location.href}`
   )}`;
 
   return (

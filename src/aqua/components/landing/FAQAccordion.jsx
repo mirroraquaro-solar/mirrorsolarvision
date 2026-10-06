@@ -5,7 +5,7 @@ import './ProductLanding.css';
 
 export function FAQAccordion({ faqs = [] }) {
   const [openIndex, setOpenIndex] = useState(0); // first open by default
-  const WHATSAPP_NUM = import.meta.env.VITE_WHATSAPP_BUSINESS_NUMBER || '919876543210';
+  const WHATSAPP_NUM = import.meta.env.VITE_WHATSAPP_BUSINESS_NUMBER || '919182612420';
 
   const defaultFaqs = [
     {
