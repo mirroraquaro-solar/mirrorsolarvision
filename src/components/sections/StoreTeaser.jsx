@@ -8,7 +8,7 @@ import {
   Star,
   Sun,
   Droplets,
-  ShieldCheck,
+  Gift,
   Sparkles
 } from 'lucide-react';
 import { CONFIRMED_BULK_COMBO, INDIVIDUAL_PRODUCTS } from '../../data/bulkComboData';
@@ -16,7 +16,8 @@ import { CONFIRMED_BULK_COMBO, INDIVIDUAL_PRODUCTS } from '../../data/bulkComboD
 export default function StoreTeaser({ onNavigateToStore, onNavigate }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const totalSlides = 3;
+  const [aquaSelectedTier, setAquaSelectedTier] = useState('combo-5'); // 'single', 'combo-5', 'pack-10'
+  const totalSlides = 4;
 
   const combo = CONFIRMED_BULK_COMBO;
   const drainClips = INDIVIDUAL_PRODUCTS.find(p => p.id === 'msv-drain-clips') || INDIVIDUAL_PRODUCTS[0];
@@ -78,7 +79,7 @@ export default function StoreTeaser({ onNavigateToStore, onNavigate }) {
             Store Catalog
           </h2>
           <p className="text-xs sm:text-sm md:text-base text-slate-600 leading-relaxed">
-            Explore genuine solar accessories, drain clips, complete installation hardware, and Mirror Aqua pre-filtration cartridges.
+            Explore genuine solar accessories, drain clips, complete installation hardware, and Mirror Aqua pre-filtration combo offers.
           </p>
         </div>
 
@@ -111,7 +112,7 @@ export default function StoreTeaser({ onNavigateToStore, onNavigate }) {
                       ? 'bg-amber-500 text-slate-950'
                       : 'bg-slate-100 text-slate-600'
                   }`}>
-                    2 Items
+                    2 Offers
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 mt-0.5 line-clamp-1">
@@ -121,38 +122,38 @@ export default function StoreTeaser({ onNavigateToStore, onNavigate }) {
             </div>
           </div>
 
-          {/* Option 2: Mirror Aqua Filtration */}
+          {/* Option 2: Mirror Aqua Filtration & Combos */}
           <div 
-            onClick={() => setCurrentSlide(2)}
+            onClick={() => setCurrentSlide(3)}
             className={`group relative p-4 rounded-2xl border transition-all duration-300 cursor-pointer text-left ${
-              currentSlide === 2
+              currentSlide === 2 || currentSlide === 3
                 ? 'bg-gradient-to-br from-cyan-50/90 via-sky-50/60 to-blue-100/40 border-cyan-300 shadow-md ring-2 ring-cyan-400/30'
                 : 'bg-white/80 hover:bg-cyan-50/40 border-slate-200/90 hover:border-cyan-200 shadow-xs'
             }`}
           >
             <div className="flex items-start gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-sm ${
-                currentSlide === 2
+                currentSlide === 2 || currentSlide === 3
                   ? 'bg-gradient-to-tr from-cyan-500 to-blue-600 text-white shadow-cyan-200'
                   : 'bg-cyan-100 text-cyan-700'
               }`}>
-                <Droplets size={20} className={currentSlide === 2 ? 'stroke-[2.5]' : ''} />
+                <Droplets size={20} className={currentSlide === 2 || currentSlide === 3 ? 'stroke-[2.5]' : ''} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-1">
                   <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight flex items-center gap-1.5">
-                    <span>Mirror Aqua</span>
+                    <span>Mirror Aqua & Combos</span>
                   </h3>
                   <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                    currentSlide === 2
+                    currentSlide === 2 || currentSlide === 3
                       ? 'bg-cyan-500 text-white'
                       : 'bg-slate-100 text-slate-600'
                   }`}>
-                    Water Tech
+                    Combo Offer 🎁
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 mt-0.5 line-clamp-1">
-                  10" 5-Micron 120g PP Spun Filter Cartridges
+                  10" PP Spun Filters & Free Spanner Wrench Kit
                 </p>
               </div>
             </div>
@@ -160,10 +161,10 @@ export default function StoreTeaser({ onNavigateToStore, onNavigate }) {
         </div>
 
         {/* Quick Product Tabs for Direct Sliding */}
-        <div className="flex items-center justify-center gap-1.5 sm:gap-2 max-w-xl mx-auto mb-6 px-1">
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2 max-w-2xl mx-auto mb-6 px-1 flex-wrap sm:flex-nowrap">
           <button
             onClick={() => setCurrentSlide(0)}
-            className={`flex-1 py-2 px-2.5 rounded-xl border text-xs sm:text-sm font-black transition-all cursor-pointer truncate ${
+            className={`flex-1 min-w-[130px] sm:min-w-0 py-2 px-2.5 rounded-xl border text-xs sm:text-sm font-black transition-all cursor-pointer truncate ${
               currentSlide === 0
                 ? 'bg-[#0A2540] text-white border-[#0A2540] shadow-sm scale-[1.02]'
                 : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -173,7 +174,7 @@ export default function StoreTeaser({ onNavigateToStore, onNavigate }) {
           </button>
           <button
             onClick={() => setCurrentSlide(1)}
-            className={`flex-1 py-2 px-2.5 rounded-xl border text-xs sm:text-sm font-black transition-all cursor-pointer truncate ${
+            className={`flex-1 min-w-[130px] sm:min-w-0 py-2 px-2.5 rounded-xl border text-xs sm:text-sm font-black transition-all cursor-pointer truncate ${
               currentSlide === 1
                 ? 'bg-[#0A2540] text-white border-[#0A2540] shadow-sm scale-[1.02]'
                 : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -183,13 +184,23 @@ export default function StoreTeaser({ onNavigateToStore, onNavigate }) {
           </button>
           <button
             onClick={() => setCurrentSlide(2)}
-            className={`flex-1 py-2 px-2.5 rounded-xl border text-xs sm:text-sm font-black transition-all cursor-pointer truncate ${
+            className={`flex-1 min-w-[130px] sm:min-w-0 py-2 px-2.5 rounded-xl border text-xs sm:text-sm font-black transition-all cursor-pointer truncate ${
               currentSlide === 2
                 ? 'bg-[#007791] text-white border-[#007791] shadow-sm scale-[1.02]'
                 : 'bg-white text-cyan-800 border-cyan-200 hover:bg-cyan-50'
             }`}
           >
-            3. Spun Filter (Aqua)
+            3. Spun Filter (120g)
+          </button>
+          <button
+            onClick={() => setCurrentSlide(3)}
+            className={`flex-1 min-w-[140px] sm:min-w-0 py-2 px-2.5 rounded-xl border text-xs sm:text-sm font-black transition-all cursor-pointer truncate ${
+              currentSlide === 3
+                ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white border-cyan-500 shadow-md scale-[1.02]'
+                : 'bg-cyan-50 text-cyan-900 border-cyan-300 hover:bg-cyan-100/70 font-black'
+            }`}
+          >
+            🎁 4. Combo + Spanner
           </button>
         </div>
 
@@ -442,8 +453,8 @@ export default function StoreTeaser({ onNavigateToStore, onNavigate }) {
                         className="bg-cyan-50/60 border border-cyan-100 rounded-2xl p-3 sm:p-5 h-44 sm:h-52 md:h-auto md:aspect-square flex items-center justify-center relative overflow-hidden cursor-pointer group hover:bg-cyan-100/50 transition"
                       >
                         <img 
-                          src="/images/product/008.jpeg" 
-                          alt="Mirror Aqua 10-Inch 5-Micron PP Spun Filter (120 Grams)" 
+                          src={aquaSelectedTier === 'combo-5' ? '/images/product/5-spun-with-wrench-combo.jpg' : '/images/product/008.jpeg'} 
+                          alt="Mirror Aqua 10-Inch 5-Micron PP Spun Filter" 
                           width="300"
                           height="200"
                           loading="lazy"
@@ -451,13 +462,50 @@ export default function StoreTeaser({ onNavigateToStore, onNavigate }) {
                           className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105" 
                         />
                         <span className="absolute top-2.5 left-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
-                          MIRROR AQUA
+                          {aquaSelectedTier === 'combo-5' ? 'COMBO OFFER' : 'MIRROR AQUA'}
                         </span>
                       </div>
-                      <div className="flex items-center justify-center gap-1.5 text-[11px] text-cyan-800 font-bold">
-                        <span>Packs:</span>
-                        <span className="bg-cyan-100/70 px-2 py-0.5 rounded text-cyan-900">1 Piece (120g)</span>
-                        <span className="bg-cyan-100/70 px-2 py-0.5 rounded text-cyan-900">10-Pack Value (1.2kg)</span>
+                      
+                      {/* Pack Options Mini Switcher */}
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-black text-cyan-900 uppercase tracking-wider block text-center">
+                          Select Pack / Combo:
+                        </span>
+                        <div className="grid grid-cols-3 gap-1 text-[10px] font-bold">
+                          <button
+                            type="button"
+                            onClick={() => setAquaSelectedTier('single')}
+                            className={`py-1 px-1 rounded-lg border text-center transition cursor-pointer ${
+                              aquaSelectedTier === 'single'
+                                ? 'bg-cyan-700 text-white border-cyan-700 shadow-xs'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-cyan-50'
+                            }`}
+                          >
+                            1 Pc ₹199
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAquaSelectedTier('combo-5')}
+                            className={`py-1 px-1 rounded-lg border text-center transition cursor-pointer relative ${
+                              aquaSelectedTier === 'combo-5'
+                                ? 'bg-cyan-700 text-white border-cyan-700 shadow-xs'
+                                : 'bg-cyan-50 text-cyan-900 border-cyan-300 hover:bg-cyan-100 font-extrabold'
+                            }`}
+                          >
+                            5+Wrench ₹995
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAquaSelectedTier('pack-10')}
+                            className={`py-1 px-1 rounded-lg border text-center transition cursor-pointer ${
+                              aquaSelectedTier === 'pack-10'
+                                ? 'bg-cyan-700 text-white border-cyan-700 shadow-xs'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-cyan-50'
+                            }`}
+                          >
+                            10 Pcs ₹1800
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -465,7 +513,7 @@ export default function StoreTeaser({ onNavigateToStore, onNavigate }) {
                     <div className="md:col-span-7 space-y-3 sm:space-y-4">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="bg-cyan-950 text-white text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                          WATER PRE-FILTRATION
+                          {aquaSelectedTier === 'combo-5' ? 'COMBO WITH FREE WRENCH' : 'WATER PRE-FILTRATION'}
                         </span>
                         <div className="flex items-center gap-1 text-amber-500 font-bold text-xs">
                           <Star size={12} className="fill-amber-400 text-amber-400" />
@@ -479,10 +527,16 @@ export default function StoreTeaser({ onNavigateToStore, onNavigate }) {
                           onClick={() => handleGoTo('aqua-store')}
                           className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 font-heading cursor-pointer hover:text-cyan-600 transition"
                         >
-                          Mirror Aqua 10" 5-Micron PP Spun Filter (120g)
+                          {aquaSelectedTier === 'combo-5' 
+                            ? '5-Pack 120g Spun + FREE Filter Spanner' 
+                            : aquaSelectedTier === 'pack-10'
+                            ? '10-Pack 120g Spun Filter Value Box (1.2kg)'
+                            : 'Mirror Aqua 10" 5-Micron PP Spun Filter (120g)'}
                         </h3>
                         <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed line-clamp-2">
-                          Heavy 120-gram precision-engineered 5-micron depth pre-filter for standard 10-inch filter bowls. 100% pure virgin polypropylene.
+                          {aquaSelectedTier === 'combo-5'
+                            ? 'Special Combo Offer: Buy 5 Heavy 120g PP Spun Filters and get 1 Heavy-Duty Filter Spanner Wrench 100% FREE.'
+                            : 'Heavy 120-gram precision-engineered 5-micron depth pre-filter for standard 10-inch filter bowls. 100% pure virgin polypropylene.'}
                         </p>
                       </div>
 
@@ -495,7 +549,7 @@ export default function StoreTeaser({ onNavigateToStore, onNavigate }) {
                           </div>
                           <div className="flex items-center gap-1.5">
                             <CheckCircle2 size={14} className="text-cyan-600 shrink-0" />
-                            <span>5-Micron Gradient Multi-Layer</span>
+                            <span>{aquaSelectedTier === 'combo-5' ? '1 FREE Filter Spanner Included' : '5-Micron Gradient Multi-Layer'}</span>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <CheckCircle2 size={14} className="text-cyan-600 shrink-0" />
@@ -511,11 +565,19 @@ export default function StoreTeaser({ onNavigateToStore, onNavigate }) {
                       {/* Price & Actions */}
                       <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
-                          <span className="text-[9px] sm:text-[10px] text-slate-600 font-bold uppercase tracking-wider block">Direct Factory Price</span>
+                          <span className="text-[9px] sm:text-[10px] text-slate-600 font-bold uppercase tracking-wider block">
+                            {aquaSelectedTier === 'combo-5' ? 'Special Combo Price' : 'Direct Factory Price'}
+                          </span>
                           <div className="flex items-baseline gap-1.5">
-                            <span className="text-2xl sm:text-3xl font-black text-slate-950 font-heading">₹199</span>
-                            <span className="text-xs text-slate-400 line-through">₹549</span>
-                            <span className="text-[11px] sm:text-xs text-emerald-600 font-bold">(64% OFF)</span>
+                            <span className="text-2xl sm:text-3xl font-black text-slate-950 font-heading">
+                              {aquaSelectedTier === 'combo-5' ? '₹995' : aquaSelectedTier === 'pack-10' ? '₹1,800' : '₹199'}
+                            </span>
+                            <span className="text-xs text-slate-400 line-through">
+                              {aquaSelectedTier === 'combo-5' ? '₹2,899' : aquaSelectedTier === 'pack-10' ? '₹5,490' : '₹549'}
+                            </span>
+                            <span className="text-[11px] sm:text-xs text-emerald-600 font-bold">
+                              {aquaSelectedTier === 'combo-5' ? '(66% OFF • Save ₹1,904)' : aquaSelectedTier === 'pack-10' ? '(67% OFF • Save ₹3,690)' : '(64% OFF)'}
+                            </span>
                           </div>
                         </div>
 
@@ -542,12 +604,132 @@ export default function StoreTeaser({ onNavigateToStore, onNavigate }) {
                 </div>
               </div>
 
+              {/* ========================================================= */}
+              {/* SLIDE 4: DEDICATED SPUN FILTER + FREE SPANNER COMBO OFFER */}
+              {/* ========================================================= */}
+              <div className="w-full flex-shrink-0">
+                <div className="bg-gradient-to-br from-white via-cyan-50/40 to-sky-50/60 rounded-3xl border-2 border-cyan-300 shadow-lg hover:shadow-xl transition-all duration-300 p-4 sm:p-8 md:p-10 text-left relative overflow-hidden">
+                  
+                  {/* Floating Gift / Discount Banner */}
+                  <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-[#F58220] text-slate-950 font-black text-[10px] sm:text-xs px-4 py-1.5 rounded-bl-2xl shadow-sm flex items-center gap-1.5">
+                    <Gift size={13} className="text-slate-950" />
+                    <span>FREE SPANNER INCLUDED</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-8 items-center pt-2 sm:pt-0">
+                    
+                    {/* Left: Combo Image with Gift Badge (5 cols) */}
+                    <div className="md:col-span-5 space-y-2">
+                      <div 
+                        onClick={() => handleGoTo('aqua-store')}
+                        className="bg-white border-2 border-cyan-200 rounded-2xl p-3 sm:p-5 h-48 sm:h-56 md:h-auto md:aspect-square flex items-center justify-center relative overflow-hidden cursor-pointer group hover:border-cyan-400 transition shadow-inner"
+                      >
+                        <img 
+                          src="/images/product/5-spun-with-wrench-combo.jpg" 
+                          alt="5 Micron 120g Spun Filter – Pack of 5 + Free Filter Spanner Combo Offer" 
+                          width="320"
+                          height="240"
+                          loading="lazy"
+                          decoding="async"
+                          className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105" 
+                        />
+                        <span className="absolute bottom-2.5 left-2.5 bg-cyan-900/90 text-white text-[10px] font-black px-2.5 py-1 rounded-lg backdrop-blur-xs shadow-xs">
+                          5 Filters + 1 Spanner
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-cyan-900 text-center font-extrabold flex items-center justify-center gap-1">
+                        <Gift size={12} className="text-amber-600" />
+                        <span>High-Quality Filter Housing Wrench (Free Gift)</span>
+                      </p>
+                    </div>
+
+                    {/* Right: Combo Details & CTAs (7 cols) */}
+                    <div className="md:col-span-7 space-y-3 sm:space-y-4">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="bg-gradient-to-r from-cyan-600 to-blue-600 text-white text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-xs">
+                          COMBO OFFER
+                        </span>
+                        <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-full">
+                          Save ₹1,904 (66% OFF)
+                        </span>
+                      </div>
+
+                      <div>
+                        <h3 
+                          onClick={() => handleGoTo('aqua-store')}
+                          className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 font-heading cursor-pointer hover:text-cyan-600 transition"
+                        >
+                          Pack of 5 Spun Filters + Free Spanner Wrench
+                        </h3>
+                        <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed line-clamp-2">
+                          Get 5 Mirror Aqua 10-Inch 5-Micron 120g PP Spun Filters and receive 1 heavy-duty pre-filter housing spanner 100% free.
+                        </p>
+                      </div>
+
+                      {/* Highlights */}
+                      <div className="bg-white/80 border border-cyan-200/90 rounded-2xl p-3 sm:p-4 space-y-1.5 text-xs font-bold text-slate-800 shadow-xs">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2">
+                          <div className="flex items-center gap-1.5">
+                            <CheckCircle2 size={14} className="text-cyan-600 shrink-0" />
+                            <span>5x 120g PP Spun Filters (600g Total)</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <CheckCircle2 size={14} className="text-amber-600 shrink-0" />
+                            <span>1x FREE Filter Bowl Spanner Wrench</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <CheckCircle2 size={14} className="text-cyan-600 shrink-0" />
+                            <span>5-Micron True Depth Pre-Filtration</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <CheckCircle2 size={14} className="text-cyan-600 shrink-0" />
+                            <span>Universal Fit for All 10" Bowls</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Price & Actions */}
+                      <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <span className="text-[9px] sm:text-[10px] text-cyan-900 font-extrabold uppercase tracking-wider block">
+                            Combo Offer Price
+                          </span>
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-2xl sm:text-3xl font-black text-slate-950 font-heading">₹995</span>
+                            <span className="text-xs text-slate-400 line-through">₹2,899</span>
+                            <span className="text-[11px] sm:text-xs text-emerald-600 font-bold">(66% OFF)</span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-3">
+                          <button
+                            onClick={() => handleGoTo('aqua-store')}
+                            className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2.5 sm:px-5 sm:py-3.5 rounded-xl text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <span>VIEW COMBO</span>
+                            <ArrowRight size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleGoTo('aqua-store')}
+                            className="bg-gradient-to-r from-amber-500 via-[#F58220] to-orange-500 hover:opacity-95 text-slate-950 font-black px-4 py-2.5 sm:px-5 sm:py-3.5 rounded-xl text-xs sm:text-sm transition shadow-md cursor-pointer text-center"
+                          >
+                            ORDER NOW
+                          </button>
+                        </div>
+                      </div>
+
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
 
           {/* Navigation Dots with Accessible Touch Targets */}
           <div className="flex items-center justify-center gap-1 mt-5">
-            {[0, 1, 2].map((idx) => (
+            {[0, 1, 2, 3].map((idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentSlide(idx)}
@@ -557,7 +739,7 @@ export default function StoreTeaser({ onNavigateToStore, onNavigate }) {
                 <span
                   className={`transition-all duration-300 rounded-full ${
                     currentSlide === idx 
-                      ? idx === 2 ? 'w-8 h-2.5 bg-cyan-600' : 'w-8 h-2.5 bg-primary-600'
+                      ? idx >= 2 ? 'w-8 h-2.5 bg-cyan-600' : 'w-8 h-2.5 bg-primary-600'
                       : 'w-2.5 h-2.5 bg-slate-300 hover:bg-slate-400'
                   }`}
                 />
