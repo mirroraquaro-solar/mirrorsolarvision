@@ -24,7 +24,11 @@ import {
   AlertCircle,
   Truck,
   ExternalLink,
-  Activity
+  Activity,
+  FileSpreadsheet,
+  Download,
+  Zap,
+  CheckCircle2
 } from 'lucide-react';
 import { 
   fetchLiveShiprocketTracking, 
@@ -43,6 +47,10 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
   const [searchError, setSearchError] = useState('');
   const [copiedId, setCopiedId] = useState(null);
   const [shareNotification, setShareNotification] = useState(null);
+
+  // Admin Data Sync & Shiprocket Auto-Push State
+  const [syncingShiprocket, setSyncingShiprocket] = useState(false);
+  const [syncStatusMsg, setSyncStatusMsg] = useState(null);
 
   // Live Shiprocket Tracking Modal State
   const [trackingModalOrder, setTrackingModalOrder] = useState(null);
@@ -527,6 +535,39 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
     setTimeout(() => setShareNotification(null), 3000);
   };
 
+  const handleSyncShiprocket = async () => {
+    setSyncingShiprocket(true);
+    setSyncStatusMsg(null);
+    try {
+      const res = await fetch('https://us-central1-mirror-solar-vision.cloudfunctions.net/retryUnpushedShiprocketOrders', {
+        method: 'POST'
+      });
+      const data = await res.json();
+      if (data.success) {
+        const pushed = data.summary?.newlyPushedCount || 0;
+        const unpushed = data.summary?.unpushedFoundCount || 0;
+        setSyncStatusMsg({
+          type: 'success',
+          text: pushed > 0 
+            ? `Successfully pushed ${pushed} order(s) to Shiprocket!`
+            : `All ${data.summary?.totalPaidOrders || 0} orders are already in sync with Shiprocket.`
+        });
+        fetchOrders();
+      } else {
+        setSyncStatusMsg({ type: 'error', text: data.error || 'Failed to sync with Shiprocket.' });
+      }
+    } catch (err) {
+      setSyncStatusMsg({ type: 'error', text: err.message || 'Network error during Shiprocket sync.' });
+    } finally {
+      setSyncingShiprocket(false);
+      setTimeout(() => setSyncStatusMsg(null), 6000);
+    }
+  };
+
+  const handleExportExcel = () => {
+    window.open('https://us-central1-mirror-solar-vision.cloudfunctions.net/exportCustomerOrdersExcel', '_blank');
+  };
+
   const filteredOrders = orders.filter((order) => {
     if (!searchQuery.trim()) return true;
     const term = searchQuery.toLowerCase().trim();
@@ -558,7 +599,16 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
             <span>ORDER DETAILS & TRACKING</span>
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={handleExportExcel}
+              className="inline-flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-2.5 py-1 rounded-lg text-xs transition cursor-pointer"
+              title="Download Customer Data Master Excel"
+            >
+              <Download size={13} className="text-emerald-700" />
+              <span className="hidden sm:inline">Export</span> Excel
+            </button>
+
             <a
               href={`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent('Hello Mirror Solar Vision, I need help with my order tracking.')}`}
               target="_blank"
@@ -566,7 +616,7 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
               className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-[#7828C8] hover:text-[#5B1F99] transition cursor-pointer uppercase tracking-wider"
             >
               <Headphones size={16} />
-              <span>HELP</span>
+              <span className="hidden xs:inline">HELP</span>
             </a>
 
             <button
@@ -590,6 +640,54 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
       )}
 
       <div className="container-custom pt-6 max-w-3xl px-3 sm:px-4">
+        
+        {/* Customer Data Collection & Shiprocket Sync Bar */}
+        <div className="bg-gradient-to-r from-slate-900 to-[#0A2540] text-white rounded-2xl p-3.5 sm:p-4 mb-4 shadow-sm border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+              <FileSpreadsheet size={16} />
+            </div>
+            <div>
+              <h4 className="text-xs sm:text-sm font-black tracking-tight">Customer Data & Logistics Hub</h4>
+              <p className="text-[11px] text-slate-400">Automatic database logging, Excel spreadsheet exports & Shiprocket sync</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button
+              onClick={handleExportExcel}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black px-3 py-2 rounded-xl transition shadow-xs cursor-pointer active:scale-95"
+            >
+              <Download size={14} />
+              <span>Download Excel (.csv)</span>
+            </button>
+            <button
+              onClick={handleSyncShiprocket}
+              disabled={syncingShiprocket}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-xs font-black px-3 py-2 rounded-xl transition shadow-xs cursor-pointer active:scale-95"
+            >
+              <Zap size={14} className={syncingShiprocket ? 'animate-bounce' : ''} />
+              <span>{syncingShiprocket ? 'Checking...' : 'Check Shiprocket'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Sync Status Banner */}
+        {syncStatusMsg && (
+          <div className={`mb-4 p-3 rounded-2xl text-xs font-bold flex items-center gap-2 ${
+            syncStatusMsg.type === 'success' 
+              ? 'bg-emerald-50 text-emerald-900 border border-emerald-200' 
+              : 'bg-red-50 text-red-900 border border-red-200'
+          }`}>
+            {syncStatusMsg.type === 'success' ? (
+              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle size={16} className="text-red-600 shrink-0" />
+            )}
+            <span>{syncStatusMsg.text}</span>
+          </div>
+        )}
+
         {/* Search & Lookup Bar */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-3.5 sm:p-4 mb-6">
           <form onSubmit={handleSearchOrder} className="flex flex-col sm:flex-row gap-2.5">

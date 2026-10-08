@@ -1542,4 +1542,347 @@ https://shiprocket.co/tracking/148291048291
   });
 });
 
+/**
+ * Automated Customer Data Collector & Excel / CSV Export Endpoint
+ * Streams a complete, formatted spreadsheet of all customer purchases,
+ * inquiries, and surveys directly to Excel / CSV with UTF-8 BOM.
+ */
+exports.exportCustomerOrdersExcel = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    try {
+      const db = admin.firestore();
+      
+      // 1. Fetch Orders
+      const ordersSnapshot = await db.collection('orders').orderBy('createdAt', 'desc').get().catch(() => ({ docs: [] }));
+      
+      // 2. Fetch Quotes & Site Surveys & Leads
+      const quotesSnapshot = await db.collection('quotes').get().catch(() => ({ docs: [] }));
+      const surveysSnapshot = await db.collection('site_surveys').get().catch(() => ({ docs: [] }));
+      const leadsSnapshot = await db.collection('contact_leads').get().catch(() => ({ docs: [] }));
+
+      const rows = [];
+      const headers = [
+        "Record Type",
+        "Booking / Ref ID",
+        "Date & Time (IST)",
+        "Customer Name",
+        "Customer Phone",
+        "Customer Email",
+        "Delivery / Site Address",
+        "City",
+        "District / State",
+        "Pincode",
+        "Google Maps / Location Link",
+        "Items / Capacity Inquired",
+        "Total Units",
+        "Total Amount (INR)",
+        "Payment Status",
+        "Razorpay Payment ID",
+        "Razorpay Order ID",
+        "Shiprocket Push Status",
+        "Shiprocket Order ID",
+        "Shiprocket Shipment ID",
+        "Shiprocket AWB",
+        "Courier Partner",
+        "Live Tracking URL"
+      ];
+
+      // Format Orders
+      ordersSnapshot.docs.forEach(doc => {
+        const d = doc.data();
+        const addr = d.address || {};
+        const items = Array.isArray(d.items) ? d.items : [];
+        const itemsText = items.map(i => `${i.quantity || 1}x ${i.name || 'Product'}`).join(' | ') || d.itemsSummary || 'Solar Product';
+        const totalUnits = items.reduce((acc, i) => acc + (Number(i.quantity) || 1), 0);
+        
+        let dateStr = 'N/A';
+        if (d.createdAt && d.createdAt.toDate) {
+          dateStr = d.createdAt.toDate().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+        } else if (d.createdAt) {
+          dateStr = new Date(d.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+        }
+
+        const isPaid = (d.status || '').toLowerCase() === 'paid';
+        const hasSr = Boolean(d.shiprocketOrderId || d.shiprocketShipmentId);
+        const srStatus = hasSr ? 'PUSHED (SUCCESS)' : (isPaid ? '⚠️ NOT PUSHED / PENDING' : 'N/A (UNPAID)');
+
+        rows.push([
+          "Online Store Order",
+          d.bookingId || doc.id,
+          dateStr,
+          d.customerName || addr.fullName || 'Valued Customer',
+          d.customerPhone || addr.phone || '',
+          d.customerEmail || addr.email || '',
+          addr.fullAddress || addr.flat || 'Address on file',
+          addr.city || 'Andhra Pradesh',
+          addr.state || 'Andhra Pradesh',
+          addr.pincode || '',
+          addr.googleMapsLink || (addr.latitude ? `https://www.google.com/maps?q=${addr.latitude},${addr.longitude}` : 'N/A'),
+          itemsText,
+          totalUnits,
+          d.amount || 0,
+          (d.status || 'created').toUpperCase(),
+          d.razorpayPaymentId || 'N/A',
+          d.razorpayOrderId || 'N/A',
+          srStatus,
+          d.shiprocketOrderId || '',
+          d.shiprocketShipmentId || '',
+          d.shiprocketAwb || '',
+          d.shiprocketCourierName || 'Delhivery / Bluedart',
+          d.shiprocketAwb ? `https://shiprocket.co/tracking/${d.shiprocketAwb}` : ''
+        ]);
+      });
+
+      // Format Quotes
+      quotesSnapshot.docs.forEach(doc => {
+        const d = doc.data();
+        let dateStr = 'N/A';
+        if (d.createdAt && d.createdAt.toDate) dateStr = d.createdAt.toDate().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+        rows.push([
+          "PM Surya Ghar Quote",
+          d.bookingId || doc.id,
+          dateStr,
+          d.fullName || d.name || 'Customer',
+          d.phone || d.mobile || '',
+          d.email || '',
+          d.address || d.city || 'AP',
+          d.city || 'Andhra Pradesh',
+          d.state || 'Andhra Pradesh',
+          d.pincode || '',
+          d.googleMapsLink || 'N/A',
+          `${d.capacity || '3kW'} Solar System (Bill: ₹${d.monthlyBill || 0})`,
+          1,
+          d.estimatedCost || 0,
+          "QUOTE REQUEST",
+          "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"
+        ]);
+      });
+
+      // Format Site Surveys
+      surveysSnapshot.docs.forEach(doc => {
+        const d = doc.data();
+        let dateStr = 'N/A';
+        if (d.createdAt && d.createdAt.toDate) dateStr = d.createdAt.toDate().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+        rows.push([
+          "Free Site Survey Booking",
+          d.bookingId || doc.id,
+          dateStr,
+          d.fullName || d.name || 'Customer',
+          d.phone || '',
+          d.email || '',
+          d.address || d.city || '',
+          d.city || 'Andhra Pradesh',
+          d.district || d.state || 'Andhra Pradesh',
+          d.pincode || '',
+          d.googleMapsLink || 'N/A',
+          `Site Survey (${d.roofType || 'RCC Roof'} - ${d.connectionType || 'Domestic'})`,
+          1,
+          0,
+          "SURVEY BOOKED",
+          "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A"
+        ]);
+      });
+
+      // If JSON format requested
+      if (req.query.format === 'json') {
+        return res.status(200).send({
+          success: true,
+          totalRecords: rows.length,
+          totalOrders: ordersSnapshot.docs.length,
+          totalQuotes: quotesSnapshot.docs.length,
+          totalSurveys: surveysSnapshot.docs.length,
+          data: rows
+        });
+      }
+
+      // Build CSV String with UTF-8 BOM for Microsoft Excel Compatibility
+      const escapeCsv = (val) => {
+        if (val === null || val === undefined) return '""';
+        const str = String(val).replace(/"/g, '""');
+        return `"${str}"`;
+      };
+
+      const csvContent = '\uFEFF' + [
+        headers.map(escapeCsv).join(','),
+        ...rows.map(r => r.map(escapeCsv).join(','))
+      ].join('\r\n');
+
+      const filename = `Mirror_Solar_Aqua_Customer_Orders_${new Date().toISOString().slice(0, 10)}.csv`;
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      return res.status(200).send(csvContent);
+
+    } catch (error) {
+      console.error("[Export Customer Excel] Error:", error);
+      return res.status(500).send({ error: error.message || 'Failed to export customer data' });
+    }
+  });
+});
+
+/**
+ * Automated Shiprocket Push Checker & Auto-Retry Endpoint
+ * Scans all paid orders, identifies any that were NOT pushed to Shiprocket,
+ * and pushes them automatically to guarantee 100% fulfillment rate.
+ */
+exports.retryUnpushedShiprocketOrders = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    try {
+      const db = admin.firestore();
+      
+      // Query all paid orders
+      const ordersSnapshot = await db.collection('orders').where('status', '==', 'paid').get();
+      
+      const unpushedOrders = [];
+      const alreadyPushedOrders = [];
+      const newlyPushedOrders = [];
+      const failedOrders = [];
+
+      for (const docSnap of ordersSnapshot.docs) {
+        const orderData = docSnap.data();
+        const bookingId = orderData.bookingId || docSnap.id;
+
+        // Check if Shiprocket order ID exists
+        if (orderData.shiprocketOrderId || orderData.shiprocketShipmentId) {
+          alreadyPushedOrders.push({
+            bookingId,
+            shiprocketOrderId: orderData.shiprocketOrderId,
+            shiprocketAwb: orderData.shiprocketAwb
+          });
+          continue;
+        }
+
+        // Unpushed order detected
+        unpushedOrders.push(orderData);
+
+        try {
+          console.log(`[Shiprocket Auto-Retry] Attempting to push unpushed order: ${bookingId}`);
+          const srData = await createShiprocketOrderForRecord(orderData, orderData.razorpayPaymentId || 'PREPAID');
+          
+          const updateData = {
+            shiprocketOrderId: srData.order_id || null,
+            shiprocketShipmentId: srData.shipment_id || null,
+            shiprocketAwb: srData.awb_code || null,
+            shiprocketStatus: srData.status || srData.status_code || 'PROCESSING',
+            shiprocketResponse: JSON.stringify(srData),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          };
+
+          await docSnap.ref.update(updateData).catch(() => {});
+          
+          if (orderData.userId) {
+            await db.collection('users').doc(orderData.userId).collection('orders').doc(bookingId).update(updateData).catch(() => {});
+          }
+
+          newlyPushedOrders.push({
+            bookingId,
+            customerName: orderData.customerName,
+            customerPhone: orderData.customerPhone,
+            shiprocketOrderId: srData.order_id,
+            shiprocketShipmentId: srData.shipment_id,
+            shiprocketAwb: srData.awb_code
+          });
+
+          // Dispatch tracking notification to customer
+          const updatedFullOrder = { ...orderData, ...updateData, bookingId };
+          dispatchBookingNotifications('order', updatedFullOrder).catch((e) => console.error("Notification error:", e));
+
+        } catch (pushErr) {
+          console.error(`[Shiprocket Auto-Retry] Failed for ${bookingId}:`, pushErr.message);
+          failedOrders.push({
+            bookingId,
+            customerName: orderData.customerName,
+            customerPhone: orderData.customerPhone,
+            error: pushErr.message
+          });
+        }
+      }
+
+      return res.status(200).send({
+        success: true,
+        summary: {
+          totalPaidOrders: ordersSnapshot.docs.length,
+          alreadyPushedCount: alreadyPushedOrders.length,
+          unpushedFoundCount: unpushedOrders.length,
+          newlyPushedCount: newlyPushedOrders.length,
+          failedCount: failedOrders.length
+        },
+        newlyPushedOrders,
+        failedOrders,
+        alreadyPushedOrders
+      });
+
+    } catch (error) {
+      console.error("[Shiprocket Auto-Retry] Error:", error);
+      return res.status(500).send({ success: false, error: error.message });
+    }
+  });
+});
+
+/**
+ * Customer Intelligence & Store Orders Executive Summary Endpoint
+ */
+exports.getCustomerOrdersSummary = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    try {
+      const db = admin.firestore();
+      const ordersSnap = await db.collection('orders').get();
+      
+      let totalRevenue = 0;
+      let paidOrdersCount = 0;
+      let unpushedShiprocketCount = 0;
+      const unpushedBookingIds = [];
+      const cityBreakdown = {};
+      const productBreakdown = {};
+
+      ordersSnap.docs.forEach(doc => {
+        const d = doc.data();
+        const amt = Number(d.amount) || 0;
+        const isPaid = (d.status || '').toLowerCase() === 'paid';
+        const hasSr = Boolean(d.shiprocketOrderId || d.shiprocketShipmentId);
+        
+        if (isPaid) {
+          totalRevenue += amt;
+          paidOrdersCount++;
+          if (!hasSr) {
+            unpushedShiprocketCount++;
+            unpushedBookingIds.push({
+              bookingId: d.bookingId || doc.id,
+              customerName: d.customerName || d.address?.fullName || 'N/A',
+              customerPhone: d.customerPhone || d.address?.phone || 'N/A',
+              amount: amt,
+              date: d.createdAt?.toDate ? d.createdAt.toDate().toISOString() : 'N/A'
+            });
+          }
+        }
+
+        const city = d.address?.city || 'Other';
+        cityBreakdown[city] = (cityBreakdown[city] || 0) + 1;
+
+        const items = Array.isArray(d.items) ? d.items : [];
+        items.forEach(it => {
+          const name = it.name || 'Solar Product';
+          productBreakdown[name] = (productBreakdown[name] || 0) + (Number(it.quantity) || 1);
+        });
+      });
+
+      return res.status(200).send({
+        success: true,
+        metrics: {
+          totalOrdersRecorded: ordersSnap.docs.length,
+          paidOrdersCount,
+          totalRevenueInr: totalRevenue,
+          unpushedShiprocketCount,
+          unpushedBookingIds,
+          topCities: cityBreakdown,
+          productBreakdown
+        }
+      });
+    } catch (error) {
+      return res.status(500).send({ success: false, error: error.message });
+    }
+  });
+});
+
+
 
