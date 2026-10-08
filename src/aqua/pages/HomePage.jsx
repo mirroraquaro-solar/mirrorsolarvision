@@ -42,6 +42,10 @@ export function HomePage({ onNavigate }) {
           <img
             src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=2000&q=85"
             alt="Handmade Indian Heritage Craftsmanship"
+            width="1920"
+            height="1080"
+            loading="eager"
+            decoding="async"
             className="hero-bg-img"
           />
           <div className="hero-overlay" />
@@ -169,6 +173,10 @@ export function HomePage({ onNavigate }) {
                 <img
                   src="https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=1200&q=80"
                   alt="Artisan hands shaping pottery"
+                  width="800"
+                  height="600"
+                  loading="lazy"
+                  decoding="async"
                   className="handmade-main-img"
                 />
                 <div className="handmade-badge-overlay">
@@ -191,6 +199,10 @@ export function HomePage({ onNavigate }) {
               <img
                 src="https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=1200&q=80"
                 alt="The Story Behind The Product"
+                width="800"
+                height="600"
+                loading="lazy"
+                decoding="async"
                 className="story-feature-img"
               />
             </div>
@@ -298,7 +310,15 @@ export function HomePage({ onNavigate }) {
                   className="region-preview-card"
                   onClick={() => openComingSoonModal(region)}
                 >
-                  <img src={region.coverImage} alt={region.name} className="region-card-img" />
+                  <img 
+                    src={region.coverImage} 
+                    alt={region.name} 
+                    width="400"
+                    height="300"
+                    loading="lazy"
+                    decoding="async"
+                    className="region-card-img" 
+                  />
                   <div className="region-card-overlay">
                     <span className="region-badge">Coming Soon</span>
                     <h3 className="region-card-name">{region.name}</h3>
@@ -408,7 +428,11 @@ export function HomePage({ onNavigate }) {
                 <div className="newsletter-input-wrap">
                   <Mail size={16} className="newsletter-icon" />
                   <input
+                    id="aqua-newsletter-email"
+                    name="email"
                     type="email"
+                    autoComplete="email"
+                    aria-label="Your email address"
                     placeholder="Your email address"
                     value={newsletterEmail}
                     onChange={(e) => setNewsletterEmail(e.target.value)}

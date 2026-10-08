@@ -454,21 +454,27 @@ ${shipmentId ? `🚚 *Shiprocket Tracking ID:* ${shipmentId}\n🔗 *Live Courier
 
                   <div>
                     <input
+                      id="success-review-title"
+                      name="reviewTitle"
                       type="text"
                       value={reviewTitle}
                       onChange={(e) => setReviewTitle(e.target.value)}
                       placeholder="Title: e.g., Best solar drain clips in Andhra Pradesh"
                       className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 font-medium"
+                      aria-label="Review Title"
                     />
                   </div>
 
                   <div>
                     <textarea
+                      id="success-review-comment"
+                      name="reviewComment"
                       rows={2}
                       value={reviewComment}
                       onChange={(e) => setReviewComment(e.target.value)}
                       placeholder="Write your review: e.g., Easy to install, eliminated mud build up completely on our 5kW plant..."
                       className="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 resize-none font-medium"
+                      aria-label="Detailed Review Comment"
                     />
                   </div>
 
@@ -565,37 +571,27 @@ ${shipmentId ? `🚚 *Shiprocket Tracking ID:* ${shipmentId}\n🔗 *Live Courier
               </button>
             </div>
 
-            {/* Customer WhatsApp Direct Link */}
-            <div className="bg-slate-800/80 rounded-xl p-3 border border-slate-700/80 space-y-2 text-left">
+            {/* Customer WhatsApp Direct Link & Support Info */}
+            <div className="bg-slate-800/80 rounded-xl p-3.5 border border-slate-700/80 space-y-2.5 text-left">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                   <MessageSquare size={13} className="text-[#25D366]" />
-                  <span>Send Confirmation to My WhatsApp</span>
+                  <span>WhatsApp Invoice & Order Support</span>
                 </span>
-                <span className="text-[10px] text-slate-400">Pre-filled Chat</span>
+                <span className="text-[10px] text-emerald-400 font-semibold">24/7 Assistance</span>
               </div>
-              <p className="text-[11px] text-slate-400">
-                Opens WhatsApp with your complete itemized confirmation note — tap Send to save to your chat.
+              <p className="text-[11px] text-slate-300 leading-relaxed">
+                For any <strong>issue, delivery queries, address corrections, or information needed</strong>, our support team is available on WhatsApp. Tap below to save your complete order invoice to your WhatsApp chat:
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <div className="pt-1">
                 <a
                   href={getCustomerWhatsAppUrl(customerPhone, whatsappReceipt)}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black text-xs py-2.5 px-3 rounded-xl transition-all shadow-xs text-center cursor-pointer"
+                  className="w-full inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black text-xs py-2.5 px-4 rounded-xl transition-all shadow-xs text-center cursor-pointer"
                 >
-                  <MessageSquare size={13} className="fill-slate-950" />
-                  <span>Send to My WhatsApp</span>
-                </a>
-
-                <a
-                  href={businessWhatsAppUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold text-xs py-2.5 px-3 rounded-xl transition-all text-center cursor-pointer"
-                >
-                  <Share2 size={13} />
-                  <span>Notify Dispatch Desk</span>
+                  <MessageSquare size={14} className="fill-slate-950" />
+                  <span>Send Confirmation to My WhatsApp</span>
                 </a>
               </div>
             </div>

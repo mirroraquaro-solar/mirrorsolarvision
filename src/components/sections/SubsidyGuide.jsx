@@ -211,6 +211,8 @@ export default function SubsidyGuide() {
               <input 
                 type="number" 
                 id="monthly-bill-input" 
+                name="monthlyBill"
+                autoComplete="off"
                 className="w-full bg-gray-50 border border-gray-200 text-gray-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20" 
                 placeholder="e.g. 3000" 
                 value={monthlyBill}

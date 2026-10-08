@@ -514,14 +514,6 @@ exports.createRazorpayOrder = functions.https.onRequest((req, res) => {
       const prefix = isAquaOrder ? 'MA' : 'MSV';
       const bookingId = `${prefix}-${Date.now().toString().slice(-6)}`;
 
-      const options = {
-        amount: Math.round(finalAmount * 100), // paise
-        currency: "INR",
-        receipt: bookingId,
-      };
-
-      const order = await razorpayInstance.orders.create(options);
-
       // Normalize and extract customer details safely
       const rawReq = req.body.data || req.body || {};
       const addr = normalizeCustomerAddress({
@@ -530,6 +522,27 @@ exports.createRazorpayOrder = functions.https.onRequest((req, res) => {
         customerPhone: address?.phone || address?.mobile || address?.contactNumber || rawReq.customerPhone || rawReq.phone,
         customerEmail: address?.email || rawReq.customerEmail || rawReq.email
       });
+
+      const itemsSummary = (items || []).map(i => `${i.quantity || 1}x ${i.name || 'Solar Product'}`).join(', ').substring(0, 200) || 'Solar Store Order';
+
+      const options = {
+        amount: Math.round(finalAmount * 100), // paise
+        currency: "INR",
+        receipt: bookingId,
+        notes: {
+          bookingId: bookingId,
+          customerName: addr.fullName || 'Valued Customer',
+          customerPhone: addr.phone || '',
+          customerEmail: addr.email || 'orders@mirrorsolarvision.com',
+          customerAddress: (addr.fullAddress || addr.flat || 'Address on file').substring(0, 200),
+          customerCity: addr.city || 'Andhra Pradesh',
+          customerState: addr.state || 'Andhra Pradesh',
+          customerPincode: addr.pincode || '',
+          itemsSummary: itemsSummary
+        }
+      };
+
+      const order = await razorpayInstance.orders.create(options);
 
       const uid = userId || 'anonymous';
       const orderDataToSave = {
@@ -792,56 +805,125 @@ exports.razorpayWebhook = functions.https.onRequest(async (req, res) => {
     }
 
     const payload = req.body;
-    if (payload.event === 'order.paid') {
-      const rzpOrderId = payload.payload.order.entity.id;
-      const rzpPaymentId = payload.payload.payment.entity.id;
+    if (payload.event === 'order.paid' || payload.event === 'payment.captured') {
+      const paymentEntity = payload.payload?.payment?.entity || {};
+      const orderEntity = payload.payload?.order?.entity || {};
+      
+      const rzpOrderId = paymentEntity.order_id || orderEntity.id;
+      const rzpPaymentId = paymentEntity.id || orderEntity.payment_id;
+      const paymentNotes = paymentEntity.notes || orderEntity.notes || {};
 
-      // Find the order in Firestore using a Collection Group query
-      const snapshot = await admin.firestore().collectionGroup('orders').where('razorpayOrderId', '==', rzpOrderId).limit(1).get();
-      if (!snapshot.empty) {
-        const orderDocSnap = snapshot.docs[0];
-        const orderRef = orderDocSnap.ref;
-        const orderData = orderDocSnap.data();
-        const bookingId = orderData.bookingId || orderDocSnap.id;
+      let orderData = null;
+      let orderRef = null;
+      let rootOrderDocRef = null;
+      let bookingId = paymentNotes.bookingId || null;
 
-        // Also reference the root orders collection doc
-        const rootOrderDocRef = admin.firestore().collection('orders').doc(bookingId);
-
-        let srData = null;
-        if (!orderData.shiprocketOrderId && !orderData.shiprocketShipmentId) {
-          try {
-            srData = await createShiprocketOrderForRecord(orderData, rzpPaymentId);
-          } catch (srErr) {
-            console.error("Webhook Shiprocket creation warning:", srErr);
-          }
+      // 1. Find the order in Firestore using razorpayOrderId or bookingId
+      if (rzpOrderId) {
+        const snapshot = await admin.firestore().collectionGroup('orders').where('razorpayOrderId', '==', rzpOrderId).limit(1).get();
+        if (!snapshot.empty) {
+          const orderDocSnap = snapshot.docs[0];
+          orderRef = orderDocSnap.ref;
+          orderData = orderDocSnap.data();
+          bookingId = orderData.bookingId || orderDocSnap.id;
         }
-
-        const updateData = {
-          status: 'paid',
-          razorpayPaymentId: rzpPaymentId,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        };
-
-        if (srData) {
-          updateData.shiprocketOrderId = srData.order_id || null;
-          updateData.shiprocketShipmentId = srData.shipment_id || null;
-          updateData.shiprocketAwb = srData.awb_code || null;
-          updateData.shiprocketStatus = srData.status || srData.status_code || 'PROCESSING';
-          updateData.shiprocketResponse = JSON.stringify(srData);
-        }
-
-        await orderRef.update(updateData).catch(() => {});
-        await rootOrderDocRef.update(updateData).catch(() => {});
-
-        const updatedFullOrder = {
-          ...orderData,
-          ...updateData,
-          bookingId
-        };
-
-        // Trigger automated WhatsApp & Email notifications
-        dispatchBookingNotifications('order', updatedFullOrder).catch((e) => console.error("Webhook notification error:", e));
       }
+
+      if (!orderData && bookingId) {
+        const directDoc = await admin.firestore().collection('orders').doc(bookingId).get();
+        if (directDoc.exists) {
+          orderData = directDoc.data();
+          rootOrderDocRef = directDoc.ref;
+        }
+      }
+
+      // 2. If order not in DB (e.g. direct UPI Intent payment), reconstruct cleanly from payment notes
+      if (!orderData) {
+        const isAqua = (paymentNotes.bookingId || '').startsWith('MA-') || (paymentNotes.itemsSummary || '').toLowerCase().includes('spun');
+        const prefix = isAqua ? 'MA' : 'MSV';
+        bookingId = bookingId || `${prefix}-${Date.now().toString().slice(-6)}`;
+        
+        const custName = paymentNotes.customerName || paymentEntity.name || 'Valued Customer';
+        const custPhone = paymentNotes.customerPhone || paymentEntity.contact || '';
+        const custEmail = paymentNotes.customerEmail || paymentEntity.email || 'orders@mirrorsolarvision.com';
+        const custAddress = paymentNotes.customerAddress || 'Address on file';
+        const custPincode = paymentNotes.customerPincode || '520001';
+        const amt = paymentEntity.amount ? (paymentEntity.amount / 100) : 300;
+
+        orderData = {
+          userId: 'guest',
+          bookingId: bookingId,
+          firestoreOrderId: bookingId,
+          customerName: custName,
+          customerPhone: custPhone,
+          customerEmail: custEmail,
+          items: [
+            {
+              name: paymentNotes.itemsSummary || (amt === 500 ? 'MSV Heavy-Duty Drain Clips (Pack of 20)' : 'MSV Heavy-Duty Solar Drain Clips Pack of 12'),
+              quantity: 1,
+              price: amt,
+              productId: isAqua ? 'ma-prod-001' : 'msv-drain-clips',
+              sku: isAqua ? 'MA-PP-10-05M' : (amt === 500 ? 'SKU_DRAIN_CLIPS_20' : 'SKU_DRAIN_CLIPS_12')
+            }
+          ],
+          amount: amt,
+          address: {
+            fullName: custName,
+            phone: custPhone,
+            email: custEmail,
+            flat: custAddress,
+            city: paymentNotes.customerCity || 'Andhra Pradesh',
+            state: paymentNotes.customerState || 'Andhra Pradesh',
+            pincode: custPincode,
+            fullAddress: `${custAddress}, ${paymentNotes.customerCity || 'AP'} - ${custPincode}`
+          },
+          razorpayOrderId: rzpOrderId || null,
+          razorpayPaymentId: rzpPaymentId,
+          status: 'paid',
+          createdAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+
+        await admin.firestore().collection('orders').doc(bookingId).set(orderData);
+      }
+
+      rootOrderDocRef = rootOrderDocRef || admin.firestore().collection('orders').doc(bookingId);
+
+      // 3. Create Shiprocket Order immediately if not already created
+      let srData = null;
+      if (!orderData.shiprocketOrderId && !orderData.shiprocketShipmentId) {
+        try {
+          srData = await createShiprocketOrderForRecord(orderData, rzpPaymentId);
+          console.log(`[Webhook Auto-Sync] Shiprocket Order Created for ${bookingId}:`, srData.order_id);
+        } catch (srErr) {
+          console.error("[Webhook Auto-Sync] Shiprocket creation error:", srErr);
+        }
+      }
+
+      const updateData = {
+        status: 'paid',
+        razorpayPaymentId: rzpPaymentId,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      };
+
+      if (srData) {
+        updateData.shiprocketOrderId = srData.order_id || null;
+        updateData.shiprocketShipmentId = srData.shipment_id || null;
+        updateData.shiprocketAwb = srData.awb_code || null;
+        updateData.shiprocketStatus = srData.status || srData.status_code || 'PROCESSING';
+        updateData.shiprocketResponse = JSON.stringify(srData);
+      }
+
+      if (orderRef) await orderRef.update(updateData).catch(() => {});
+      if (rootOrderDocRef) await rootOrderDocRef.update(updateData).catch(() => {});
+
+      const updatedFullOrder = {
+        ...orderData,
+        ...updateData,
+        bookingId
+      };
+
+      // 4. Trigger automated WhatsApp & Email notifications instantly
+      dispatchBookingNotifications('order', updatedFullOrder).catch((e) => console.error("Webhook notification error:", e));
     }
 
     res.status(200).send('ok');

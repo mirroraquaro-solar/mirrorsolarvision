@@ -255,9 +255,12 @@ export function CartPage({ onNavigate }) {
 
             <form onSubmit={handleQuickFormSubmit} className="quick-pay-form">
               <div className="quick-field">
-                <label><User size={13} /> Full Name *</label>
+                <label htmlFor="quick-pay-name"><User size={13} /> Full Name *</label>
                 <input
+                  id="quick-pay-name"
+                  name="fullName"
                   type="text"
+                  autoComplete="name"
                   required
                   placeholder="Recipient Name"
                   value={quickForm.fullName}
@@ -268,9 +271,12 @@ export function CartPage({ onNavigate }) {
 
               <div className="quick-grid-2">
                 <div className="quick-field">
-                  <label><Phone size={13} /> Phone (WhatsApp / Updates) *</label>
+                  <label htmlFor="quick-pay-phone"><Phone size={13} /> Phone (WhatsApp / Updates) *</label>
                   <input
+                    id="quick-pay-phone"
+                    name="phone"
                     type="tel"
+                    autoComplete="tel"
                     required
                     maxLength={10}
                     placeholder="10-digit mobile"
@@ -281,9 +287,12 @@ export function CartPage({ onNavigate }) {
                 </div>
 
                 <div className="quick-field">
-                  <label><MapPin size={13} /> PIN Code *</label>
+                  <label htmlFor="quick-pay-pincode"><MapPin size={13} /> PIN Code *</label>
                   <input
+                    id="quick-pay-pincode"
+                    name="pincode"
                     type="text"
+                    autoComplete="postal-code"
                     required
                     maxLength={6}
                     placeholder="6 digits"
@@ -313,8 +322,11 @@ export function CartPage({ onNavigate }) {
               </div>
 
               <div className="quick-field">
-                <label><Home size={13} /> Complete Delivery Address *</label>
+                <label htmlFor="quick-pay-address"><Home size={13} /> Complete Delivery Address *</label>
                 <textarea
+                  id="quick-pay-address"
+                  name="address"
+                  autoComplete="street-address"
                   required
                   rows={2}
                   placeholder="Flat/House No, Building, Street, Area, City"
@@ -435,6 +447,10 @@ export function CartPage({ onNavigate }) {
                           <img
                             src={item.product?.images?.[0]?.url || '/images/product/spun1.jpeg'}
                             alt={item.product?.name || 'PP Spun Filter'}
+                            width="80"
+                            height="80"
+                            loading="lazy"
+                            decoding="async"
                             className="item-product-thumb"
                             onClick={() => onNavigate(`/product/${item.product?.slug || '10-inch-5-micron-pp-spun-filter'}`)}
                           />
@@ -570,7 +586,11 @@ export function CartPage({ onNavigate }) {
 
                 <form className="pincode-checker-form" onSubmit={handleCheckPin}>
                   <input
+                    id="cart-pincode-input"
+                    name="pincode"
                     type="text"
+                    autoComplete="postal-code"
+                    aria-label="PIN Code"
                     maxLength={6}
                     placeholder="Enter 6-digit PIN (e.g. 500001, 520001)"
                     value={pinInput}
@@ -662,7 +682,11 @@ export function CartPage({ onNavigate }) {
                   ) : (
                     <form className="cart-coupon-form" onSubmit={handleApplyCoupon}>
                       <input
+                        id="cart-coupon-input"
+                        name="couponCode"
                         type="text"
+                        autoComplete="off"
+                        aria-label="Discount code"
                         placeholder="Discount code (e.g. AQUA10)"
                         value={inputCoupon}
                         onChange={(e) => setInputCoupon(e.target.value)}

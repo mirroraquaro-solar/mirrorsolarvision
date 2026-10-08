@@ -2,8 +2,6 @@ import React from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import CartDrawer from '../checkout/CartDrawer';
-import { WhatsAppBotButton } from '../../aqua/components/ui/WhatsAppBotButton.jsx';
-
 export default function Layout({ children, onNavigate }) {
   return (
     <div className="flex flex-col min-h-screen">
@@ -22,7 +20,6 @@ export default function Layout({ children, onNavigate }) {
         onNavigate={onNavigate}
         onProceedToCheckout={() => onNavigate('store', 'checkout')}
       />
-      <WhatsAppBotButton />
     </div>
   );
 }

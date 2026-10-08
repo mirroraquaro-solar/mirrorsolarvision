@@ -58,6 +58,10 @@ export function ProblemSection() {
               <img
                 src="/images/product/001.jpeg"
                 alt="Mirror Aqua Fresh Filter vs Trapped Dirt Filter"
+                width="500"
+                height="300"
+                loading="lazy"
+                decoding="async"
                 className="proof-img"
               />
               <div className="proof-caption">

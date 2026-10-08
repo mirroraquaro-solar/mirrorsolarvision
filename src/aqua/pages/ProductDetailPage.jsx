@@ -74,6 +74,10 @@ export function ProductDetailPage({ slug, onNavigate }) {
             <img
               src={product.images[selectedImageIndex]?.url || product.images[0]?.url}
               alt={product.images[selectedImageIndex]?.altText || product.name}
+              width="600"
+              height="600"
+              loading="eager"
+              decoding="async"
               className="gallery-main-image"
             />
             <div className="gallery-badges">
@@ -92,7 +96,7 @@ export function ProductDetailPage({ slug, onNavigate }) {
                   onClick={() => setSelectedImageIndex(idx)}
                   aria-label={`View image ${idx + 1}`}
                 >
-                  <img src={img.url} alt="" />
+                  <img src={img.url} alt="" width="80" height="80" loading="lazy" decoding="async" />
                 </button>
               ))}
             </div>

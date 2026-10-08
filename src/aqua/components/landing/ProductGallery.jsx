@@ -31,8 +31,11 @@ export function ProductGallery({ images = [], productName = 'Mirror Aqua PP Spun
         <img
           src={activeImage.url}
           alt={activeImage.altText || productName}
-          className="gallery-main-img"
+          width="600"
+          height="600"
           loading="eager"
+          decoding="async"
+          className="gallery-main-img"
         />
 
         {/* Feature Overlay Badges */}
@@ -73,7 +76,14 @@ export function ProductGallery({ images = [], productName = 'Mirror Aqua PP Spun
               onClick={() => setActiveIndex(idx)}
               aria-label={`View image ${idx + 1}: ${img.caption || img.altText}`}
             >
-              <img src={img.url} alt={img.altText || `Thumbnail ${idx + 1}`} />
+              <img 
+                src={img.url} 
+                alt={img.altText || `Thumbnail ${idx + 1}`} 
+                width="80"
+                height="80"
+                loading="lazy"
+                decoding="async"
+              />
               {activeIndex === idx && <div className="thumb-active-indicator" />}
             </button>
           ))}

@@ -47,6 +47,10 @@ export function WishlistDrawer({ onNavigate }) {
                   <img
                     src={product.images?.[0]?.url}
                     alt={product.name}
+                    width="64"
+                    height="64"
+                    loading="lazy"
+                    decoding="async"
                     className="cart-item-thumb"
                   />
                   <div className="cart-item-details">

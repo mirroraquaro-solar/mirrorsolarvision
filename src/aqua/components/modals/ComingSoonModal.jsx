@@ -50,7 +50,11 @@ export function ComingSoonModal() {
               <div className="input-group">
                 <Mail size={16} className="input-icon" />
                 <input
+                  id="coming-soon-email"
+                  name="email"
                   type="email"
+                  autoComplete="email"
+                  aria-label="Enter your email address"
                   placeholder="Enter your email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

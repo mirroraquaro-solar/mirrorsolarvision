@@ -65,6 +65,10 @@ export function Header({ currentPath = '/', onNavigate }) {
           <img
             src="/images/product/logo2.jpeg"
             alt="Mirror Aqua Water Purification & Spares"
+            width="160"
+            height="48"
+            loading="eager"
+            decoding="async"
             className="brand-logo-img"
           />
         </div>

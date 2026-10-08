@@ -1,8 +1,11 @@
-import React from 'react';
-import { Send, MapPin, Phone, Mail, Package } from 'lucide-react';
+import React, { useState } from 'react';
+import { Send, MapPin, Phone, Mail, Package, HelpCircle } from 'lucide-react';
 import { BUSINESS_CONTACT } from '../../data/bulkComboData';
+import { HelpSupportModal } from '../ui/HelpSupportModal';
 
 export default function Footer({ onNavigate }) {
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+
   const handleStoreClick = (e) => {
     e.preventDefault();
     if (onNavigate) {
@@ -32,6 +35,9 @@ export default function Footer({ onNavigate }) {
             <form onSubmit={(e) => { e.preventDefault(); alert('Thank you for subscribing to Mirror Solar Vision updates.'); }} className="flex flex-col sm:flex-row w-full lg:max-w-[440px] relative gap-2 sm:gap-0" aria-label="Newsletter signup">
               <input 
                 type="email" 
+                id="footer-newsletter-email"
+                name="email"
+                autoComplete="email"
                 className="w-full bg-slate-900/90 border border-slate-700 text-white px-4 sm:px-5 py-3 sm:pr-[120px] rounded-xl sm:rounded-full text-xs sm:text-sm placeholder-slate-500 focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500" 
                 placeholder="Enter your email address" 
                 aria-label="Email address" 
@@ -53,6 +59,17 @@ export default function Footer({ onNavigate }) {
             </span>
             
             <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center justify-center gap-2.5 w-full sm:w-auto">
+              {/* Help & Support Button */}
+              <button 
+                type="button"
+                onClick={() => setIsHelpOpen(true)}
+                className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black px-4 py-2.5 rounded-xl text-xs transition shadow-sm cursor-pointer active:scale-95 w-full sm:w-auto"
+                aria-label="Open Help and WhatsApp Support"
+              >
+                <HelpCircle size={15} />
+                <span>Help Desk (Issue / Query)</span>
+              </button>
+
               {/* YouTube Subscribe Button */}
               <a 
                 href="https://youtube.com/@mirrorlife123?si=CREJrBVy3AYRHlGI" 
@@ -173,6 +190,16 @@ export default function Footer({ onNavigate }) {
                 <li>
                   <a href="#contact" className="hover:text-accent-400 transition-colors py-0.5 inline-block">Contact</a>
                 </li>
+                <li>
+                  <button 
+                    type="button"
+                    onClick={() => setIsHelpOpen(true)}
+                    className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 py-0.5 text-emerald-400 font-bold cursor-pointer"
+                  >
+                    <HelpCircle size={13} className="text-emerald-400 shrink-0" />
+                    <span>Help & Support</span>
+                  </button>
+                </li>
               </ul>
             </div>
 
@@ -240,7 +267,7 @@ export default function Footer({ onNavigate }) {
             </div>
           </div>
 
-          {/* Contact Details */}
+          {/* Contact Details & Help Desk */}
           <div className="flex flex-col items-center sm:items-start text-xs text-slate-400 space-y-3 text-center sm:text-left bg-white/[0.02] sm:bg-transparent p-4 sm:p-0 rounded-2xl border border-white/5 sm:border-0">
             <h4 className="text-white font-bold text-xs sm:text-sm mb-1 tracking-wider uppercase">
               Head Office
@@ -260,6 +287,18 @@ export default function Footer({ onNavigate }) {
               <Mail size={15} className="text-accent-500 shrink-0" />
               <a href={`mailto:${BUSINESS_CONTACT.email}`} className="hover:text-white transition-colors">{BUSINESS_CONTACT.email}</a>
             </div>
+
+            {/* Help Button in Contact Section */}
+            <div className="pt-2 w-full">
+              <button 
+                type="button"
+                onClick={() => setIsHelpOpen(true)}
+                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold px-3.5 py-2.5 rounded-xl text-xs shadow-md transition-all cursor-pointer active:scale-95"
+              >
+                <HelpCircle size={15} />
+                <span>Help Desk (Issue / Query)</span>
+              </button>
+            </div>
           </div>
 
         </div>
@@ -277,11 +316,25 @@ export default function Footer({ onNavigate }) {
           <p className="text-[11px] sm:text-xs text-slate-300 font-medium">
             &copy; {new Date().getFullYear()} <strong className="text-white font-bold">Mirror Solar Vision</strong>. All rights reserved.
           </p>
-          <div className="flex gap-4">
-            <span className="text-slate-300 text-[11px] sm:text-xs font-medium">Fast dispatch across all 26 AP districts</span>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setIsHelpOpen(true)}
+              className="text-emerald-400 hover:text-emerald-300 transition-colors text-[11px] sm:text-xs font-bold flex items-center gap-1 cursor-pointer"
+            >
+              <HelpCircle size={12} />
+              <span>Help Desk</span>
+            </button>
+            <span className="text-slate-300 text-[11px] sm:text-xs font-medium">• Fast dispatch across all 26 AP districts</span>
           </div>
         </div>
       </div>
+
+      {/* Help & Support Modal */}
+      <HelpSupportModal 
+        isOpen={isHelpOpen} 
+        onClose={() => setIsHelpOpen(false)} 
+      />
     </footer>
   );
 }

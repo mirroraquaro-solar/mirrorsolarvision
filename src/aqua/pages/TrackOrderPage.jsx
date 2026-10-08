@@ -167,7 +167,10 @@ export function TrackOrderPage({ onNavigate }) {
             <div className="search-input-wrap">
               <Search size={18} className="search-icon-inside" />
               <input
+                id="track-order-query"
+                name="query"
                 type="text"
+                aria-label="Order ID or Mobile Number"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="e.g. order_TfvnuK54MOZmVj or 9876543210"

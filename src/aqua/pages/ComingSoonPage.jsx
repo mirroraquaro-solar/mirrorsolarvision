@@ -29,7 +29,15 @@ export function ComingSoonPage() {
               onClick={() => openComingSoonModal(region)}
             >
               <div className="region-img-wrap">
-                <img src={region.coverImage} alt={region.name} className="region-img" />
+                <img 
+                  src={region.coverImage} 
+                  alt={region.name} 
+                  width="400" 
+                  height="300" 
+                  loading="lazy" 
+                  decoding="async" 
+                  className="region-img" 
+                />
                 <span className="region-card-badge">Coming {region.launchEstimate}</span>
               </div>
               <div className="region-content">

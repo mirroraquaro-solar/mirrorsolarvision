@@ -26,7 +26,15 @@ export function StoriesPage({ onNavigate }) {
               onClick={() => onNavigate(`/stories/${story.slug}`)}
             >
               <div className="story-img-wrap">
-                <img src={story.coverImage} alt={story.title} className="story-cover" />
+                <img 
+                  src={story.coverImage} 
+                  alt={story.title} 
+                  width="600" 
+                  height="400" 
+                  loading="lazy" 
+                  decoding="async" 
+                  className="story-cover" 
+                />
                 <span className="story-category-tag">{story.category}</span>
               </div>
               <div className="story-body">
@@ -70,7 +78,15 @@ export function StoryDetailPage({ slug, onNavigate }) {
         </div>
 
         <div className="story-hero-media">
-          <img src={story.coverImage} alt={story.title} className="story-hero-img" />
+          <img 
+            src={story.coverImage} 
+            alt={story.title} 
+            width="1000" 
+            height="600" 
+            loading="eager" 
+            decoding="async" 
+            className="story-hero-img" 
+          />
         </div>
 
         <div className="story-article-body">

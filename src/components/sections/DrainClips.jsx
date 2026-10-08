@@ -173,6 +173,10 @@ export default function DrainClips() {
               <img 
                 src={activeImage} 
                 alt="Solar panel drain clip product" 
+                width="500"
+                height="500"
+                loading="eager"
+                decoding="async"
                 className="max-h-full max-w-full object-contain"
               />
             </div>
@@ -184,7 +188,7 @@ export default function DrainClips() {
                   onClick={() => setActiveImage(img)}
                   className={`border-[2px] rounded-xl overflow-hidden aspect-square flex items-center justify-center p-1 bg-white hover:border-accent-500 transition-all ${activeImage === img ? 'border-accent-500' : 'border-gray-200'}`}
                 >
-                  <img src={img} alt={`Thumbnail ${idx + 1}`} className="max-h-full max-w-full object-contain" />
+                  <img src={img} alt={`Thumbnail ${idx + 1}`} width="80" height="80" loading="eager" decoding="async" className="max-h-full max-w-full object-contain" />
                 </button>
               ))}
             </div>
@@ -389,29 +393,20 @@ export default function DrainClips() {
                     </button>
                   </div>
 
-                  {/* WhatsApp Customer Link */}
+                  {/* WhatsApp Customer Link & Support Info */}
                   <div className="pt-1">
-                    <p className="text-[11px] text-slate-400 mb-2">
-                      Opens WhatsApp with your pre-filled confirmation note — tap Send to save to your chat:
+                    <p className="text-[11px] text-slate-300 mb-2 leading-relaxed">
+                      For any <strong>issue, delivery queries, or information needed</strong>, our team is available on WhatsApp. Tap below to save your booking receipt to your WhatsApp:
                     </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
                       <a
                         href={getCustomerWhatsAppUrl(checkoutForm.phone, `🧾 *MIRROR SOLAR VISION — DRAIN CLIPS ORDER INVOICE*\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n✅ *Status:* Order Placed & Confirmed\n📦 *Booking ID:* ${submittedResult?.bookingId || 'MSV-DRN'}\n👤 *Customer:* ${checkoutForm.name}\n📍 *Address:* ${checkoutForm.address}, ${checkoutForm.mandal}, ${checkoutForm.district}\n🛒 *Item:* MSV Drain Clips (${selectedSize}) - ${selectedPack * quantity} Clips (${selectedPack * quantity / 4} kW)\n💰 *Total:* ₹${totalPrice.toLocaleString('en-IN')}\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📞 Support: +91 91826 12420`)}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black text-xs py-2 px-3 rounded-xl shadow-xs transition text-center cursor-pointer"
+                        className="w-full inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-slate-950 font-black text-xs py-2.5 px-3 rounded-xl shadow-xs transition text-center cursor-pointer"
                       >
-                        <MessageSquare size={13} className="fill-slate-950" />
-                        <span>Send to My WhatsApp</span>
-                      </a>
-
-                      <a
-                        href={submittedResult?.waUrl || `https://wa.me/${ADMIN_WHATSAPP}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-2 px-3 rounded-xl transition text-center cursor-pointer"
-                      >
-                        <span>Notify Dispatch Desk</span>
+                        <MessageSquare size={14} className="fill-slate-950" />
+                        <span>Send Confirmation to My WhatsApp</span>
                       </a>
                     </div>
                   </div>
@@ -506,9 +501,12 @@ export default function DrainClips() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Full Name *</label>
+                  <label htmlFor="drain-name" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Full Name *</label>
                   <input 
                     type="text" 
+                    id="drain-name"
+                    name="name"
+                    autoComplete="name"
                     required 
                     className="w-full bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20"
                     placeholder="Enter your name"
@@ -519,9 +517,12 @@ export default function DrainClips() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Mobile Number *</label>
+                    <label htmlFor="drain-phone" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Mobile Number *</label>
                     <input 
                       type="tel" 
+                      id="drain-phone"
+                      name="phone"
+                      autoComplete="tel"
                       required 
                       className="w-full bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20"
                       placeholder="e.g. 9876543210"
@@ -531,9 +532,12 @@ export default function DrainClips() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Email Address (Optional)</label>
+                    <label htmlFor="drain-email" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Email Address (Optional)</label>
                     <input 
                       type="email" 
+                      id="drain-email"
+                      name="email"
+                      autoComplete="email"
                       className="w-full bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20"
                       placeholder="e.g. name@example.com"
                       value={checkoutForm.email}
@@ -545,9 +549,12 @@ export default function DrainClips() {
 
                 <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">PIN Code *</label>
+                    <label htmlFor="drain-pincode" className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">PIN Code *</label>
                     <input 
                       type="text" 
+                      id="drain-pincode"
+                      name="pincode"
+                      autoComplete="postal-code"
                       required 
                       maxLength={6}
                       className="w-full bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-xl text-sm font-mono focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20"
@@ -557,9 +564,12 @@ export default function DrainClips() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">District (AP) *</label>
+                    <label htmlFor="drain-district" className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">District (AP) *</label>
                     <input 
                       type="text" 
+                      id="drain-district"
+                      name="district"
+                      autoComplete="address-level2"
                       required 
                       className="w-full bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20"
                       placeholder="District"
@@ -568,9 +578,11 @@ export default function DrainClips() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">Mandal / Town *</label>
+                    <label htmlFor="drain-mandal" className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">Mandal / Town *</label>
                     <input 
                       type="text" 
+                      id="drain-mandal"
+                      name="mandal"
                       required 
                       className="w-full bg-gray-50 border border-gray-200 px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20"
                       placeholder="Mandal / City"
@@ -581,8 +593,11 @@ export default function DrainClips() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Delivery Address (House / Street / Landmark) *</label>
+                  <label htmlFor="drain-address" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Delivery Address (House / Street / Landmark) *</label>
                   <textarea 
+                    id="drain-address"
+                    name="address"
+                    autoComplete="street-address"
                     required 
                     rows="2"
                     className="w-full bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20"

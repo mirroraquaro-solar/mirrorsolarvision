@@ -49,6 +49,10 @@ export function QuickViewModal({ onNavigate }) {
               <img
                 src={currentImage}
                 alt={quickViewProduct.name}
+                width="400"
+                height="400"
+                loading="eager"
+                decoding="async"
                 className="quick-view-main-img"
               />
               <div className="quick-view-badges">
@@ -65,7 +69,7 @@ export function QuickViewModal({ onNavigate }) {
                     className={`qv-thumb-btn ${selectedImgIndex === idx ? 'active' : ''}`}
                     onClick={() => setSelectedImgIndex(idx)}
                   >
-                    <img src={img.url} alt="" />
+                    <img src={img.url} alt="" width="60" height="60" loading="lazy" decoding="async" />
                   </button>
                 ))}
               </div>

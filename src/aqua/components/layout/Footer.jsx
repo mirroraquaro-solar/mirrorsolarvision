@@ -1,8 +1,11 @@
-import React from 'react';
-import { ShieldCheck, Truck, CheckCircle2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShieldCheck, Truck, CheckCircle2, HelpCircle } from 'lucide-react';
+import { HelpSupportModal } from '../../../components/ui/HelpSupportModal';
 import './Footer.css';
 
 export function Footer({ onNavigate }) {
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+
   return (
     <footer className="site-footer">
       {/* Trust & Guarantee Ribbon */}
@@ -40,6 +43,10 @@ export function Footer({ onNavigate }) {
               <img
                 src="/images/product/logo1.jpeg"
                 alt="Mirror Aqua Water Purification & Spares"
+                width="160"
+                height="48"
+                loading="lazy"
+                decoding="async"
                 className="footer-logo-img"
               />
             </div>
@@ -67,6 +74,27 @@ export function Footer({ onNavigate }) {
               <li><a href="#bulk-enquiry" onClick={(e) => { e.preventDefault(); const el = document.getElementById('bulk-enquiry'); if (el) el.scrollIntoView({ behavior: 'smooth' }); else onNavigate('/product/10-inch-5-micron-pp-spun-filter#bulk-enquiry'); }}>Bulk Cartridge Orders (50+)</a></li>
               <li><a href="#dealer-enquiry" onClick={(e) => { e.preventDefault(); const el = document.getElementById('bulk-enquiry'); if (el) el.scrollIntoView({ behavior: 'smooth' }); else onNavigate('/product/10-inch-5-micron-pp-spun-filter#bulk-enquiry'); }}>Dealer Onboarding</a></li>
               <li><a href="/faq" onClick={(e) => { e.preventDefault(); onNavigate('/faq'); }}>Technical FAQ</a></li>
+              <li>
+                <button 
+                  type="button" 
+                  onClick={() => setIsHelpOpen(true)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#0284c7',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '4px 0',
+                    fontSize: '13px'
+                  }}
+                >
+                  <HelpCircle size={14} />
+                  <span>Help Desk (Issue / Query)</span>
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -76,9 +104,29 @@ export function Footer({ onNavigate }) {
             <p className="footer-compliance-notice">
               PP spun filters are mechanical depth filters engineered strictly for suspended physical particulate reduction (sand, silt, rust, dirt). They do not reduce dissolved chemical salts (TDS) or replace microbiological disinfection stages (UV/RO).
             </p>
-            <div className="footer-contact-info">
+            <div className="footer-contact-info" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
               <span>📍 Made in India</span>
-              <span>📞 WhatsApp Support Available Mon–Sat</span>
+              <button 
+                type="button"
+                onClick={() => setIsHelpOpen(true)}
+                style={{
+                  background: '#0284c7',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '8px 12px',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  width: 'fit-content'
+                }}
+              >
+                <HelpCircle size={14} />
+                <span>Help Desk & WhatsApp Support</span>
+              </button>
             </div>
           </div>
         </div>
@@ -95,6 +143,12 @@ export function Footer({ onNavigate }) {
           </div>
         </div>
       </div>
+
+      {/* Help & Support Modal */}
+      <HelpSupportModal 
+        isOpen={isHelpOpen} 
+        onClose={() => setIsHelpOpen(false)} 
+      />
     </footer>
   );
 }

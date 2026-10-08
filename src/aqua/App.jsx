@@ -14,7 +14,6 @@ import { AccountPage } from './pages/AccountPage.jsx';
 import { VideoTutorialPage } from './pages/VideoTutorialPage.jsx';
 import { TrackOrderPage } from './pages/TrackOrderPage.jsx';
 import { FAQPage, ShippingInfoPage, LegalPage } from './pages/StaticPages.jsx';
-import { WhatsAppBotButton } from './components/ui/WhatsAppBotButton.jsx';
 
 export function App() {
   const [currentPath, setCurrentPath] = useState(() => {
@@ -130,9 +129,6 @@ export function App() {
       <SearchDrawer onNavigate={navigate} />
       <MobileNavDrawer currentPath={currentPath} onNavigate={navigate} />
       <QuickViewModal onNavigate={navigate} />
-
-      {/* Floating WhatsApp Bot Support Widget */}
-      <WhatsAppBotButton />
     </div>
   );
 }

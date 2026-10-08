@@ -55,8 +55,11 @@ export function ProductCard({ product, onNavigate }) {
         <img
           src={isHovered ? secondaryImg : primaryImg}
           alt={product.images?.[0]?.altText || product.name}
-          className="product-card-image"
+          width="300"
+          height="300"
           loading="lazy"
+          decoding="async"
+          className="product-card-image"
         />
 
         {/* Badges Container */}

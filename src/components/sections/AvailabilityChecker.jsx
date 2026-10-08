@@ -46,6 +46,8 @@ export default function AvailabilityChecker() {
             <label htmlFor="district-selector" className="block text-sm font-bold text-gray-700 mb-2">Select Your District:</label>
             <select 
               id="district-selector" 
+              name="district"
+              autoComplete="address-level2"
               className="w-full max-w-[400px] mx-auto bg-white border border-gray-200 text-gray-800 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
               value={selectedDistrict}
               onChange={(e) => setSelectedDistrict(e.target.value)}

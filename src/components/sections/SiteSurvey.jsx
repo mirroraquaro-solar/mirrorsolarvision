@@ -189,6 +189,8 @@ export default function SiteSurvey() {
                   <input 
                     type="text" 
                     id="survey-name" 
+                    name="name"
+                    autoComplete="name"
                     className="w-full bg-gray-50 border border-gray-200 text-gray-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 text-sm" 
                     placeholder="Your Full Name" 
                     value={formData.name}
@@ -201,6 +203,8 @@ export default function SiteSurvey() {
                   <input 
                     type="tel" 
                     id="survey-phone" 
+                    name="phone"
+                    autoComplete="tel"
                     className="w-full bg-gray-50 border border-gray-200 text-gray-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 text-sm" 
                     placeholder="e.g. 9876543210" 
                     value={formData.phone}
@@ -213,6 +217,8 @@ export default function SiteSurvey() {
                   <input 
                     type="email" 
                     id="survey-email" 
+                    name="email"
+                    autoComplete="email"
                     className="w-full bg-gray-50 border border-gray-200 text-gray-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 text-sm" 
                     placeholder="e.g. name@example.com" 
                     value={formData.email}
@@ -227,6 +233,7 @@ export default function SiteSurvey() {
                   <label htmlFor="survey-district" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">District (Andhra Pradesh) *</label>
                   <select 
                     id="survey-district" 
+                    name="district"
                     className="w-full bg-gray-50 border border-gray-200 text-gray-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 text-sm"
                     value={formData.district}
                     onChange={(e) => setFormData({...formData, district: e.target.value})}
@@ -250,6 +257,7 @@ export default function SiteSurvey() {
                   <input 
                     type="text" 
                     id="survey-mandal" 
+                    name="mandal"
                     className="w-full bg-gray-50 border border-gray-200 text-gray-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 text-sm" 
                     placeholder="Enter Mandal or Town name" 
                     value={formData.mandal}
@@ -265,6 +273,7 @@ export default function SiteSurvey() {
                   <input 
                     type="number" 
                     id="survey-bill" 
+                    name="bill"
                     className="w-full bg-gray-50 border border-gray-200 text-gray-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 text-sm" 
                     placeholder="e.g. 3000" 
                     value={formData.bill}
@@ -276,6 +285,7 @@ export default function SiteSurvey() {
                   <label htmlFor="survey-roof" className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">Rooftop Surface Type *</label>
                   <select 
                     id="survey-roof" 
+                    name="roofType"
                     className="w-full bg-gray-50 border border-gray-200 text-gray-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 text-sm"
                     value={formData.roofType}
                     onChange={(e) => setFormData({...formData, roofType: e.target.value})}
@@ -297,6 +307,7 @@ export default function SiteSurvey() {
                   <input 
                     type="date" 
                     id="survey-date" 
+                    name="preferredDate"
                     className="w-full bg-gray-50 border border-gray-200 text-gray-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 text-sm" 
                     value={formData.preferredDate}
                     onChange={(e) => setFormData({...formData, preferredDate: e.target.value})}

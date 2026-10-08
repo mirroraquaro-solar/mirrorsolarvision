@@ -342,7 +342,7 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
               <div key={idx} className="py-2 flex items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 p-0.5 flex items-center justify-center shrink-0">
-                    <img src={item.image} alt="" className="max-h-full max-w-full object-contain" />
+                    <img src={item.image} alt={item.name || 'Cart item'} width="40" height="40" loading="lazy" decoding="async" className="max-h-full max-w-full object-contain" />
                   </div>
                   <div className="min-w-0">
                     <p className="font-bold text-slate-900 truncate">{item.name}</p>
@@ -453,11 +453,14 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
 
                   <form onSubmit={handleAddressSubmit} className="space-y-3.5">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label htmlFor="checkout-name" className="block text-xs font-bold text-slate-700 mb-1">
                         Full Name (First and Last Name) *
                       </label>
                       <input 
                         type="text" 
+                        id="checkout-name"
+                        name="fullName"
+                        autoComplete="name"
                         required 
                         placeholder="e.g. Ramesh Kumar"
                         value={address.fullName} 
@@ -468,11 +471,14 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                        <label htmlFor="checkout-phone" className="block text-xs font-bold text-slate-700 mb-1">
                           Mobile Number (10 Digits) *
                         </label>
                         <input 
                           type="tel" 
+                          id="checkout-phone"
+                          name="phone"
+                          autoComplete="tel"
                           required 
                           pattern="[0-9]{10}" 
                           maxLength="10" 
@@ -484,11 +490,14 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                        <label htmlFor="checkout-email" className="block text-xs font-bold text-slate-700 mb-1">
                           Email Address (Optional, for Courier/Invoice)
                         </label>
                         <input 
                           type="email" 
+                          id="checkout-email"
+                          name="email"
+                          autoComplete="email"
                           value={address.email} 
                           onChange={e => setAddress({...address, email: e.target.value})} 
                           className="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm sm:text-base focus:border-primary-500 focus:ring-2 focus:ring-primary-100 outline-none transition" 
@@ -498,11 +507,14 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label htmlFor="checkout-pincode" className="block text-xs font-bold text-slate-700 mb-1">
                         PIN Code * (Auto City/State)
                       </label>
                       <input 
                         type="text" 
+                        id="checkout-pincode"
+                        name="pincode"
+                        autoComplete="postal-code"
                         required 
                         pattern="[0-9]{6}" 
                         maxLength="6" 
@@ -514,11 +526,14 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label htmlFor="checkout-flat" className="block text-xs font-bold text-slate-700 mb-1">
                         Flat, House No., Building, Apartment *
                       </label>
                       <input 
                         type="text" 
+                        id="checkout-flat"
+                        name="flat"
+                        autoComplete="address-line1"
                         required 
                         placeholder="Door / House No, Building Name"
                         value={address.flat} 
@@ -528,11 +543,14 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label htmlFor="checkout-area" className="block text-xs font-bold text-slate-700 mb-1">
                         Area, Street, Sector, Village *
                       </label>
                       <input 
                         type="text" 
+                        id="checkout-area"
+                        name="area"
+                        autoComplete="address-line2"
                         required 
                         placeholder="Street Name, Landmark, Area"
                         value={address.area} 
@@ -543,11 +561,14 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                        <label htmlFor="checkout-city" className="block text-xs font-bold text-slate-700 mb-1">
                           Town / City *
                         </label>
                         <input 
                           type="text" 
+                          id="checkout-city"
+                          name="city"
+                          autoComplete="address-level2"
                           required 
                           placeholder="City / District"
                           value={address.city} 
@@ -557,11 +578,14 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                        <label htmlFor="checkout-state" className="block text-xs font-bold text-slate-700 mb-1">
                           State *
                         </label>
                         <input 
                           type="text" 
+                          id="checkout-state"
+                          name="state"
+                          autoComplete="address-level1"
                           required 
                           placeholder="State"
                           value={address.state} 
@@ -613,9 +637,12 @@ const CheckoutPage = ({ onPaymentSuccess, onBack, checkoutData }) => {
                     <div className="p-4 bg-amber-50/70 flex items-start gap-3">
                       <input 
                         type="radio" 
+                        id="payment-method-upi"
+                        name="paymentMethod"
                         checked 
                         readOnly 
                         className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 cursor-pointer" 
+                        aria-label="Pay with UPI and QR code"
                       />
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">

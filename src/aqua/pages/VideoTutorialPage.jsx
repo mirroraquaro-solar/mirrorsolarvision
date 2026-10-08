@@ -150,6 +150,10 @@ export function VideoTutorialPage({ onNavigate }) {
               <img
                 src="/images/product/008.jpeg"
                 alt="Mirror Aqua PP Spun Filter"
+                width="300"
+                height="300"
+                loading="lazy"
+                decoding="async"
                 className="vp-cta-img"
               />
             </div>

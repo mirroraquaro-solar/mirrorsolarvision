@@ -741,8 +741,9 @@ export function CheckoutPage({ onNavigate }) {
             <div className="checkout-form-section">
               <h2 className="form-section-title">3. Shipping Speed</h2>
               <div className="shipping-options-list">
-                <label className={`shipping-radio-card ${shippingMethod === 'standard' ? 'selected' : ''}`}>
+                <label htmlFor="shipping-method-standard" className={`shipping-radio-card ${shippingMethod === 'standard' ? 'selected' : ''}`}>
                   <input
+                    id="shipping-method-standard"
                     type="radio"
                     name="shippingMethod"
                     value="standard"
@@ -764,8 +765,9 @@ export function CheckoutPage({ onNavigate }) {
                   </span>
                 </label>
 
-                <label className={`shipping-radio-card ${shippingMethod === 'express' ? 'selected' : ''}`}>
+                <label htmlFor="shipping-method-express" className={`shipping-radio-card ${shippingMethod === 'express' ? 'selected' : ''}`}>
                   <input
+                    id="shipping-method-express"
                     type="radio"
                     name="shippingMethod"
                     value="express"
@@ -849,7 +851,15 @@ export function CheckoutPage({ onNavigate }) {
                   const itemIdentifier = item.itemKey || item.productId || item.product?.id || `checkout_item_${idx}`;
                   return (
                     <div key={itemIdentifier || idx} className="summary-item-line">
-                      <img src={item.product?.images?.[0]?.url || '/images/product/spun1.jpeg'} alt="" className="summary-thumb" />
+                      <img 
+                        src={item.product?.images?.[0]?.url || '/images/product/spun1.jpeg'} 
+                        alt={item.product?.name || 'Item'} 
+                        width="48"
+                        height="48"
+                        loading="lazy"
+                        decoding="async"
+                        className="summary-thumb" 
+                      />
                       <div className="summary-info">
                         <h4 className="summary-name">{item.product?.name || '10" PP Spun Filter'}</h4>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
@@ -911,7 +921,11 @@ export function CheckoutPage({ onNavigate }) {
                 ) : (
                   <div className="coupon-inline-form">
                     <input
+                      id="checkout-coupon-code"
+                      name="couponCode"
                       type="text"
+                      autoComplete="off"
+                      aria-label="Discount Code"
                       placeholder="Discount Code"
                       value={inputCoupon}
                       onChange={(e) => setInputCoupon(e.target.value)}

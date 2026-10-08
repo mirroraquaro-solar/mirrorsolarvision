@@ -39,6 +39,9 @@ export function SearchDrawer({ onNavigate }) {
           <div className="search-input-wrap">
             <Search size={18} className="search-icon" />
             <input
+              id="search-drawer-input"
+              name="searchTerm"
+              aria-label="Search Collection"
               type="text"
               placeholder="Search by craft, material, region, or product..."
               value={searchTerm}
@@ -98,6 +101,10 @@ export function SearchDrawer({ onNavigate }) {
                   <img
                     src={product.images?.[0]?.url}
                     alt={product.name}
+                    width="60"
+                    height="60"
+                    loading="lazy"
+                    decoding="async"
                     className="search-result-thumb"
                   />
                   <div className="search-result-info">

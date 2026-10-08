@@ -50,7 +50,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
         const localList = JSON.parse(localStorage.getItem('msv_custom_reviews_list') || '[]');
         if (Array.isArray(localList)) list.push(...localList);
       } catch (e) {
-        console.warn('Local reviews load error:', e);
+        // Fallback silently if localStorage empty
       }
       try {
         if (db) {
@@ -64,7 +64,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
           });
         }
       } catch (err) {
-        console.warn('Firestore live reviews load error:', err);
+        // Fallback silently to verified static & local reviews if Firestore rule restricted
       }
       setLiveReviews(list);
     };
@@ -424,10 +424,12 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
   return (
     <div className="bg-slate-50 min-h-screen text-slate-900 pb-28 scroll-mt-24 sm:scroll-mt-28 relative" id="store">
       
-      {/* Top Header / Sticky Navigation Bar */}
-      <div className="bg-[#0A192F] text-white border-b border-slate-800 sticky top-[72px] sm:top-[78px] z-30 shadow-md">
-        <div className="container-custom py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      {/* Top Header / Sleek Minimal Sticky Navigation Bar */}
+      <div className="bg-[#0A192F]/95 backdrop-blur-md text-white border-b border-slate-800 sticky top-[72px] sm:top-[78px] z-30 shadow-sm">
+        <div className="container-custom py-2 sm:py-2.5 flex items-center justify-between gap-2">
+          
+          {/* Left: Home Link & Store Brand */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button
               onClick={() => {
                 if (onBackToHome) {
@@ -436,24 +438,26 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                   window.location.hash = '#home';
                 }
               }}
-              className="inline-flex items-center gap-2 text-xs font-bold text-slate-300 hover:text-white transition-colors cursor-pointer mr-2"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white transition-colors cursor-pointer p-1 rounded-lg hover:bg-slate-800"
+              title="Return to Home"
             >
-              <ArrowLeft size={16} />
-              <span>Home</span>
+              <ArrowLeft size={14} />
+              <span className="hidden xs:inline">Home</span>
             </button>
 
             {/* Mirror Solar Store Logo Title */}
-            <div className="flex items-center gap-1.5 font-heading font-black text-lg sm:text-xl tracking-tight text-white">
-              <span>Mirror Solar</span>
+            <div className="flex items-center gap-1 font-heading font-black text-sm sm:text-base tracking-tight text-white select-none">
+              <Sun size={15} className="text-[#F58220]" />
+              <span>Solar</span>
               <span className="text-[#F58220]">Store</span>
             </div>
           </div>
 
           {/* Center: Dual Store Quick Switcher */}
-          <div className="hidden md:flex items-center bg-slate-900/90 p-1 rounded-full border border-slate-700/60 shadow-inner">
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-[#F58220] text-slate-950 shadow-sm">
-              <Sun size={13} className="text-slate-950 fill-slate-950" />
-              <span>Solar Store</span>
+          <div className="flex items-center bg-slate-900/90 p-0.5 rounded-full border border-slate-700/60 shadow-inner">
+            <div className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-black bg-[#F58220] text-slate-950 shadow-xs">
+              <Sun size={12} className="fill-slate-950 text-slate-950" />
+              <span>Solar</span>
             </div>
             
             <button
@@ -461,49 +465,43 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                 if (onNavigate) onNavigate('aqua-store');
                 else window.location.hash = '#aqua-store';
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-cyan-200 hover:text-white hover:bg-slate-800 transition-all cursor-pointer"
+              className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold text-cyan-300 hover:text-white hover:bg-slate-800 transition-all cursor-pointer"
               title="Switch to Mirror Aqua Store"
             >
-              <Droplets size={13} className="text-cyan-400" />
-              <span>Aqua Store</span>
+              <Droplets size={12} className="text-cyan-400" />
+              <span>Aqua</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Right: Order Tracking & Cart Actions */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Track Orders Button */}
             <button
               onClick={() => {
                 setViewMode('orders');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="inline-flex items-center gap-1.5 bg-[#172A45] hover:bg-[#1F3658] border border-slate-700 text-slate-200 hover:text-white text-xs sm:text-sm font-bold px-3 sm:px-3.5 py-2 rounded-xl shadow-sm transition-all cursor-pointer"
+              className="inline-flex items-center gap-1 bg-[#172A45] hover:bg-[#1F3658] border border-slate-700/80 text-slate-200 hover:text-white text-xs font-bold px-2.5 sm:px-3 py-1.5 rounded-lg shadow-xs transition-all cursor-pointer"
+              title="Track Orders"
             >
-              <Truck size={15} className="text-blue-400" />
-              <span className="hidden sm:inline">Track Orders</span>
-              <span className="sm:hidden">Track</span>
+              <Truck size={14} className="text-blue-400" />
+              <span className="hidden md:inline">Track</span>
             </button>
 
             {/* Cart Drawer Button */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="inline-flex items-center gap-2 bg-[#172A45] hover:bg-[#1F3658] border border-slate-700 text-white text-xs sm:text-sm font-bold px-3.5 sm:px-4 py-2 rounded-xl shadow-sm transition-all relative cursor-pointer"
+              className="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-[#F58220] hover:opacity-95 text-slate-950 text-xs font-black px-3 sm:px-3.5 py-1.5 rounded-lg shadow-xs transition-all relative cursor-pointer"
+              aria-label="View Cart"
             >
-              <ShoppingCart size={16} className="text-[#F58220]" />
+              <ShoppingCart size={14} />
               <span>Cart</span>
               {cartItemsCount > 0 && (
-                <span className="bg-[#F58220] text-slate-950 font-black text-[10px] w-5 h-5 rounded-full flex items-center justify-center -mr-1">
+                <span className="bg-slate-950 text-white font-black text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
                   {cartItemsCount}
                 </span>
               )}
             </button>
-
-            <a 
-              href={`tel:${BUSINESS_CONTACT.phoneRaw}`}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-accent-400 transition hidden lg:inline-flex"
-            >
-              <Phone size={14} className="text-emerald-400" />
-              <span>{BUSINESS_CONTACT.phone}</span>
-            </a>
           </div>
         </div>
       </div>
@@ -516,15 +514,33 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
         </div>
       )}
 
-      {/* Store Catalog Heading (Single Clean Header) */}
-      <div className="pt-10 pb-8 text-center">
-        <div className="container-custom max-w-3xl mx-auto space-y-2.5">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 font-heading tracking-tight">
+      {/* Store Catalog Heading & Organic Quick Switcher */}
+      <div className="pt-6 sm:pt-8 pb-5 sm:pb-6 text-center">
+        <div className="container-custom max-w-3xl mx-auto space-y-3">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 font-heading tracking-tight">
             Store Catalog
           </h1>
-          <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-2xl mx-auto">
             Genuine solar accessories, drain clips, and complete installation bulk combos with instant online checkout.
           </p>
+
+          {/* Organic Category Quick Links */}
+          <div className="flex items-center justify-center gap-2 pt-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-900 font-black text-xs shadow-xs">
+              <Sun size={13} className="text-amber-600 fill-amber-500" />
+              <span>Solar Store (Active)</span>
+            </div>
+            <button
+              onClick={() => {
+                if (onNavigate) onNavigate('aqua-store');
+                else window.location.hash = '#aqua-store';
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-50 hover:bg-cyan-100/80 border border-cyan-200 text-cyan-800 font-bold text-xs transition cursor-pointer"
+            >
+              <Droplets size={13} className="text-cyan-600" />
+              <span>Mirror Aqua Store →</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -562,6 +578,10 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                   <img 
                     src={drainClipsProduct.images[0]} 
                     alt={drainClipsProduct.name} 
+                    width="400"
+                    height="400"
+                    loading="eager"
+                    decoding="async"
                     className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
                   />
                   <span className="absolute top-3 left-3 bg-accent-500 text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wide shadow-xs">
@@ -577,7 +597,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                       onClick={() => setActiveProductDetail(drainClipsProduct)}
                       className="aspect-square bg-slate-50 border border-slate-200 rounded-xl p-1.5 flex items-center justify-center cursor-pointer hover:border-primary-500 transition"
                     >
-                      <img src={img} alt="" className="max-h-full max-w-full object-contain" />
+                      <img src={img} alt={`Drain clip angle ${idx + 1}`} width="80" height="80" loading="eager" decoding="async" className="max-h-full max-w-full object-contain" />
                     </div>
                   ))}
                 </div>
@@ -720,6 +740,8 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                             
                             <div className="relative flex-1">
                               <input
+                                id="custom-kw-input"
+                                name="customKw"
                                 type="number"
                                 min="3"
                                 max="500"
@@ -727,6 +749,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                                 onChange={(e) => setCustomKwInput(e.target.value)}
                                 className="w-full bg-white border border-amber-300 px-3 py-1.5 rounded-lg text-center text-sm font-black text-slate-900 focus:outline-none focus:border-accent-500"
                                 placeholder="e.g. 3, 5, 8, 10..."
+                                aria-label="Custom solar plant capacity in kW"
                               />
                               <span className="absolute right-3 top-1.5 text-xs text-slate-400 font-bold pointer-events-none">kW</span>
                             </div>
@@ -825,6 +848,10 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                         <img 
                           src={mat.image} 
                           alt={mat.name} 
+                          width="120"
+                          height="120"
+                          loading="lazy"
+                          decoding="async"
                           className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-110" 
                         />
                         <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/20 rounded-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
@@ -1035,6 +1062,10 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                 <img 
                   src={activeComboMaterialModal.image} 
                   alt={activeComboMaterialModal.name} 
+                  width="500"
+                  height="300"
+                  loading="lazy"
+                  decoding="async"
                   className="max-h-full max-w-full object-contain transition-transform duration-300"
                 />
                 <span className="absolute top-3 left-3 bg-primary-600 text-white text-xs font-black px-3 py-1 rounded-lg shadow-sm">
@@ -1082,7 +1113,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                           : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
                       }`}
                     >
-                      <img src={m.image} alt={m.name} className="h-8 w-8 object-contain" />
+                      <img src={m.image} alt={m.name} width="32" height="32" loading="lazy" decoding="async" className="h-8 w-8 object-contain" />
                       <span className="text-[9px] font-bold text-slate-800 truncate w-full mt-1 text-center">
                         {m.name.split(' ')[0]}
                       </span>
@@ -1150,7 +1181,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
-                        <img src={mat.image} alt={mat.name} className="max-h-full max-w-full object-contain" />
+                        <img src={mat.image} alt={mat.name} width="150" height="150" loading="lazy" decoding="async" className="max-h-full max-w-full object-contain" />
                       </div>
                       <div>
                         <strong className="text-xs sm:text-sm font-bold text-slate-900 block group-hover:text-primary-600 transition">{mat.name}</strong>
@@ -1438,11 +1469,14 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    <label htmlFor="combo-name" className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
                       Full Name *
                     </label>
                     <input
                       type="text"
+                      id="combo-name"
+                      name="name"
+                      autoComplete="name"
                       required
                       placeholder="Your Name"
                       value={comboFormData.name}
@@ -1452,11 +1486,14 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    <label htmlFor="combo-company" className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
                       Company (Optional)
                     </label>
                     <input
                       type="text"
+                      id="combo-company"
+                      name="companyName"
+                      autoComplete="organization"
                       placeholder="Company Name"
                       value={comboFormData.companyName}
                       onChange={(e) => setComboFormData({ ...comboFormData, companyName: e.target.value })}
@@ -1467,11 +1504,14 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    <label htmlFor="combo-phone" className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
                       Mobile Number *
                     </label>
                     <input
                       type="tel"
+                      id="combo-phone"
+                      name="phone"
+                      autoComplete="tel"
                       required
                       placeholder="10-digit mobile"
                       value={comboFormData.phone}
@@ -1481,11 +1521,14 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    <label htmlFor="combo-whatsapp" className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
                       WhatsApp Number
                     </label>
                     <input
                       type="tel"
+                      id="combo-whatsapp"
+                      name="whatsapp"
+                      autoComplete="tel"
                       placeholder="WhatsApp"
                       value={comboFormData.whatsapp}
                       onChange={(e) => setComboFormData({ ...comboFormData, whatsapp: e.target.value })}
@@ -1494,11 +1537,14 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    <label htmlFor="combo-email" className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
                       Email Address (Optional)
                     </label>
                     <input
                       type="email"
+                      id="combo-email"
+                      name="email"
+                      autoComplete="email"
                       placeholder="e.g. name@example.com"
                       value={comboFormData.email}
                       onChange={(e) => setComboFormData({ ...comboFormData, email: e.target.value })}
@@ -1509,10 +1555,12 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  <label htmlFor="combo-district" className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
                     Delivery District *
                   </label>
                   <select
+                    id="combo-district"
+                    name="district"
                     required
                     value={comboFormData.district}
                     onChange={(e) => setComboFormData({ ...comboFormData, district: e.target.value })}
@@ -1526,10 +1574,12 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  <label htmlFor="combo-address" className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
                     Delivery Address / Instructions
                   </label>
                   <textarea
+                    id="combo-address"
+                    name="message"
                     rows={2}
                     placeholder="Enter delivery location details..."
                     value={comboFormData.message}
@@ -1618,7 +1668,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
                       className="flex items-center justify-between gap-3 p-3 sm:p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80"
                     >
                       <div className="w-14 h-14 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center shrink-0">
-                        <img src={item.image} alt={item.name} className="max-h-full max-w-full object-contain" />
+                        <img src={item.image} alt={item.name} width="80" height="80" loading="lazy" decoding="async" className="max-h-full max-w-full object-contain" />
                       </div>
 
                       <div className="flex-1 min-w-0">
@@ -1762,7 +1812,7 @@ export default function MirrorSolarStore({ onBackToHome, initialView = 'store', 
             <div className="space-y-5">
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 rounded-2xl bg-slate-50 border border-slate-200 p-2 flex items-center justify-center shrink-0">
-                  <img src={activeProductDetail.images[0]} alt={activeProductDetail.name} className="max-h-full max-w-full object-contain" />
+                  <img src={activeProductDetail.images[0]} alt={activeProductDetail.name} width="400" height="400" loading="lazy" decoding="async" className="max-h-full max-w-full object-contain" />
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-accent-600 bg-accent-50 px-2.5 py-0.5 rounded-full uppercase">

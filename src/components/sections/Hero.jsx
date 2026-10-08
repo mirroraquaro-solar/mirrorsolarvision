@@ -60,14 +60,14 @@ export default function Hero({ onNavigate }) {
       <div className="container-custom relative z-20 w-full flex flex-col lg:flex-row items-center justify-between gap-10 py-10 lg:py-16">
         
         {/* Left Side: Hero content */}
-        <div className="flex-1 text-left max-w-[650px] mt-2 sm:mt-4 lg:mt-[-20px] flex flex-col justify-center h-full animate-fade-in-up">
+        <div className="flex-1 text-left max-w-[650px] mt-1 sm:mt-4 lg:mt-[-20px] flex flex-col justify-center h-full animate-fade-in-up">
           {/* Top Badge */}
-          <div className="inline-flex items-center gap-2 bg-accent-500/10 px-4 py-2 rounded-full border border-accent-500/30 mb-8 sm:mb-10 text-[13px] font-bold text-accent-400 tracking-[0.5px] uppercase self-start">
-            <Zap size={14} className="fill-accent-500 text-accent-500" />
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-accent-500/10 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border border-accent-500/30 mb-4 sm:mb-8 text-[11px] sm:text-[13px] font-bold text-accent-400 tracking-[0.5px] uppercase self-start">
+            <Zap size={13} className="fill-accent-500 text-accent-500 shrink-0" />
             <span>Andhra Pradesh's Leading Solar Partner</span>
           </div>
 
-          <h1 className="font-heading text-4xl sm:text-5xl lg:text-[60px] font-black text-white leading-tight tracking-tight mb-6 sm:mb-8">
+          <h1 className="font-heading text-3xl sm:text-5xl lg:text-[56px] font-black text-white leading-tight tracking-tight mb-3 sm:mb-6">
             Power Your Home <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-400 via-amber-400 to-orange-400">
               With The Sun
@@ -75,7 +75,7 @@ export default function Hero({ onNavigate }) {
           </h1>
 
           {/* Sub Bullets */}
-          <div className="flex flex-wrap items-center gap-2 text-white font-semibold text-lg md:text-xl mb-6 sm:mb-8">
+          <div className="flex flex-wrap items-center gap-2 text-white font-semibold text-sm sm:text-lg md:text-xl mb-3 sm:mb-6">
             <span>Save Energy</span>
             <span className="text-accent-400">•</span>
             <span>Save Money</span>
@@ -83,25 +83,25 @@ export default function Hero({ onNavigate }) {
             <span>Save Future</span>
           </div>
           
-          <p className="text-slate-300 text-base sm:text-lg leading-relaxed mb-8 sm:mb-10">
+          <p className="text-slate-300 text-xs sm:text-base leading-relaxed mb-5 sm:mb-8">
             Join 1500+ families and commercial establishments across Andhra Pradesh reducing electricity bills by up to 90% with Tier-1 on-grid, off-grid, and hybrid solar systems. Powered by nearly 20 years of Mirror Aqua's trusted heritage.
           </p>
           
           {/* CTA Buttons */}
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <a 
               href="#contact" 
               onClick={scrollToContact}
-              className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 px-6 sm:px-8 py-3.5 sm:py-4 rounded-full font-black text-sm sm:text-base shadow-accent transition-all duration-300 transform hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-accent-500 to-[#F58220] hover:opacity-95 text-slate-950 px-5 sm:px-8 py-3 sm:py-3.5 rounded-full font-black text-xs sm:text-base shadow-accent transition-all duration-300 transform hover:-translate-y-0.5"
             >
-              Get Free Quote <ArrowRight size={18} />
+              Get Free Quote <ArrowRight size={16} />
             </a>
             <a 
               href="#store" 
               onClick={handleStoreClick}
-              className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 border border-white/25 backdrop-blur-md text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-full font-bold text-sm sm:text-base transition-all duration-300 transform hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 border border-white/25 backdrop-blur-md text-white px-5 sm:px-8 py-3 sm:py-3.5 rounded-full font-bold text-xs sm:text-base transition-all duration-300 transform hover:-translate-y-0.5"
             >
-              <Package size={18} className="text-accent-400" />
+              <Package size={16} className="text-accent-400" />
               <span>Solar Store</span>
             </a>
           </div>

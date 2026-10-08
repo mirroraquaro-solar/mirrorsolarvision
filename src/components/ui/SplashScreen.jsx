@@ -35,6 +35,10 @@ export default function SplashScreen() {
           <img 
             src="/assets/images/logo/mirror_solar-removebg-preview.png" 
             alt="Mirror Solar Vision" 
+            width="240"
+            height="80"
+            loading="eager"
+            decoding="async"
             className="w-auto h-[60px] md:h-[80px] object-contain"
           />
         </div>

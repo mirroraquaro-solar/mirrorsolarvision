@@ -76,6 +76,10 @@ export function RelatedProducts({ currentProductId, onNavigate }) {
                     <img
                       src={prod.images?.[0]?.url || '/images/product/008.jpeg'}
                       alt={prod.name}
+                      width="112"
+                      height="112"
+                      loading="lazy"
+                      decoding="async"
                       className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>

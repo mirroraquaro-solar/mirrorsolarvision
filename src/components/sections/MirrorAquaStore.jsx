@@ -108,8 +108,8 @@ function AquaStoreContent({ onBackToHome, onNavigate, initialPath = '/' }) {
   return (
     <div className="bg-slate-50 min-h-screen text-slate-900 pb-20 relative" id="aqua-store">
       {/* Top Sticky Header with Store Switcher Bar */}
-      <div className="bg-[#07172A] text-white border-b border-cyan-900/50 sticky top-[72px] sm:top-[78px] z-30 shadow-lg">
-        <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-2.5 sm:py-3">
+      <div className="bg-[#07172A]/95 backdrop-blur-md text-white border-b border-cyan-900/50 sticky top-[72px] sm:top-[78px] z-30 shadow-sm">
+        <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-2 sm:py-2.5">
           
           {/* Main Top Bar: Left Logo & Right Actions */}
           <div className="flex items-center justify-between gap-2 sm:gap-4">
@@ -126,19 +126,19 @@ function AquaStoreContent({ onBackToHome, onNavigate, initialPath = '/' }) {
                     window.location.hash = '#home';
                   }
                 }}
-                className="inline-flex items-center gap-1 text-xs font-bold text-slate-300 hover:text-white transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-slate-800/60"
+                className="inline-flex items-center gap-1 text-xs font-bold text-slate-300 hover:text-white transition-colors cursor-pointer p-1 rounded-lg hover:bg-slate-800/60"
                 title="Back to Home"
               >
-                <ArrowLeft size={16} />
+                <ArrowLeft size={14} />
                 <span className="hidden xs:inline">Home</span>
               </button>
 
               <div 
                 onClick={() => handleNavigatePath('/')}
-                className="flex items-center gap-1.5 sm:gap-2 font-heading font-black text-base sm:text-xl tracking-tight text-white cursor-pointer select-none"
+                className="flex items-center gap-1.5 font-heading font-black text-sm sm:text-base tracking-tight text-white cursor-pointer select-none"
               >
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-md shrink-0">
-                  <Droplets size={16} className="text-white fill-white/30" />
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-xs shrink-0">
+                  <Droplets size={13} className="text-white fill-white/30" />
                 </div>
                 <div className="flex items-center gap-1 leading-tight">
                   <span className="font-extrabold">Mirror Aqua</span>
@@ -147,23 +147,23 @@ function AquaStoreContent({ onBackToHome, onNavigate, initialPath = '/' }) {
               </div>
             </div>
 
-            {/* Center: Dual Store Quick Switcher (Desktop / Tablet view) */}
-            <div className="hidden md:flex items-center bg-slate-900/90 p-1 rounded-full border border-slate-700/70 shadow-inner">
+            {/* Center: Dual Store Quick Switcher */}
+            <div className="flex items-center bg-slate-900/90 p-0.5 rounded-full border border-slate-700/70 shadow-inner">
               <button
                 onClick={() => {
                   if (onNavigate) onNavigate('store');
                   else window.location.hash = '#store';
                 }}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition-all cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold text-amber-300 hover:text-white hover:bg-slate-800 transition-all cursor-pointer"
                 title="Switch to Solar Products"
               >
-                <Sun size={13} className="text-amber-400" />
-                <span>Solar Products</span>
+                <Sun size={12} className="text-amber-400" />
+                <span>Solar</span>
               </button>
               
-              <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-sm">
-                <Droplets size={13} className="text-cyan-200 fill-cyan-200/30" />
-                <span>Mirror Aqua (120g)</span>
+              <div className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-black bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-xs">
+                <Droplets size={12} className="text-cyan-200 fill-cyan-200/30" />
+                <span>Aqua</span>
               </div>
             </div>
 

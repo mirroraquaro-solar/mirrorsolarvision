@@ -1,4 +1,8 @@
-/* Floating WhatsApp Bot Button */
+/* ==========================================================================
+   FLOATING WHATSAPP BUTTON & INTERACTIVE SUPPORT CARD
+   Mirror Solar Vision & Mirror Aqua
+   ========================================================================== */
+
 .wa-bot-floating-container {
   position: fixed;
   right: 28px;
@@ -8,54 +12,70 @@
   flex-direction: column;
   align-items: flex-end;
   pointer-events: none;
+  font-family: var(--font-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
 }
 
 .wa-bot-floating-container * {
   pointer-events: auto;
+  box-sizing: border-box;
 }
 
-/* Floating Greeting Bubble */
+/* --------------------------------------------------------------------------
+   1. GREETING BUBBLE
+   -------------------------------------------------------------------------- */
 .wa-bot-bubble {
+  position: relative;
   margin-bottom: 12px;
-  max-width: 270px;
+  max-width: 290px;
   background: #ffffff;
-  border-radius: 16px 16px 4px 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  padding: 12px 14px;
+  border-radius: 18px 18px 4px 18px;
+  box-shadow: 0 12px 36px rgba(10, 37, 64, 0.18), 0 2px 10px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 12px 32px 12px 14px;
   opacity: 0;
-  transform: translateY(10px) scale(0.95);
+  transform: translateY(12px) scale(0.92);
   pointer-events: none;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
 }
 
-.wa-bot-bubble.visible,
-.wa-bot-floating-container:hover .wa-bot-bubble {
+.wa-bot-bubble.visible {
   opacity: 1;
   transform: translateY(0) scale(1);
   pointer-events: auto;
+}
+
+.wa-bot-bubble:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 16px 42px rgba(10, 37, 64, 0.24);
+  border-color: #10b981;
+}
+
+.wa-bot-bubble-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .wa-bot-bubble-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 4px;
 }
 
 .wa-bot-title {
   font-size: 13px;
-  font-weight: 700;
-  color: #111827;
-  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 800;
+  color: #0A2540;
+  letter-spacing: -0.2px;
 }
 
 .wa-bot-status-tag {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 600;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
   color: #059669;
   background: #ecfdf5;
   padding: 2px 7px;
@@ -68,40 +88,634 @@
   border-radius: 50%;
   background-color: #10b981;
   box-shadow: 0 0 6px #10b981;
+  display: inline-block;
+  animation: wa-dot-pulse 2s infinite;
+}
+
+@keyframes wa-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
 }
 
 .wa-bot-bubble-msg {
   font-size: 12px;
-  color: #4b5563;
-  line-height: 1.45;
+  color: #475569;
+  line-height: 1.4;
   margin: 0;
 }
 
-/* Main WhatsApp Round Bot Button */
+.wa-bot-bubble-msg strong {
+  color: #0f172a;
+}
+
+.wa-bot-bubble-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wa-bot-bubble-close:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* --------------------------------------------------------------------------
+   2. INTERACTIVE SUPPORT CARD MODAL (POPOVER)
+   -------------------------------------------------------------------------- */
+.wa-card-modal {
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  max-height: min(630px, calc(100vh - 120px));
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(10, 37, 64, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.08);
+  margin-bottom: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  z-index: 10000;
+  animation: wa-card-slide-up 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes wa-card-slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header */
+.wa-card-header {
+  background: linear-gradient(135deg, #0A2540 0%, #0F3460 100%);
+  color: #ffffff;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.wa-card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wa-card-back-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #ffffff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-right: -2px;
+}
+
+.wa-card-back-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateX(-2px);
+}
+
+.wa-header-avatar {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+}
+
+.wa-header-avatar-icon {
+  font-size: 20px;
+}
+
+.wa-header-status-indicator {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 2px solid #0A2540;
+}
+
+.wa-header-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.wa-header-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.wa-header-subtitle {
+  font-size: 11px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 1px;
+}
+
+.wa-card-close-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #e2e8f0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.wa-card-close-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  transform: rotate(90deg);
+}
+
+/* Card Body */
+.wa-card-body {
+  padding: 16px;
+  overflow-y: auto;
+  max-height: calc(min(630px, calc(100vh - 120px)) - 120px);
+  background: #f8fafc;
+}
+
+/* Step 1: Selection Screen */
+.wa-welcome-banner {
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.wa-welcome-heading {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 3px 0;
+}
+
+.wa-welcome-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.wa-options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wa-option-card {
+  text-align: left;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.wa-option-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(10, 37, 64, 0.09);
+}
+
+.wa-option-issue:hover {
+  border-color: #f97316;
+  background: linear-gradient(135deg, #fffaf5 0%, #ffffff 100%);
+}
+
+.wa-option-query:hover {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+}
+
+.wa-option-badge-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wa-option-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.wa-option-card:hover .wa-option-icon {
+  transform: scale(1.08);
+}
+
+.wa-icon-issue {
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #fed7aa;
+}
+
+.wa-icon-query {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.wa-option-tag {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
+.wa-tag-issue {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.wa-tag-query {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.wa-option-text-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.wa-option-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.wa-option-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.wa-option-telugu {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.wa-option-desc {
+  font-size: 11.5px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.wa-option-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0284c7;
+  padding-top: 4px;
+  border-top: 1px dashed #f1f5f9;
+}
+
+.wa-option-issue .wa-option-action {
+  color: #ea580c;
+}
+
+.wa-option-query .wa-option-action {
+  color: #059669;
+}
+
+.wa-action-arrow {
+  transition: transform 0.2s;
+}
+
+.wa-option-card:hover .wa-action-arrow {
+  transform: translateX(4px);
+}
+
+/* Direct Chat Link */
+.wa-direct-chat-row {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.wa-direct-chat-link {
+  background: none;
+  border: none;
+  color: #475569;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  transition: all 0.15s;
+}
+
+.wa-direct-chat-link:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Step 2: Form Views (Issue / Query) */
+.wa-form-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wa-form-heading-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+.wa-heading-issue {
+  border-left: 4px solid #ea580c;
+}
+
+.wa-heading-query {
+  border-left: 4px solid #059669;
+}
+
+.wa-form-heading-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  shrink: 0;
+}
+
+.wa-heading-issue .wa-form-heading-icon {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.wa-heading-query .wa-form-heading-icon {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.wa-form-heading-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.wa-form-heading-sub {
+  font-size: 10.5px;
+  color: #64748b;
+  margin: 0;
+}
+
+.wa-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: left;
+}
+
+.wa-field-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.wa-req {
+  color: #ef4444;
+}
+
+.wa-chips-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.wa-chip-btn {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wa-chip-btn:hover {
+  border-color: #25D366;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.wa-chip-btn.active {
+  background: #0A2540;
+  border-color: #0A2540;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(10, 37, 64, 0.2);
+}
+
+.wa-chip-check {
+  color: #10b981;
+}
+
+.wa-form-inputs-row {
+  display: grid;
+  grid-cols: 1;
+  gap: 8px;
+}
+
+@media (min-width: 360px) {
+  .wa-form-inputs-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.wa-text-input,
+.wa-textarea-input {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+}
+
+.wa-text-input:focus,
+.wa-textarea-input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.wa-textarea-input {
+  resize: vertical;
+  min-height: 52px;
+}
+
+/* Submit & Forward Action Button */
+.wa-submit-forward-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: none;
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+  cursor: pointer;
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+  box-shadow: 0 8px 20px rgba(37, 211, 102, 0.35);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 4px;
+}
+
+.wa-submit-forward-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(37, 211, 102, 0.45);
+  background: linear-gradient(135deg, #2fe06f 0%, #0e7b6e 100%);
+}
+
+.wa-submit-forward-btn:active {
+  transform: scale(0.98);
+}
+
+.wa-submit-forward-btn.forwarded {
+  background: #059669;
+}
+
+.wa-submit-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wa-privacy-note {
+  font-size: 10px;
+  color: #64748b;
+  text-align: center;
+  margin: 0;
+  line-height: 1.35;
+}
+
+/* Card Footer */
+.wa-card-footer {
+  background: #f1f5f9;
+  border-top: 1px solid #e2e8f0;
+  padding: 8px 14px;
+  text-align: center;
+}
+
+.wa-footer-text {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.2px;
+}
+
+/* --------------------------------------------------------------------------
+   3. MAIN ROUND WHATSAPP TRIGGER BUTTON
+   -------------------------------------------------------------------------- */
 .wa-bot-button {
   position: relative;
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
   border: none;
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 6px 24px rgba(37, 211, 102, 0.45), 0 2px 8px rgba(0, 0, 0, 0.12);
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+  box-shadow: 0 8px 28px rgba(37, 211, 102, 0.48), 0 3px 10px rgba(0, 0, 0, 0.15);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, background 0.25s ease;
   outline: none;
 }
 
 .wa-bot-button:hover {
   transform: scale(1.08) translateY(-2px);
-  box-shadow: 0 10px 32px rgba(37, 211, 102, 0.55), 0 4px 12px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 12px 36px rgba(37, 211, 102, 0.6), 0 5px 14px rgba(0, 0, 0, 0.2);
+}
+
+.wa-bot-button.active {
+  background: #0A2540;
+  box-shadow: 0 8px 24px rgba(10, 37, 64, 0.4);
+  transform: rotate(90deg);
 }
 
 .wa-bot-button:active {
-  transform: scale(0.96);
+  transform: scale(0.95);
 }
 
 .wa-bot-icon-wrap {
@@ -110,6 +724,7 @@
   justify-content: center;
   position: relative;
   z-index: 2;
+  transition: transform 0.2s ease;
 }
 
 .wa-svg-icon {
@@ -118,15 +733,19 @@
   fill: #ffffff;
 }
 
+.wa-close-svg {
+  color: #ffffff;
+}
+
 /* Pulsing radar ping */
 .wa-bot-ping-ring {
   position: absolute;
-  top: -4px;
-  left: -4px;
-  right: -4px;
-  bottom: -4px;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
   border-radius: 50%;
-  border: 2px solid rgba(37, 211, 102, 0.6);
+  border: 2px solid rgba(37, 211, 102, 0.65);
   animation: wa-bot-ping 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
   z-index: 1;
 }
@@ -146,34 +765,27 @@
   }
 }
 
-/* Mini dot badge on top right of button */
-.wa-bot-badge {
+/* Live Online Badge on Button */
+.wa-bot-online-badge {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 14px;
-  height: 14px;
-  background: #ffffff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 3;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.wa-bot-badge-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  top: 3px;
+  right: 3px;
+  width: 13px;
+  height: 13px;
   background: #10b981;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  z-index: 3;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
 }
 
-/* Mobile responsive position to avoid overlapping sticky bar */
+/* --------------------------------------------------------------------------
+   4. RESPONSIVE ADJUSTMENTS
+   -------------------------------------------------------------------------- */
 @media (max-width: 768px) {
   .wa-bot-floating-container {
-    right: 18px;
-    bottom: 84px;
+    right: 16px;
+    bottom: 84px; /* Clearance above bottom bar */
   }
 
   .wa-bot-button {
@@ -186,9 +798,15 @@
     height: 28px;
   }
 
+  .wa-card-modal {
+    width: calc(100vw - 32px);
+    max-height: calc(100vh - 160px);
+    margin-bottom: 12px;
+  }
+
   .wa-bot-bubble {
-    max-width: 230px;
+    max-width: 240px;
     font-size: 11px;
-    padding: 10px 12px;
+    padding: 10px 28px 10px 12px;
   }
 }

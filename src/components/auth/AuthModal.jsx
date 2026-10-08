@@ -187,13 +187,17 @@ export default function AuthModal({ isOpen, onClose, pendingActionText }) {
           {view === 'login' && (
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Email Address</label>
+                <label htmlFor="login-email" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Email Address</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Mail size={16} className="text-slate-400" />
                   </div>
                   <input 
-                    type="email" required
+                    type="email" 
+                    id="login-email"
+                    name="email"
+                    autoComplete="email"
+                    required
                     className="w-full bg-slate-50 border border-slate-300 pl-10 pr-4 py-3 rounded-xl text-sm focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500/20"
                     placeholder="you@example.com"
                     value={loginForm.email} onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
@@ -203,7 +207,7 @@ export default function AuthModal({ isOpen, onClose, pendingActionText }) {
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Password</label>
+                  <label htmlFor="login-password" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Password</label>
                   <button type="button" onClick={() => setView('forgot-password')} className="text-xs text-primary-600 hover:text-primary-800 hover:underline">Forgot?</button>
                 </div>
                 <div className="relative">
@@ -211,7 +215,11 @@ export default function AuthModal({ isOpen, onClose, pendingActionText }) {
                     <Lock size={16} className="text-slate-400" />
                   </div>
                   <input 
-                    type="password" required
+                    type="password" 
+                    id="login-password"
+                    name="password"
+                    autoComplete="current-password"
+                    required
                     className="w-full bg-slate-50 border border-slate-300 pl-10 pr-4 py-3 rounded-xl text-sm focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500/20"
                     placeholder="••••••••"
                     value={loginForm.password} onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
@@ -255,13 +263,17 @@ export default function AuthModal({ isOpen, onClose, pendingActionText }) {
           {view === 'register' && (
             <form onSubmit={handleRegisterSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Full Name</label>
+                <label htmlFor="reg-fullname" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Full Name</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <User size={16} className="text-slate-400" />
                   </div>
                   <input 
-                    type="text" required
+                    type="text" 
+                    id="reg-fullname"
+                    name="fullName"
+                    autoComplete="name"
+                    required
                     className="w-full bg-slate-50 border border-slate-300 pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500/20"
                     placeholder="John Doe"
                     value={registerForm.fullName} onChange={(e) => setRegisterForm({...registerForm, fullName: e.target.value})}
@@ -270,13 +282,17 @@ export default function AuthModal({ isOpen, onClose, pendingActionText }) {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Email Address</label>
+                <label htmlFor="reg-email" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Email Address</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Mail size={16} className="text-slate-400" />
                   </div>
                   <input 
-                    type="email" required
+                    type="email" 
+                    id="reg-email"
+                    name="email"
+                    autoComplete="email"
+                    required
                     className="w-full bg-slate-50 border border-slate-300 pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500/20"
                     placeholder="you@example.com"
                     value={registerForm.email} onChange={(e) => setRegisterForm({...registerForm, email: e.target.value})}
@@ -285,13 +301,17 @@ export default function AuthModal({ isOpen, onClose, pendingActionText }) {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Mobile Number</label>
+                <label htmlFor="reg-phone" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Mobile Number</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Phone size={16} className="text-slate-400" />
                   </div>
                   <input 
-                    type="tel" required
+                    type="tel" 
+                    id="reg-phone"
+                    name="phone"
+                    autoComplete="tel"
+                    required
                     className="w-full bg-slate-50 border border-slate-300 pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-accent-500 focus:ring-1 focus:ring-accent-500/20"
                     placeholder="10-digit number"
                     value={registerForm.phone} onChange={(e) => setRegisterForm({...registerForm, phone: e.target.value})}
@@ -301,18 +321,27 @@ export default function AuthModal({ isOpen, onClose, pendingActionText }) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">Password</label>
+                  <label htmlFor="reg-password" className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">Password</label>
                   <input 
-                    type="password" required minLength="8"
+                    type="password" 
+                    id="reg-password"
+                    name="password"
+                    autoComplete="new-password"
+                    required 
+                    minLength="8"
                     className="w-full bg-slate-50 border border-slate-300 px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:border-accent-500"
                     placeholder="Min 8 chars"
                     value={registerForm.password} onChange={(e) => setRegisterForm({...registerForm, password: e.target.value})}
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">Confirm</label>
+                  <label htmlFor="reg-confirm-password" className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">Confirm</label>
                   <input 
-                    type="password" required
+                    type="password" 
+                    id="reg-confirm-password"
+                    name="confirmPassword"
+                    autoComplete="new-password"
+                    required
                     className="w-full bg-slate-50 border border-slate-300 px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:border-accent-500"
                     placeholder="Repeat password"
                     value={registerForm.confirmPassword} onChange={(e) => setRegisterForm({...registerForm, confirmPassword: e.target.value})}
@@ -357,13 +386,17 @@ export default function AuthModal({ isOpen, onClose, pendingActionText }) {
             <form onSubmit={handleForgotSubmit} className="space-y-4">
               <p className="text-sm text-slate-600 mb-2">Enter your email address and we'll send you a link to reset your password.</p>
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Email Address</label>
+                <label htmlFor="forgot-email" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Email Address</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Mail size={16} className="text-slate-400" />
                   </div>
                   <input 
-                    type="email" required
+                    type="email" 
+                    id="forgot-email"
+                    name="email"
+                    autoComplete="email"
+                    required
                     className="w-full bg-slate-50 border border-slate-300 pl-10 pr-4 py-3 rounded-xl text-sm focus:outline-none focus:border-accent-500"
                     placeholder="you@example.com"
                     value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)}

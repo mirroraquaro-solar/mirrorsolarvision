@@ -167,7 +167,10 @@ function App() {
           <NotificationPopup />
           <Hero onNavigate={handleNavigate} />
           <AuthorizedDealers />
-          <StoreTeaser onNavigateToStore={(action) => handleNavigate('store', action)} />
+          <StoreTeaser 
+            onNavigate={handleNavigate}
+            onNavigateToStore={(action) => handleNavigate(action === 'aqua-store' || action === 'aqua' ? 'aqua-store' : 'store', action)} 
+          />
           <AboutGroup />
           <WhyChooseUs />
           <Gallery />

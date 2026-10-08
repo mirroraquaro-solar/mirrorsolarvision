@@ -370,6 +370,8 @@ export function ProductHero({ product, onNavigate }) {
                     <Minus size={14} />
                   </button>
                   <input
+                    id="product-quantity-input"
+                    name="quantity"
                     type="number"
                     min="1"
                     max="200"
@@ -447,7 +449,11 @@ export function ProductHero({ product, onNavigate }) {
             <form onSubmit={handleCheckPincode} className="pincode-form">
               <MapPin size={16} className="pincode-icon" />
               <input
+                id="product-hero-pincode"
+                name="pincode"
                 type="text"
+                autoComplete="postal-code"
+                aria-label="Delivery PIN code"
                 maxLength={6}
                 value={pincode}
                 onChange={(e) => setPincode(e.target.value)}

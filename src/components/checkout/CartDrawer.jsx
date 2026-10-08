@@ -149,6 +149,10 @@ export default function CartDrawer({ onProceedToCheckout, onNavigate }) {
                     <img 
                       src={item.image || '/images/product/008.jpeg'} 
                       alt={item.name} 
+                      width="88"
+                      height="88"
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-contain p-1"
                       onError={(e) => {
                         e.currentTarget.src = isAqua ? '/images/product/008.jpeg' : '/assets/images/products/drain-clip-front.png';

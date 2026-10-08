@@ -226,6 +226,8 @@ export default function QuoteForm() {
                   <input 
                     type="text" 
                     id="lead-name" 
+                    name="name"
+                    autoComplete="name"
                     className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm" 
                     placeholder="Enter your full name" 
                     value={formData.name}
@@ -240,6 +242,8 @@ export default function QuoteForm() {
                     <input 
                       type="tel" 
                       id="lead-phone" 
+                      name="phone"
+                      autoComplete="tel"
                       className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-4 py-3 pr-10 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm" 
                       placeholder="e.g. 9876543210" 
                       value={formData.phone}
@@ -259,6 +263,8 @@ export default function QuoteForm() {
                     <input 
                       type="email" 
                       id="lead-email" 
+                      name="email"
+                      autoComplete="email"
                       className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-4 py-3 pr-10 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm" 
                       placeholder="name@email.com" 
                       value={formData.email}
@@ -272,6 +278,7 @@ export default function QuoteForm() {
                   <label htmlFor="lead-district" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">District in AP / State *</label>
                   <select 
                     id="lead-district" 
+                    name="district"
                     className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
                     value={formData.district}
                     onChange={(e) => setFormData({...formData, district: e.target.value})}
@@ -291,6 +298,7 @@ export default function QuoteForm() {
                   <label htmlFor="lead-property" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Property Type *</label>
                   <select 
                     id="lead-property" 
+                    name="propertyType"
                     className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
                     value={formData.propertyType}
                     onChange={(e) => setFormData({...formData, propertyType: e.target.value})}
@@ -308,6 +316,7 @@ export default function QuoteForm() {
                   <input 
                     type="number" 
                     id="lead-bill" 
+                    name="monthlyBill"
                     className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm" 
                     placeholder="e.g. 4500" 
                     value={formData.monthlyBill}
@@ -319,7 +328,7 @@ export default function QuoteForm() {
 
               {/* Inquiry Type */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Inquiry Type</label>
+                <span className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Inquiry Type</span>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   {[
                     { id: 'solar-plant', label: 'Complete Solar Plant', desc: 'Rooftop on-grid/hybrid system' },
@@ -328,6 +337,7 @@ export default function QuoteForm() {
                   ].map((item) => (
                     <label 
                       key={item.id}
+                      htmlFor={`lead-inquiry-${item.id}`}
                       className={`flex flex-col p-3 rounded-xl border text-xs cursor-pointer transition-all ${
                         formData.inquiryType === item.id 
                           ? 'border-primary-600 bg-primary-50/50 text-slate-900 font-bold ring-1 ring-primary-600' 
@@ -337,6 +347,7 @@ export default function QuoteForm() {
                       <div className="flex items-center gap-2">
                         <input 
                           type="radio" 
+                          id={`lead-inquiry-${item.id}`}
                           name="inquiryType" 
                           value={item.id}
                           checked={formData.inquiryType === item.id}
@@ -356,6 +367,7 @@ export default function QuoteForm() {
                 <label htmlFor="lead-message" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Additional Notes / Roof Specs (Optional)</label>
                 <textarea 
                   id="lead-message" 
+                  name="message"
                   rows={2}
                   className="w-full bg-slate-50 border border-slate-200 text-slate-900 px-4 py-3 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm resize-none" 
                   placeholder="e.g. 1200 sq ft flat concrete roof in Rajahmundry, looking for 5kW system..."

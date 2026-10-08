@@ -64,6 +64,10 @@ export function MobileNavDrawer({ currentPath = '/', onNavigate }) {
             <img
               src="/images/product/logo2.jpeg"
               alt="Mirror Aqua"
+              width="120"
+              height="36"
+              loading="lazy"
+              decoding="async"
               className="brand-logo-img"
               style={{ maxHeight: '36px', objectFit: 'contain' }}
             />

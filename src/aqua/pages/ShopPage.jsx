@@ -91,6 +91,7 @@ export function ShopPage({ initialFilter = null, onNavigate }) {
               <label htmlFor="category-select" className="sr-only">Category</label>
               <select
                 id="category-select"
+                name="category"
                 value={selectedCategory}
                 onChange={(e) => {
                   setSelectedCategory(e.target.value);
@@ -109,6 +110,7 @@ export function ShopPage({ initialFilter = null, onNavigate }) {
               <label htmlFor="sort-select" className="sr-only">Sort By</label>
               <select
                 id="sort-select"
+                name="sortBy"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="shop-select"

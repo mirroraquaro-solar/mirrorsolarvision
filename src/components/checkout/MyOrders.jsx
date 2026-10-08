@@ -596,6 +596,8 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
               <input
+                id="orders-search-query"
+                name="searchQuery"
                 type="text"
                 value={searchQuery}
                 onChange={(e) => {
@@ -604,6 +606,7 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                 }}
                 placeholder="Search Booking ID (e.g. MSV-244545), Phone, or Tracking ID..."
                 className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                aria-label="Search Orders by Booking ID, Phone, or Tracking ID"
               />
               {searchQuery && (
                 <button
@@ -779,6 +782,10 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                         <img
                           src={firstItem?.image || '/assets/images/001.png'}
                           alt={firstItem?.name || 'Product'}
+                          width="80"
+                          height="80"
+                          loading="lazy"
+                          decoding="async"
                           className="max-h-full max-w-full object-contain"
                         />
                       </div>
@@ -1288,10 +1295,12 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  <label htmlFor="review-title" className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
                     Review Headline
                   </label>
                   <input
+                    id="review-title"
+                    name="reviewTitle"
                     type="text"
                     value={reviewTitle}
                     onChange={(e) => setReviewTitle(e.target.value)}
@@ -1301,10 +1310,12 @@ export default function MyOrders({ onBackToStore, onBackToHome }) {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  <label htmlFor="review-comment" className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
                     Detailed Review
                   </label>
                   <textarea
+                    id="review-comment"
+                    name="reviewComment"
                     rows={3}
                     value={reviewComment}
                     onChange={(e) => setReviewComment(e.target.value)}
