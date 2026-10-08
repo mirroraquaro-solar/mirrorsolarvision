@@ -381,23 +381,35 @@ function normalizeCustomerAddress(orderData = {}) {
 }
 
 async function createShiprocketOrderForRecord(orderData, razorpay_payment_id) {
-  const orderBookingId = orderData.bookingId || orderData.firestoreOrderId;
+  const orderBookingId = String(orderData.bookingId || orderData.firestoreOrderId || orderData.id || `MSV-${Date.now()}`);
   const addr = normalizeCustomerAddress(orderData);
-  const items = orderData.items || [];
-  const cleanPhone = addr.phone;
-  const custEmail = addr.email || 'orders@mirrorsolarvision.com';
-  const custName = addr.fullName;
-  const nameParts = custName.split(' ');
+  const rawItems = orderData.items && orderData.items.length > 0 ? orderData.items : [{
+    name: orderData.productName || orderData.item || 'Solar Accessory',
+    productId: 'MSV-GENERIC',
+    quantity: 1,
+    price: orderData.amount || 20
+  }];
+  
+  let cleanPhone = String(addr.phone || orderData.customerPhone || orderData.phone || '9849810668').replace(/\D/g, '');
+  if (cleanPhone.length < 10) {
+    cleanPhone = '9849810668';
+  } else if (cleanPhone.length > 10) {
+    cleanPhone = cleanPhone.slice(-10);
+  }
+
+  const custEmail = addr.email || orderData.customerEmail || 'orders@mirrorsolarvision.com';
+  const custName = addr.fullName || orderData.customerName || 'Customer';
+  const nameParts = custName.trim().split(/\s+/);
   const firstName = nameParts[0] || 'Customer';
-  const lastName = nameParts.slice(1).join(' ') || 'Customer';
+  const lastName = nameParts.slice(1).join(' ') || firstName;
 
   const token = await getShiprocketToken();
   
-  const orderItems = items.map(item => ({
+  const orderItems = rawItems.map(item => ({
     name: (item.name || 'Solar Product').substring(0, 100),
     sku: (item.productId || item.cartItemId || item.id || `SKU_${Date.now()}`).substring(0, 50),
     units: Math.max(1, Number(item.quantity) || 1),
-    selling_price: Math.max(1, Number(item.price) || (orderData.amount / (items.length || 1))),
+    selling_price: Math.max(1, Number(item.price) || (orderData.amount / (rawItems.length || 1))),
     discount: 0,
     tax: 0,
     hsn: ''
@@ -1741,6 +1753,7 @@ exports.retryUnpushedShiprocketOrders = functions.https.onRequest((req, res) => 
       for (const docSnap of ordersSnapshot.docs) {
         const orderData = docSnap.data();
         const bookingId = orderData.bookingId || docSnap.id;
+        orderData.bookingId = bookingId;
 
         // Check if Shiprocket order ID exists
         if (orderData.shiprocketOrderId || orderData.shiprocketShipmentId) {
